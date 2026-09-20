@@ -1,6 +1,7 @@
-// Evaluate a parking area's rule at a given time.
-// TODO: parse hours ("9-21, (9-18)"), duration, season, holidays; handle rule types.
-export function evaluate(area, time) {
-  if (!area.voimassaolo) return { label: "Unknown", source: "no hours in register" };
-  return { label: "Not implemented", source: "official rule" };
+// Evaluate a parking area's parsed rule at a given time.
+// TODO: apply hours/duration/season windows and holidays; return a timeline, not a label.
+export function evaluate(area) {
+  if (area.status === "missing_hours") return { label: "Hours not published for this section." };
+  if (area.status === "uncertain") return { label: "Check the sign before parking." };
+  return { label: "Not implemented yet." };
 }

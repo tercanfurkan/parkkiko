@@ -1,4 +1,4 @@
-data/
+data/raw/
 data_samples/
 .claude/worktrees/
 __pycache__/

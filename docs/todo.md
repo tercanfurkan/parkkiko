@@ -24,12 +24,12 @@ Deadlines: spotlight talk in week 42, final submission on 27 October.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Parse hours | | To do | "9-21, (9-18)" means Mon–Fri 9–21, Sat 9–18. Ambiguous values become uncertain. |
-| Normalise maximum parking time | | To do | 25 spellings such as "4 h", "4h" and "4" become minutes or no limit. |
-| Class and space type to rule type | | To do | Paid, free with time limit, banned during hours, always banned, reserved. |
-| Seasons and holidays | | To do | Seasonal date ranges. A holiday counts as Sunday, the day before as Saturday. |
-| Contradictions and extra info | | To do | Contradicting fields become uncertain. Free text is shown to the driver as written. |
-| Temporary traffic arrangements | | To do | Match roadworks to parking areas. Active roadworks make the answer uncertain. |
+| Parse hours | | Done | "9-21, (9-18)" means Mon–Fri 9–21, Sat 9–18. Ambiguous values become uncertain. |
+| Normalise maximum parking time | | Done | 25 spellings such as "4 h", "4h" and "4" become minutes or no limit. |
+| Class and space type to rule type | | Done | Paid, free with time limit, banned during hours, always banned, reserved. |
+| Seasons and holidays | | Doing | Seasons parsed. Holiday calendar still to add. |
+| Contradictions and extra info | | Done | Contradicting fields become uncertain. Free text is shown to the driver as written. |
+| Temporary traffic arrangements | | Done | Match roadworks to parking areas. Active roadworks make the answer uncertain. |
 
 ## Learning
 

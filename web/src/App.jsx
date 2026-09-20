@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import { evaluate } from "./rules.js";
+import { styleFor } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
 
 const HELSINKI = [60.1699, 24.9384];
@@ -20,14 +21,14 @@ export default function App() {
 
   return (
     <div className="app">
-      <MapContainer center={HELSINKI} zoom={16} className="map">
+      <MapContainer center={HELSINKI} zoom={16} className="map" preferCanvas>
         <TileLayer
           url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution="© OpenStreetMap contributors"
         />
-        {areas && <GeoJSON data={areas} onEachFeature={onEachFeature} />}
+        {areas && <GeoJSON data={areas} onEachFeature={onEachFeature} style={styleFor} />}
       </MapContainer>
-      <RulePanel area={selected} time={time} setTime={setTime} result={selected && evaluate(selected, time)} />
+      <RulePanel area={selected} setTime={setTime} result={selected ? evaluate(selected, time) : null} />
     </div>
   );
 }

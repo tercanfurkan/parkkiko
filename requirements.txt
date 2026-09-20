@@ -1,5 +1,7 @@
 pandas
 geopandas
+pyarrow
+duckdb
 matplotlib
 scipy
 scikit-learn

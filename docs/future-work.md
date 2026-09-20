@@ -7,7 +7,14 @@ these are genuine machine learning opportunities that would improve the app.
 
 Helsinki publishes every recorded parking violation. The 2023 data holds 156,383 fines and 9,341
 warnings, all twelve months, issued by parking inspectors (162,125) and police (3,599).
-`pipeline/fetch.py --violations` downloads it.
+To pull it locally:
+
+```python
+from pipeline.fetch import fetch_layer
+import json
+fc = fetch_layer("avoindata:Pysakointivirheet", "EPSG:3879")   # ~31 s, 106 MB
+json.dump(fc, open("data/raw/violations_2023.geojson", "w"))
+```
 
 **Why it is interesting.** It is observed ground truth rather than a target we invented. A model
 of where drivers are actually fined would let the app warn "this street is often misread, check

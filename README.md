@@ -27,26 +27,36 @@ Python and fail to import geopandas.
 Everything comes from the City of Helsinki's open data under CC BY 4.0, with no login. See
 [docs/data.md](docs/data.md) for the sources, sizes, timings and known limits.
 
+**The cleaned data is already in git**, so you can explore straight after cloning. Run the two
+scripts when you want the raw files to poke at, or when you change the pipeline:
+
 ```bash
-.venv/bin/python pipeline/fetch.py               # ~7 s  -> data/raw/YYYY-MM-DD/
-.venv/bin/python pipeline/fetch.py --violations  # adds 2023 fines, 106 MB, exploration only
-.venv/bin/python pipeline/process.py             # ~4 s  -> parquet + web GeoJSON
+.venv/bin/python pipeline/fetch.py     # ~4 s  -> data/raw/YYYY-MM-DD/*.geojson
+.venv/bin/python pipeline/process.py   # ~2 s  -> data/processed/ and web/public/data/
 ```
 
-You only need to fetch and process if you are changing the pipeline. The processed file is in
-git, so exploration works straight after cloning.
+`fetch.py` saves exactly what the city's server returned, one dated folder per run, so you can
+open the raw GeoJSON in any map tool and compare it against what we parsed. `process.py` reads
+the newest folder and writes the cleaned Parquet plus the map file for the app.
 
 ## Exploring
 
-Three ways, pick whichever suits you:
+Three ways, pick whichever suits you.
+
+**Notebooks.** Start Jupyter and choose the "Python (parkkiko)" kernel:
 
 ```bash
-.venv/bin/python -m jupyter notebook notebooks/   # notebooks, pick the "Python (parkkiko)" kernel
-.venv/bin/python -m duckdb                        # plain SQL, see docs/querying.md
+.venv/bin/python -m jupyter notebook notebooks/
 ```
 
-Or open `web/public/data/parking_areas.geojson` in [kepler.gl](https://kepler.gl) for an
-interactive map with no code at all.
+**SQL.** No pandas or geopandas needed, see [docs/querying.md](docs/querying.md):
+
+```bash
+.venv/bin/python -c "import duckdb; print(duckdb.sql(\"select status, count(*) from 'data/processed/parking_rules.parquet' group by 1\"))"
+```
+
+**A map, with no code.** Run `pipeline/process.py`, then drag
+`web/public/data/parking_areas.geojson` into [kepler.gl](https://kepler.gl).
 
 ## Web app
 

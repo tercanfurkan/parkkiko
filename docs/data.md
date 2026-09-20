@@ -10,19 +10,18 @@ No account, key or registration is needed; we verified this with bare unauthenti
 |---|---|---|
 | `avoindata:Pysakointipaikat_alue` | 8,754 | street parking areas, their rules and geometry |
 | `avoindata:Tilapainen_liikennejarjestely_alue` | 299 | roadworks and closures, with start and end dates |
-| `avoindata:Pysakointivirheet` | 165,724 | 2023 parking fines, optional, exploration only |
 
-We request metric coordinates (EPSG:3879) for analysis and GPS coordinates (EPSG:4326) for the
-map. **A GeoJSON file always declares itself as WGS84 even when it is not**, so the metric file
+We download metric coordinates (EPSG:3879), which makes distances come out in metres, and
+convert to GPS coordinates once when exporting for the map. **A GeoJSON file always declares itself as WGS84 even when it is not**, so the metric file
 must have its coordinate system set explicitly on read or every distance comes out wrong.
 
 ## Files
 
 | File | Size | In git | Purpose |
 |---|---|---|---|
-| `data/raw/<date>/*.geojson` | 14.5 MB | no | dated snapshot, exactly as the city served it |
+| `data/raw/<date>/*.geojson` | 7.8 MB | no | dated snapshot, exactly as the city served it |
 | `data/processed/parking_rules.parquet` | 0.8 MB | **yes** | analysis snapshot, one row per parking area |
-| `web/public/data/parking_areas.geojson` | 4.7 MB, 0.43 MB gzipped | no | what the app loads |
+| `web/public/data/parking_areas.geojson` | 3.9 MB, 0.40 MB gzipped | no | what the app loads |
 
 The processed file is committed so all three of us analyse identical data and results reproduce.
 Raw snapshots stay out of git and are re-fetched only when re-processing. Both derived files come
@@ -32,8 +31,7 @@ from one script, so the rules in the app and in the analysis cannot drift apart.
 
 | Step | Time |
 |---|---|
-| Fetch the three core layers | 7-14 s, varies with the server |
-| Fetch 2023 violations as well | +31 s |
+| Fetch both layers | ~4 s |
 | Process everything into both outputs | ~2 s |
 | Load the processed file in a notebook | <1 s |
 | Build a spatial index over 8,754 areas | 3 ms |
@@ -54,8 +52,10 @@ or reserved; parsed `hours`, `duration_min` and `season`; and a `status`:
 | `missing_hours` | 978 | rule type known, no hours published |
 | `uncertain` | 385 | something could not be parsed or contradicts itself |
 
-Every uncertain area carries a `reason` in plain words. Nothing is ever guessed: if a value
-cannot be read, the area says so instead of showing a wrong answer.
+Every uncertain area carries an `issue_codes` value (`unreadable`, `ambiguous`, `note`) for code
+to branch on, and a `reason` in plain words for the driver. The parsers fail closed: they must
+account for every character of a field, so `7-18 7-15` is flagged as ambiguous rather than read
+as `7-18`, and an unrecognised space type is flagged rather than falling back to the class.
 
 172 areas currently overlap a roadworks arrangement and should not be trusted while it lasts.
 

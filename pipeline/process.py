@@ -6,18 +6,18 @@
 Usage: python pipeline/process.py
 """
 import json
-import re
 import sys
 from pathlib import Path
 
 import geopandas as gpd
+import pandas as pd
 
-sys.path.insert(0, str(Path(__file__).parent))
-import rules  # noqa: E402
+import rules
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
 WEB_FIELDS = ["id", "rule_type", "hours", "duration_min", "season", "status", "reason",
-              "extra_info", "luokka_nimi", "tyyppi"]
+              "extra_info"]
+COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
 def latest_snapshot():
@@ -28,38 +28,39 @@ def latest_snapshot():
 
 
 def classify(row):
-    """Return the parsed rule for one parking area, plus why it is uncertain (if it is)."""
-    why = []
-    rule, r = rules.rule_type(row.get("luokka"), row.get("tyyppi"), row.get("luokka_nimi"))
-    if r:
-        why.append(r)
+    """Parse one parking area. Returns the rule plus a status and, if unsure, why."""
+    issues = []
 
-    hours, r = rules.parse_hours(row.get("voimassaolo"))
-    no_hours_stated = hours is None and "no hours" in (r or "")
-    # A ban or a reserved bay applies at all times, so it needs no hours.
-    missing_hours = no_hours_stated and rule in NEEDS_HOURS
-    if r and not no_hours_stated:
-        why.append(r)
+    def take(result):
+        value, issue = result
+        if issue:
+            issues.append(issue)
+        return value
 
-    minutes, r = rules.parse_duration(row.get("kesto"))
-    if r:
-        why.append(r)
+    rule, stated_limit, issue = rules.rule_type(row.get("luokka"), row.get("tyyppi"))
+    if issue:
+        issues.append(issue)
 
-    season, r = rules.parse_season(row.get("kausi"))
-    if r:
-        why.append(r)
+    # Hours the register never stated are a status of their own, not a parse failure.
+    hours, hours_issue = rules.parse_hours(row.get("voimassaolo"))
+    no_hours_stated = hours_issue is not None and hours_issue[0] == rules.MISSING
+    if hours_issue and not no_hours_stated:
+        issues.append(hours_issue)
 
-    extra, r = rules.parse_extra(row.get("lisatieto"))
-    if r:
-        why.append(r)
+    minutes = take(rules.parse_duration(row.get("kesto")))
+    season = take(rules.parse_season(row.get("kausi")))
+    extra = take(rules.parse_extra(row.get("lisatieto")))
 
-    r = rules.duration_contradiction(row.get("luokka_nimi"), minutes)
-    if r:
-        why.append(r)
+    if stated_limit is not None and minutes is not None and stated_limit != minutes:
+        issues.append((rules.UNREADABLE,
+                       f"the class allows {stated_limit} min but the register says {minutes} min"))
+    if minutes is None:
+        minutes = stated_limit
 
-    if why:
+    codes = {code for code, _ in issues}
+    if codes:
         status = "uncertain"
-    elif missing_hours:
+    elif no_hours_stated and rule in NEEDS_HOURS:
         status = "missing_hours"
     else:
         status = "official"
@@ -71,21 +72,18 @@ def classify(row):
         "season": json.dumps(season) if season else None,
         "extra_info": extra,
         "status": status,
-        "reason": "; ".join(why) or None,
+        "issue_codes": ",".join(sorted(codes)) or None,
+        "reason": "; ".join(text for _, text in issues) or None,
     }
 
 
 def add_roadworks(areas, snapshot):
-    """Flag areas overlapping a temporary traffic arrangement, keeping its dates."""
-    path = snapshot / "temporary_arrangements_4326.geojson"
-    areas["roadworks_until"] = None
-    if not path.exists():
-        print("  no temporary arrangements in snapshot, skipping")
-        return areas
-    works = gpd.read_file(path).to_crs(areas.crs)
+    """Flag areas overlapping a temporary traffic arrangement, keeping its end date."""
+    works = gpd.read_file(snapshot / "temporary_arrangements_4326.geojson").to_crs(areas.crs)
     hit = gpd.sjoin(areas[["geometry"]], works[["geometry", "liikennejarjestely_paattyy"]],
                     predicate="intersects", how="inner")
     ends = hit.groupby(hit.index)["liikennejarjestely_paattyy"].max()
+    areas["roadworks_until"] = None
     areas.loc[ends.index, "roadworks_until"] = ends
     print(f"  {len(ends)} areas overlap roadworks")
     return areas
@@ -99,7 +97,8 @@ def main():
     # or every distance and spatial join below is silently wrong.
     areas = gpd.read_file(snapshot / "parking_areas_3879.geojson").set_crs(3879, allow_override=True)
     assert areas["id"].is_unique, "parking area ids are not unique"
-    parsed = gpd.pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
+
+    parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
     areas = add_roadworks(areas, snapshot)
@@ -110,14 +109,12 @@ def main():
     print(f"  {len(areas)} areas -> {out / 'parking_rules.parquet'}")
     print(areas["status"].value_counts().to_string())
 
-    # web export: GPS coordinates, display fields only, 6 decimals (~0.1 m)
-    web = gpd.read_file(snapshot / "parking_areas_4326.geojson")[["id", "geometry"]]
-    web = web.merge(areas.drop(columns="geometry"), on="id")[WEB_FIELDS + ["geometry"]]
+    # The app needs GPS coordinates and only the display fields.
+    web = areas[WEB_FIELDS + ["geometry"]].to_crs(4326)
     path = Path("web/public/data/parking_areas.geojson")
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = re.sub(r"(\d+\.\d{6})\d+", r"\1", web.to_json(drop_id=True))
-    path.write_text(text)
-    print(f"  {len(web)} areas -> {path} ({len(text) / 1e6:.2f} MB)")
+    web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
+    print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
 
 
 if __name__ == "__main__":

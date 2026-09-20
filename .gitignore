@@ -1,6 +1,6 @@
 data/raw/
 data_samples/
-.claude/worktrees/
+.claude/
 __pycache__/
 .ipynb_checkpoints/
 .venv/

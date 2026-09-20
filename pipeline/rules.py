@@ -1,9 +1,16 @@
 """Parse the city register's raw rule strings into machine-readable values.
 
-Pure functions, no I/O. Every parser returns (value, reason); reason is None on success
-and a short explanation when the value could not be trusted. Nothing is ever guessed.
+Pure functions, no I/O. Every parser returns (value, issue), where issue is None on success
+or (code, explanation). Codes are the contract; the explanation is prose for the driver and
+can be reworded freely. Parsers fail closed: anything they cannot fully account for becomes
+an issue, never a partial answer.
 """
 import re
+
+MISSING = "missing"          # the register states nothing
+UNREADABLE = "unreadable"    # stated, but we cannot parse it
+AMBIGUOUS = "ambiguous"      # stated, parses more than one way
+NOTE = "note"                # free-text condition we deliberately do not parse
 
 
 def _txt(value):
@@ -15,109 +22,123 @@ def _txt(value):
 
 # ---------------------------------------------------------------- rule type
 
-RESERVED_TYPES = {
-    "Sähköpotkulauta": "e-scooter", "Sähköauto": "electric car", "Taxi": "taxi",
-    "Taksi": "taxi", "Taxi, lataus": "taxi", "Kuormauspaikka": "loading", "Inva": "disabled",
-    "Matkailuliikenne": "tourist coach", "CD": "diplomatic", "Moottoripyörä": "motorcycle",
-    "Polkupyörä": "bicycle", "Virka-auto": "official car", "Poliisi": "police",
-    "Kirjastoauto": "library bus", "Kuorma-auto": "lorry", "Parklet": "parklet",
-    "Kaupunginkanslia": "city hall", "Valtioneuvosto": "government",
-    "henkilöauto, pakettiauto": "car or van",
+# The whole domain of luokka, which is 1:1 with luokka_nimi in the register.
+# stated limit comes from the class name ("Kertamaksu enintään 2 tuntia"), so it is data
+# here rather than a regex over Finnish prose at read time.
+LUOKKA_RULES = {                    # luokka: (rule_type, stated limit in minutes)
+    1: ("free_limited", None),      # Ilmainen lyhytaikainen pysäköinti
+    2: ("free_limited", None),      # Ilmainen pitkäaikainen pysäköinti
+    3: ("paid", 60),                # Kertamaksu enintään 1 tunti
+    4: ("paid", 120),               # Kertamaksu enintään 2 tuntia
+    5: ("paid", 240),               # Kertamaksu enintään 4 tuntia
+    6: ("paid", None),              # Maksullinen ilman asukas-/yritystunnusta
+    7: ("paid", 60),                # Kertamaksu enintään 1 h ilman tunnusta
+    8: ("free_limited", None),      # Ilmainen lyhytaikainen, pysäköintikiekko
+    9: ("banned_hours", None),      # Pysäköinti sallittu pysäköintikieltoajan ulkopuolella
+    10: ("paid", None),             # Maksullinen vyöhykehinta
+    11: ("reserved", None),         # Z-tunnus nouto/palautus
 }
-BAN_TYPES = {"Pysäköintikielto", "pysäköintikielto", "Pysäyttämiskielto"}
 
-# luokka -> rule type. 6,10 paid without limit; 3,4,5,7 paid with limit; 1,2,8 free; 9 ban hours.
-PAID = {3, 4, 5, 6, 7, 10}
-FREE = {1, 2, 8}
+# Space types, lower-cased. Membership is all we need; the driver-facing wording lives in the app.
+BAN_TYPES = {"pysäköintikielto", "pysäyttämiskielto"}
+RESERVED_TYPES = {
+    "sähköpotkulauta", "sähköauto", "taxi", "taksi", "taxi, lataus", "kuormauspaikka", "inva",
+    "matkailuliikenne", "cd", "moottoripyörä", "polkupyörä", "virka-auto", "poliisi",
+    "kirjastoauto", "kuorma-auto", "parklet", "kaupunginkanslia", "valtioneuvosto",
+    "henkilöauto, pakettiauto",
+}
 
 
-def rule_type(luokka, tyyppi, luokka_nimi=None):
-    """Combine class and space type into one of five driver-facing rule types."""
-    t = _txt(tyyppi).strip()
+def rule_type(luokka, tyyppi):
+    """Combine class and space type into (rule_type, stated limit, issue).
+
+    An unrecognised space type is an issue, not a fall-through to the class: the city adds new
+    ones, and guessing would turn a reserved bay into "paid" with full confidence.
+    """
+    t = _txt(tyyppi).strip().lower()
     if t in BAN_TYPES:
-        return "always_banned", None
+        return "always_banned", None, None
     if t in RESERVED_TYPES:
-        return "reserved", None
-    if luokka in PAID:
-        return "paid", None
-    if luokka in FREE:
-        return "free_limited", None
-    if luokka == 9:
-        return "banned_hours", None
-    if luokka == 11:  # Z-tunnus nouto/palautus: pickup/return bay
-        return "reserved", None
-    return "unknown", f"no rule type for luokka={luokka!r} tyyppi={t!r}"
+        return "reserved", None, None
+    if t and not t.isdigit():
+        return "unknown", None, (UNREADABLE, f"unknown space type {tyyppi!r}")
+    try:
+        rule, limit = LUOKKA_RULES[int(luokka)]
+        return rule, limit, None
+    except (KeyError, TypeError, ValueError):
+        return "unknown", None, (UNREADABLE, f"no rule for class {luokka!r}")
 
 
 # ------------------------------------------------------------------- hours
 
-_RANGE = re.compile(r"(\d{1,2})\s*[-–]\s*(\d{1,2})")
-
-
-def _window(text):
-    m = _RANGE.search(text)
-    if not m:
-        return None
-    a, b = int(m.group(1)), int(m.group(2))
-    return [a, b] if a <= 24 and b <= 24 else None
+# '.' appears as a typo for '-' ('9.21'), so it is accepted as a separator.
+_RANGE = re.compile(r"(\d{1,2})\s*[-–.]\s*(\d{1,2})")
 
 
 def parse_hours(raw):
     """'9-21, (9-18)' -> {'mon_fri': [9,21], 'sat': [9,18]}.
 
-    Brackets mean Saturday; a third bare range means Sunday. Holidays follow Sunday.
+    Brackets mean Saturday, a later bare range means Sunday, and holidays follow Sunday.
+    Every character must be accounted for, so a stray range or word is flagged rather than
+    dropped: '7-18 7-15' is ambiguous, not "7-18".
     """
     s = _txt(raw).replace("\n", " ").strip()
     if not s:
-        return None, "no hours in register"
-    s = re.sub(r"(?<=\d)\.(?=\d)", "-", s)          # '9.21' typo -> '9-21'
-    s = re.sub(r"(\d)\s*\(", r"\1, (", s)           # '7-18 (7-15)' -> '7-18, (7-15)'
+        return None, (MISSING, "the register states no hours for this section")
 
-    out, seen_bracket = {}, False
-    for part in s.split(","):
-        part = part.strip()
-        if not part:
-            continue
-        w = _window(part)
-        if w is None:
-            return None, f"unreadable time range in {raw!r}"
-        if "(" in part:
-            out["sat"], seen_bracket = w, True
+    out, seen_bracket, leftover = {}, False, s
+    for m in _RANGE.finditer(s):
+        a, b = int(m.group(1)), int(m.group(2))
+        if a > 24 or b > 24:
+            return None, (UNREADABLE, f"hour outside 0-24 in {raw!r}")
+        leftover = leftover.replace(m.group(0), " ", 1)
+        bracketed = s.rfind("(", 0, m.start()) > s.rfind(")", 0, m.start())
+        if bracketed:
+            out["sat"], seen_bracket = [a, b], True
         elif "mon_fri" not in out:
-            out["mon_fri"] = w
+            out["mon_fri"] = [a, b]
         elif seen_bracket:
-            out["sun"] = w
+            out["sun"] = [a, b]
         else:
-            return None, f"ambiguous: two ranges without brackets in {raw!r}"
-    return (out, None) if out else (None, f"no time range in {raw!r}")
+            return None, (AMBIGUOUS, f"two ranges with no brackets to tell the days apart: {raw!r}")
+
+    if not out:
+        return None, (UNREADABLE, f"no time range in {raw!r}")
+    unaccounted = re.sub(r"[(),\s]+", " ", leftover).strip()
+    if unaccounted:
+        return None, (UNREADABLE, f"the hours {raw!r} also say {unaccounted!r}, which we cannot read")
+    return out, None
 
 
 # ---------------------------------------------------------------- duration
 
-_DAY_WORDS = ("lauantai", "sunnuntai", "arkisin", "maanantai")
+_DURATION = re.compile(r"(?:max\s*)?(\d+)\s*(h|min)?")
+_RU_DUPLICATE = re.compile(r"\(?\s*\d+\s*(?:мин|ч)\s*\)?")
 
 
 def parse_duration(raw):
-    """'4 h' -> 240 minutes. 0 means no time limit."""
+    """'4 h' -> 240 minutes. 0 means explicitly no limit, None means none stated.
+
+    The whole string must match, so conditions smuggled into this field
+    ('max 60 min lauantai') are flagged instead of silently read as 60 minutes.
+    """
     s = _txt(raw).strip().lower()
     if not s:
-        return None, None                            # no limit stated is not an error
-    if any(w in s for w in _DAY_WORDS):
-        return None, f"day condition hidden in duration field: {raw!r}"
+        return None, None
     if "ei aikaraj" in s:
         return 0, None
-    s = s.split(",")[0]                              # drop Russian duplicate
-    m = re.search(r"(\d+)\s*(h|min)", s)
-    if m:
-        return int(m.group(1)) * (60 if m.group(2) == "h" else 1), None
-    if s.strip().isdigit():
-        return int(s.strip()) * 60, None             # bare number means hours
-    return None, f"unreadable duration {raw!r}"
+
+    head, *rest = s.split(",")
+    m = _DURATION.fullmatch(head.strip())
+    if not m or any(not _RU_DUPLICATE.fullmatch(r.strip()) for r in rest):
+        return None, (UNREADABLE, f"unreadable duration {raw!r}")
+    unit = m.group(2)
+    return int(m.group(1)) * (1 if unit == "min" else 60), None
 
 
 # ------------------------------------------------------------------ season
 
-_ALL_YEAR = {"0", "ympärivuotinen", "1.1.-31.12.", "1.1.-31.12", "1.1.-31.12."}
+_ALL_YEAR = {"0", "ympärivuotinen"}
 _DATES = re.compile(r"(\d{1,2})\.\s*(\d{1,2})\.?\s*[-–]\s*(\d{1,2})\.\s*(\d{1,2})\.?")
 
 
@@ -133,7 +154,7 @@ def parse_season(raw):
             if (m1, d1) == (1, 1) and (m2, d2) == (12, 31):
                 return None, None                    # all year, written as a range
             return {"start": [m1, d1], "end": [m2, d2]}, None
-    return None, f"unreadable season {raw!r}"
+    return None, (UNREADABLE, f"unreadable season {raw!r}")
 
 
 # --------------------------------------------------- extra info (lisatieto)
@@ -145,20 +166,4 @@ def parse_extra(raw):
         return None, None
     if re.fullmatch(r"[\d\-/, ]+", s):
         return s, None                               # plain sign code(s)
-    return s, "unparsed condition in extra info"
-
-
-# ----------------------------------------------------------- contradictions
-
-_NAMED_HOURS = re.compile(r"enintään\s+(\d+)\s*(tunti|tuntia|h)")
-
-
-def duration_contradiction(luokka_nimi, minutes):
-    """Class name states a limit that disagrees with the duration field."""
-    m = _NAMED_HOURS.search(_txt(luokka_nimi).lower())
-    if not m or minutes is None:
-        return None
-    named = int(m.group(1)) * 60
-    if named != minutes:
-        return f"class name says {named // 60} h but duration field says {minutes} min"
-    return None
+    return s, (NOTE, "the sign carries a condition we do not read; check it yourself")

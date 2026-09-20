@@ -4,11 +4,24 @@ You do not need geopandas, pandas or a notebook to explore this data. DuckDB rea
 file directly and speaks ordinary SQL, including spatial functions. There is no server, no
 account and nothing to start.
 
+Run a query from the shell:
+
 ```bash
-.venv/bin/python -m duckdb          # or: pip install duckdb && duckdb
+.venv/bin/python -c "import duckdb; print(duckdb.sql(\"select status, count(*) from 'data/processed/parking_rules.parquet' group by 1\"))"
 ```
 
-Then point queries straight at the file. Coordinates are metres (EPSG:3879), so distances come
+For anything longer, start Python and keep the session open:
+
+```bash
+.venv/bin/python
+>>> import duckdb
+>>> duckdb.sql("install spatial; load spatial;")     # only needed for the distance query below
+>>> duckdb.sql("""select ... """)
+```
+
+If you would rather have a proper SQL shell with history and tab completion, install the DuckDB
+command line tool (`brew install duckdb`) and run `duckdb` from the repository root. The queries
+below are identical either way. Coordinates are metres (EPSG:3879), so distances come
 out in metres.
 
 ## How much can the app answer?
@@ -24,11 +37,13 @@ order by areas desc;
 
 Every uncertain area explains itself in plain words.
 
+`issue_codes` is for branching in code, `reason` is the wording shown to the driver.
+
 ```sql
-select reason, count(*) as areas
+select issue_codes, reason, count(*) as areas
 from 'data/processed/parking_rules.parquet'
 where status = 'uncertain'
-group by 1
+group by 1, 2
 order by areas desc;
 ```
 
@@ -49,8 +64,6 @@ limit 20;
 Load the spatial extension once per session.
 
 ```sql
-install spatial; load spatial;
-
 select id, rule_type, hours, duration_min, status,
        round(ST_Distance(geometry, ST_Point(25496500, 6672800))) as metres
 from 'data/processed/parking_rules.parquet'

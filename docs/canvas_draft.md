@@ -147,7 +147,7 @@ parking areas of the same class. Predict only where a close neighbour exists; ot
 | 50–200 m | 73.3% | 15 (too small to trust) |
 
 **Main risk.** Missingness is not random (lecture 2, slide 29). Missing-hours areas are far from
-known ones: nearest known same-class area median 82 m, only 29% within 50 m. The test above is
+known ones: nearest known same-class area median 148 m, only 18.3% within 50 m. The test above is
 dominated by close neighbours and is optimistic for the areas we actually need to predict. The
 distance cut-off is the confidence threshold and must be validated at realistic distances.
 
@@ -185,7 +185,7 @@ Counts partly reflect patrol intensity.
 - **No random split.** Neighbouring sections of the same street are near-duplicates; a random
   split tests on them and inflates accuracy.
 - **Spatially blocked cross-validation:** hold out whole grid blocks or districts.
-- **Distance-matched test:** missing areas are a median 82 m from known same-class areas, while
+- **Distance-matched test:** missing areas are a median 148 m from known same-class areas, while
   most known areas have a neighbour within 10 m. Simulate the real situation by hiding all
   known areas within a radius of each test area, so test distances match those of the missing
   areas. Report this score as the headline, since it reflects real use.

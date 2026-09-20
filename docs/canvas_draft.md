@@ -22,8 +22,9 @@ parking fines in 2023 alone**. Many are not defiance but misreading.
 and be honest when the data does not support an answer. A wrong "you may park here" costs the
 user a fine and costs us their trust; an honest "unsure" costs nothing.
 
-**Benefit.** Fewer avoidable fines for drivers. For the city, a ranked list of kerbs where the
-signage demonstrably fails, which is actionable without any new data collection.
+**Benefit.** Fewer avoidable fines for drivers, and knowing when the car must move. For the city,
+the list of areas whose published rule is incomplete or self-contradicting, which is actionable
+without any new data collection.
 
 ---
 
@@ -45,10 +46,8 @@ pre-formatted hours (`9-21, (9-18)` → `ma-pe 9-21, la 9-18`). Not worth a seco
 Request GPS coordinates with `srsName=EPSG:4326` (default is EPSG:3879). All sources CC BY 4.0,
 no registration or authentication (verified with bare HTTP requests).
 
-**Not yet included, pending Learning Task:** parking violations, `avoindata:Pysakointivirheet`
-(WFS serves 2023 only: 156,383 fines + 9,341 warnings; older years 2014–2022 as CSV on
-https://hri.fi/data/en_GB/dataset/pysakointivirheet-helsingissa, unopened). Digiroad traffic signs
-(68,010 in Helsinki) only if the app shows the source sign.
+**Deliberately out of scope:** parking fines and Digiroad traffic signs. Both are recorded in
+[future-work.md](future-work.md) with the reasons and the endpoints.
 
 **Data management plan.** A script downloads each source and saves a dated raw snapshot in the
 repo. All cleaning and analysis run on snapshots, never on live API calls, so results are
@@ -98,8 +97,6 @@ class, district, street).
 - Class balance of the 8,759 areas (see Learning Task — it is severe).
 - Coverage map: which kerbs have a rule, which are class 0 "Other", which have no sign nearby.
   This is the honest map of what we do not know.
-- Violation density per parking space, by district and by month, normalised so that big
-  districts do not simply dominate.
 - Agreement check: does the sign panel text agree with the polygon's `validity_period`?
   Disagreement rate is itself a headline finding.
 - Distance distribution from sign to nearest kerb, to pick a defensible cutoff in step 5.
@@ -113,9 +110,8 @@ class, district, street).
   record it came from.
 - **Time slider** — the same map at 09:00 Tuesday versus 20:00 Saturday, since the rule
   changes and this makes that legible.
-- **Ranked table for the city** — the 20 kerbs with the highest fines per space, each with
-  its sign text, as a maintenance worklist.
-- Static: class imbalance, violation seasonality, sign-to-kerb distance histogram.
+- Static: rule type mix, where hours are missing, and how neighbour agreement falls with
+  distance.
 
 ---
 
@@ -132,31 +128,29 @@ parking areas of the same class. Predict only where a close neighbour exists; ot
 - **Inputs:** hours of nearest same-class areas, distance to them, same-street match, class,
   district.
 
-**Measured feasibility (1,500 random known areas, hours hidden):**
+**Measured feasibility (every one of the 5,823 areas with known hours, hours hidden in turn):**
 
 | Method | Correct |
 |---|---|
 | Majority class (`9-21,(9-18)`) | 32.8% |
-| Nearest area's hours | 89.3% |
-| Nearest same-class area's hours | 98.3% |
+| Nearest area's hours | 88.9% |
+| Nearest same-class area's hours | 97.5% |
 
 | Same-class neighbour distance | Correct | n |
 |---|---|---|
-| 0–10 m | 99.1% | 1,291 |
-| 10–50 m | 93.8% | 145 |
-| 50–200 m | 73.3% | 15 (too small to trust) |
+| 0–10 m | 99.5% | 4,711 |
+| 10–50 m | 95.5% | 706 |
+| 50–200 m | 68.4% | 152 |
+| over 200 m | 35.4% | 65 |
 
-**Main risk.** Missingness is not random (lecture 2, slide 29). Missing-hours areas are far from
-known ones: nearest known same-class area median 148 m, only 18.3% within 50 m. The test above is
-dominated by close neighbours and is optimistic for the areas we actually need to predict. The
-distance cut-off is the confidence threshold and must be validated at realistic distances.
+**Main risk.** Missingness is not random (lecture 2, slide 29). Missing-hours areas sit far from
+known ones: nearest known same-class area median 153 m, only 17.7% within 50 m. Accuracy in that
+range is 68% and below, so the headline 97.5% describes areas we do not need to predict. The
+distance cut-off is the confidence threshold, and it must be set from the far bins, not the near
+ones.
 
-**Optional enhancement (undecided): street-level fine risk.** Fines per street per month from
-2023 violations. Fines are geocoded to address points, not the parked car: 165,724 fines on
-10,932 coordinates (3,705 at Haartmaninkatu 4); only 15.0% within 10 m and 41.0% within 20 m of
-any parking area. So area- or side-level attribution is not possible; street level only.
-61.8% of fines are rule-related (no ticket, time exceeded, sign ban). Monthly time only.
-Counts partly reflect patrol intensity.
+**Optional enhancement:** a street-level fine risk layer was considered and dropped; see
+[future-work.md](future-work.md).
 
 ---
 
@@ -207,15 +201,13 @@ the spatial split, what failed, and what we would do differently.
 
 ## DATA PRIVACY AND ETHICAL CONSIDERATIONS
 
-- **No personal data is collected.** Violations carry location, month, and reason code — no
-  plate, no owner, no identifier. No consent or pseudonymisation is required, and we should say
-  so explicitly rather than leave it unaddressed.
-- **Aggregation floor.** Fines are still geocoded near homes. Report violation counts only
-  aggregated to kerb segments with a minimum count, never as individual mapped points.
-- **Fairness.** A model predicting where fines occur will partly learn *where enforcement
-  patrols go*, not where rules are broken. Publishing it risks concentrating enforcement on
-  already-policed districts, a feedback loop. Compare predicted risk against district
-  demographics and state the disparity in the report rather than shipping it silently.
+- **No personal data is collected or processed.** Every source describes street infrastructure,
+  not people. No consent or pseudonymisation is required, and we should say so explicitly rather
+  than leave it unaddressed. The app reads the driver's location on their own device and never
+  sends it anywhere.
+- **Fairness.** Predicted hours will be most available in the dense centre, where neighbouring
+  areas are close, and least available in outer districts. Drivers there get "unknown" more
+  often. State that unevenness in the report rather than hiding it behind an average.
 - **Liability.** The app must never assert permission. Green means "the register and the sign
   agree"; it is not legal advice, and the interface has to say that.
 - **Grey is not failure.** Refusing to answer where the data is thin is the ethical default,
@@ -228,8 +220,8 @@ the spatial split, what failed, and what we would do differently.
 For the driver: avoided fines, and a tool that admits what it does not know — which is what
 makes it trustworthy enough to use twice.
 
-For the city: the disagreement analysis and the fines-per-space ranking are a signage
-maintenance worklist derived entirely from data the city already publishes. No survey, no
+For the city: the list of areas whose published rule is incomplete or self-contradicting is a
+register-quality worklist derived entirely from data the city already publishes. No survey, no
 sensors, no new collection.
 
 The prediction becomes value at the moment it abstains as readily as it answers.
@@ -256,4 +248,3 @@ The prediction becomes value at the moment it abstains as readily as it answers.
 4. **Sign-to-kerb assignment has no ground truth.** Step 5 is inferred. If that inference is
    weak, the "show the sign it came from" promise weakens with it. This is the largest single
    risk in the project and is not yet mitigated.
-5. **2023-only violations.** Confirm no earlier years are published before relying on Task B.

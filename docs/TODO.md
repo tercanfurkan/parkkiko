@@ -124,7 +124,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Host the first version | | todo | The map already draws all 8,754 areas over OpenStreetMap tiles: `web/src/App.jsx`, styling in `web/src/style.js`. Not yet deployed. The city's own map, for comparison, is palvelukartta.hel.fi. |
+| Host the first version | furkan-frontend | doing | The map already draws all 8,754 areas over OpenStreetMap tiles: `web/src/App.jsx`, styling in `web/src/style.js`. Not yet deployed. The city's own map, for comparison, is palvelukartta.hel.fi. |
 | Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. |
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |

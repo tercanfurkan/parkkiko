@@ -48,3 +48,6 @@ export function styleFor(feature) {
     dashArray: uncertain ? "4 4" : null,
   };
 }
+
+// Drawn over the tapped area's own style, so its colour still says what the rule is
+export const SELECTED_STYLE = { weight: 9, opacity: 1, dashArray: null };

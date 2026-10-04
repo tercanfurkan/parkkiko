@@ -119,10 +119,12 @@ def main():
     path.parent.mkdir(parents=True, exist_ok=True)
     web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
 
-    # Most areas leave most fields empty, and a null costs as many bytes as a value.
+    # Most areas leave most fields empty, and an empty value costs as many bytes as a real one.
+    # The app checks whether a property is present, so absent is the honest encoding of "none".
     payload = json.loads(path.read_text())
     for feature in payload["features"]:
-        feature["properties"] = {k: v for k, v in feature["properties"].items() if v is not None}
+        feature["properties"] = {k: v for k, v in feature["properties"].items()
+                                 if v is not None and v != ""}
     path.write_text(json.dumps(payload, separators=(",", ":")))
     print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
 

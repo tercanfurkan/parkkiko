@@ -5,10 +5,12 @@ the city's open data. University of Helsinki, Introduction to Data Science mini-
 
 **[How this project was built](docs/process.md)** walks through the six stages of a data science
 project with the code, data and results behind each one.
+**[The task board](docs/TODO.md)** is the shared plan, and carries the data contract between the
+pipeline and the app. New here? Start with **[docs/prompt.md](docs/prompt.md)**.
 
 ## Layout
 
-- `docs/` the process walkthrough, project canvas, data documentation and SQL guide
+- `docs/` the task board, process walkthrough, project canvas, data documentation and SQL guide
 - `analysis/` regenerates every figure and table quoted in the report
 - `pipeline/` download the data, parse the rules, export for the app
 - `notebooks/` exploration

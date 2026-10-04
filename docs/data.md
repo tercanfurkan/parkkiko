@@ -9,7 +9,6 @@ No account, key or registration is needed; we verified this with bare unauthenti
 | Layer | Rows | Used for |
 |---|---|---|
 | `avoindata:Pysakointipaikat_alue` | 8,754 | street parking areas, their rules and geometry |
-| `avoindata:Tilapainen_liikennejarjestely_alue` | 299 | roadworks and closures, with start and end dates |
 
 We download metric coordinates (EPSG:3879), which makes distances come out in metres, and
 convert to GPS coordinates once when exporting for the map. **A GeoJSON file always declares itself as WGS84 even when it is not**, so the metric file
@@ -31,7 +30,7 @@ from one script, so the rules in the app and in the analysis cannot drift apart.
 
 | Step | Time |
 |---|---|
-| Fetch both layers | ~4 s |
+| Fetch the parking register | ~2 s |
 | Process everything into both outputs | ~2 s |
 | Load the processed file in a notebook | <1 s |
 | Build a spatial index over 8,754 areas | 3 ms |
@@ -44,7 +43,8 @@ the team.
 ## What the processing produces
 
 Each area gets a `rule_type` of paid, free with time limit, banned during hours, always banned,
-or reserved; parsed `hours`, `duration_min` and `season`; and a `status`:
+or reserved; English labels in `class_name_en` and `space_type_en`; parsed `hours`,
+`duration_min` and `season`; and a `status`:
 
 | Status | Areas | Meaning |
 |---|---|---|
@@ -57,7 +57,30 @@ to branch on, and a `reason` in plain words for the driver. The parsers fail clo
 account for every character of a field, so `7-18 7-15` is flagged as ambiguous rather than read
 as `7-18`, and an unrecognised space type is flagged rather than falling back to the class.
 
-172 areas currently overlap a roadworks arrangement and should not be trusted while it lasts.
+## Columns
+
+| Column | Meaning |
+|---|---|
+| `id` | the register's own area id, unique |
+| `rule_type` | paid, free_limited, banned_hours, always_banned, reserved, unknown |
+| `class_name_en` | English name of the parking class, or empty for a class we do not recognise |
+| `space_type_en` | English name of the space type, where the register states one we recognise |
+| `hours` | parsed windows, e.g. `{"mon_fri": [9, 21], "sat": [9, 18]}` |
+| `duration_min` | maximum parking time in minutes; 0 means explicitly no limit |
+| `season` | months and days the rule applies, or empty for all year |
+| `status` | official, missing_hours or uncertain |
+| `issue_codes` | unreadable, ambiguous or note, for code to branch on |
+| `reason` | the same thing in plain words, for the driver |
+| `luokka`, `luokka_nimi`, `tyyppi`, `voimassaolo`, `kesto`, `kausi`, `lisatieto` | the register's own fields, kept so any parse can be traced back |
+| `geometry` | MultiPolygon, EPSG:3879 |
+
+Before writing, the pipeline refuses to continue unless ids are unique and present, every area has
+a geometry we can measure, every shape is a polygon, and the coordinates are metres around
+Helsinki. That last one matters: reading the file asserts the coordinate system rather than
+verifying it, so if the server ever returned degrees the numbers would land nowhere near the city.
+
+The parquet is written by pyarrow. Versions before 21 cannot read it (`Repetition level histogram
+size mismatch`), which is why `requirements.txt` pins a floor rather than leaving it open.
 
 ## Known limits
 
@@ -69,5 +92,6 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
   in a street canyon is comparable to the street width, so the driver picks the side.
 - **Public holidays are not in any source.** A holiday follows Sunday rules and the day before a
   holiday follows Saturday rules, so the app supplies its own calendar.
+- **Temporary traffic arrangements are not usable**, see [future-work.md](future-work.md).
 - **One area's hours are genuinely ambiguous** (`7-9, 15-17`, two ranges with no brackets) and
   stay uncertain by design.

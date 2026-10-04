@@ -17,7 +17,6 @@ PAGE = 20000
 # name -> (layer, CRS). EPSG:3879 is metric, so distances come out in metres.
 LAYERS = {
     "parking_areas_3879": ("avoindata:Pysakointipaikat_alue", "EPSG:3879"),
-    "temporary_arrangements_4326": ("avoindata:Tilapainen_liikennejarjestely_alue", "EPSG:4326"),
 }
 
 

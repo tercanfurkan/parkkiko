@@ -9,6 +9,35 @@ export const RULE_TYPES = {
   unknown:       { label: "Unknown",            colour: "#999999" },
 };
 
+// What a space is reserved for, keyed by the register's own Finnish value. Wording lives here
+// rather than in the pipeline, so changing it is a one-line edit instead of a data rebuild.
+export const SPACE_TYPES = {
+  "pysäyttämiskielto": "No stopping",
+  "sähköpotkulauta": "Electric scooter",
+  "sähköauto": "Electric car",
+  "taxi": "Taxi",
+  "taksi": "Taxi",
+  "taxi, lataus": "Taxi, charging",
+  "kuormauspaikka": "Loading zone",
+  "inva": "Accessible parking",
+  "matkailuliikenne": "Tourist coach",
+  "cd": "Diplomatic vehicle",
+  "moottoripyörä": "Motorcycle",
+  "polkupyörä": "Bicycle",
+  "virka-auto": "Official vehicle",
+  "poliisi": "Police",
+  "kirjastoauto": "Mobile library",
+  "kuorma-auto": "Lorry",
+  "parklet": "Parklet",
+  "kaupunginkanslia": "City Executive Office",
+  "valtioneuvosto": "Finnish Government",
+  "henkilöauto, pakettiauto": "Car or van",
+};
+
+export function spaceLabel(tyyppi) {
+  return SPACE_TYPES[(tyyppi ?? "").trim().toLowerCase()] ?? null;
+}
+
 export function styleFor(feature) {
   const { rule_type, status } = feature.properties;
   const uncertain = status !== "official";

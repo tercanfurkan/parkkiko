@@ -54,3 +54,23 @@ enough reports agree.
 **Why it is not in the project.** There is no user base during the course, so no confidence
 threshold could ever be reached. A wrong entry causes a fine, so it needs moderation. Reports also
 reveal where and when someone parked, which raises privacy questions we cannot test.
+
+## Temporary traffic arrangements, evaluated and dropped
+
+The city publishes `avoindata:Tilapainen_liikennejarjestely_alue`, 295 polygons for temporary
+traffic arrangements. We built the spatial join, measured what it gave us, and removed it.
+
+It does not describe what its name suggests. The arrangements run for years, not days: a median
+of 711 days and a maximum of 3,204. They are construction projects and event permits, not
+roadworks closures, so nothing about them is live.
+
+The link to parking is also inferred rather than stated. Of 8,754 parking areas, 191 overlap an
+arrangement, 45 of those only overlap one that has already ended, and of the 146 that remain only
+18 have a stated purpose that mentions parking at all. The status field does not help: 290 of the
+295 records claim to be ongoing, including the expired ones.
+
+So an overlap told us a permit exists nearby, not that the parking spaces are gone. Marking an
+area uncertain on that basis is the same unfounded confidence the project exists to avoid.
+
+What this idea actually needs is a feed of real parking suspensions with real dates. Helsinki does
+not appear to publish one.

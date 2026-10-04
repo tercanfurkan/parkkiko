@@ -15,8 +15,8 @@ import pandas as pd
 import rules
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
-WEB_FIELDS = ["id", "rule_type", "hours", "duration_min", "season", "status", "reason",
-              "extra_info"]
+WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
+              "reason", "extra_info"]
 COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
@@ -67,6 +67,8 @@ def classify(row):
 
     return {
         "rule_type": rule,
+        "class_name_en": rules.class_name_en(row.get("luokka")),
+        "space_type_en": rules.space_type_en(row.get("tyyppi")),
         "hours": json.dumps(hours) if hours else None,
         "duration_min": minutes,
         "season": json.dumps(season) if season else None,
@@ -77,16 +79,19 @@ def classify(row):
     }
 
 
-def add_roadworks(areas, snapshot):
-    """Flag areas overlapping a temporary traffic arrangement, keeping its end date."""
-    works = gpd.read_file(snapshot / "temporary_arrangements_4326.geojson").to_crs(areas.crs)
-    hit = gpd.sjoin(areas[["geometry"]], works[["geometry", "liikennejarjestely_paattyy"]],
-                    predicate="intersects", how="inner")
-    ends = hit.groupby(hit.index)["liikennejarjestely_paattyy"].max()
-    areas["roadworks_until"] = None
-    areas.loc[ends.index, "roadworks_until"] = ends
-    print(f"  {len(ends)} areas overlap roadworks")
-    return areas
+def check(areas):
+    """Fail loudly if the register breaks an assumption everything downstream relies on."""
+    if not areas["id"].is_unique or areas["id"].isna().any():
+        raise ValueError("parking area ids must be unique and present")
+    if (areas.geometry.isna() | areas.geometry.is_empty).any():
+        raise ValueError("every parking area needs a geometry we can measure")
+    if not areas.geometry.geom_type.isin({"Polygon", "MultiPolygon"}).all():
+        raise ValueError("expected every geometry to be a polygon")
+    # set_crs asserts the coordinate system rather than verifying it, so check the numbers:
+    # if the server ever returns degrees, they land nowhere near Helsinki in metres.
+    minx, miny, maxx, maxy = areas.total_bounds
+    if not (25_400_000 < minx < 25_600_000 and 6_650_000 < miny < 6_750_000):
+        raise ValueError(f"coordinates are not metres around Helsinki: {areas.total_bounds}")
 
 
 def main():
@@ -96,12 +101,11 @@ def main():
     # GeoJSON always declares WGS84, so the metric file is mislabelled on read. Correct it,
     # or every distance and spatial join below is silently wrong.
     areas = gpd.read_file(snapshot / "parking_areas_3879.geojson").set_crs(3879, allow_override=True)
-    assert areas["id"].is_unique, "parking area ids are not unique"
+    check(areas)
 
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
-    areas = add_roadworks(areas, snapshot)
 
     out = Path("data/processed")
     out.mkdir(parents=True, exist_ok=True)
@@ -114,6 +118,12 @@ def main():
     path = Path("web/public/data/parking_areas.geojson")
     path.parent.mkdir(parents=True, exist_ok=True)
     web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
+
+    # Most areas leave most fields empty, and a null costs as many bytes as a value.
+    payload = json.loads(path.read_text())
+    for feature in payload["features"]:
+        feature["properties"] = {k: v for k, v in feature["properties"].items() if v is not None}
+    path.write_text(json.dumps(payload, separators=(",", ":")))
     print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
 
 

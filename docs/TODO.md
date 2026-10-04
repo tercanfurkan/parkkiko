@@ -131,7 +131,8 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
-| Street-level fine risk | | stretch | Measured and parked: [future-work.md](future-work.md) has the numbers and why it cannot be tied to an area. |
+| Street-level fine risk heatmap | | stretch | Fines per street, normalised per parking space. Street level only: the fines are geocoded to addresses, so an area or a side cannot be inferred. Numbers and limits: [future-work.md](future-work.md). |
+| Weather-conditioned risk | | stretch | Second iteration of the heatmap. The fines carry year and month only, with no day or hour, so matching weather at the time of a fine and conditioning on "raining now" or "04:00" is not possible from this source. Monthly seasonality against monthly weather is. Read [future-work.md](future-work.md) before starting. |
 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
 
@@ -143,7 +144,7 @@ Raise anything here that needs the other stream or the group to decide.
 
 | Question | Raised by | Answer |
 |---|---|---|
-| Does the frontend need a field the GeoJSON does not carry? | | |
+| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend to answer. The parquet also holds the register's raw strings (`voimassaolo`, `kesto`, `kausi`, `lisatieto`), the class (`luokka`, `class_name_en`, filled on all 8,754) and `issue_codes`. Any of them can be added to `WEB_FIELDS` in `pipeline/export_web.py`; say which and why here, and the backend ships it. Not available anywhere yet: district, and the number of spaces per area. |
 | `process.md` and `report_draft.md` overlap. Which is the source? | backend | process.md. report_draft.md is unmaintained raw material for writing the report, and says so at the top. |
 | The app's data file is generated and not in git, so the frontend needs Python and network access before it can see a map. | backend | Both: `pipeline/export_web.py` rebuilds it from the committed parquet offline in 0.7 s, and the file is now committed so a clone just works. Costs 0.49 MB per change in git. |
 

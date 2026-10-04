@@ -1,5 +1,5 @@
 {
- "note": "Dates whose parking window differs from their weekday. Absent means use the weekday: Mon-Fri the first window, Saturday the bracketed one, Sunday the third. An entry with 'uncertain' should be shown as check-the-sign, not as free.",
+ "note": "Dates whose parking window is not simply their weekday. Absent and inside 'years' means use the weekday. Outside 'years' is unknown, not a weekday: show check-the-sign. An entry with 'status': 'uncertain' is also check-the-sign.",
  "years": [
   2026,
   2028
@@ -47,12 +47,15 @@
   },
   "2026-06-18": {
    "window": "sat",
-   "name": "day before Midsummer Eve"
+   "name": "day before Midsummer Eve",
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2026-06-19": {
    "window": "sun",
    "name": "Midsummer Eve",
-   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2026-06-20": {
    "window": "sun",
@@ -68,12 +71,15 @@
   },
   "2026-12-23": {
    "window": "sat",
-   "name": "day before Christmas Eve"
+   "name": "day before Christmas Eve",
+   "status": "uncertain",
+   "reason": "rests on Christmas Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2026-12-24": {
    "window": "sun",
    "name": "Christmas Eve",
-   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+   "status": "uncertain",
+   "reason": "rests on Christmas Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2026-12-25": {
    "window": "sun",
@@ -129,12 +135,15 @@
   },
   "2027-06-24": {
    "window": "sat",
-   "name": "day before Midsummer Eve"
+   "name": "day before Midsummer Eve",
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2027-06-25": {
    "window": "sun",
    "name": "Midsummer Eve",
-   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2027-06-26": {
    "window": "sun",
@@ -148,18 +157,25 @@
    "window": "sun",
    "name": "All Saints' Day"
   },
+  "2027-12-05": {
+   "window": "sat",
+   "name": "day before Independence Day"
+  },
   "2027-12-06": {
    "window": "sun",
    "name": "Independence Day"
   },
   "2027-12-23": {
    "window": "sat",
-   "name": "day before Christmas Eve"
+   "name": "day before Christmas Eve",
+   "status": "uncertain",
+   "reason": "rests on Christmas Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2027-12-24": {
    "window": "sun",
    "name": "Christmas Eve",
-   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+   "status": "uncertain",
+   "reason": "rests on Christmas Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2027-12-25": {
    "window": "sun",
@@ -193,6 +209,10 @@
    "window": "sun",
    "name": "Easter Monday"
   },
+  "2028-04-30": {
+   "window": "sat",
+   "name": "day before May Day"
+  },
   "2028-05-01": {
    "window": "sun",
    "name": "May Day"
@@ -207,12 +227,15 @@
   },
   "2028-06-22": {
    "window": "sat",
-   "name": "day before Midsummer Eve"
+   "name": "day before Midsummer Eve",
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2028-06-23": {
    "window": "sun",
    "name": "Midsummer Eve",
-   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+   "status": "uncertain",
+   "reason": "rests on Midsummer Eve, which the calendar calls a holiday but we have not confirmed the city does for parking"
   },
   "2028-06-24": {
    "window": "sun",
@@ -241,6 +264,10 @@
   "2028-12-26": {
    "window": "sun",
    "name": "Second Day of Christmas"
+  },
+  "2028-12-31": {
+   "window": "sat",
+   "name": "day before New Year's Day"
   }
  }
 }

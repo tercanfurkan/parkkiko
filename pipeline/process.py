@@ -13,6 +13,7 @@ import geopandas as gpd
 import pandas as pd
 
 import rules
+from export_holidays import write as write_holidays
 from export_web import SOURCE as PARQUET, write_web
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
@@ -77,6 +78,16 @@ def classify(row):
     }
 
 
+def read_metric(path):
+    """Read a snapshot file, insisting on the metric coordinate system it actually holds.
+
+    A GeoJSON always declares WGS84, whatever is inside it, so reading one without this leaves
+    metres labelled as degrees. Nothing fails: distances come out nonsense and spatial joins
+    quietly match nothing. Every read of a snapshot goes through here.
+    """
+    return gpd.read_file(path).set_crs(3879, allow_override=True)
+
+
 def check(areas):
     """Fail loudly if the register breaks an assumption everything downstream relies on."""
     if not areas["id"].is_unique or areas["id"].isna().any():
@@ -98,16 +109,12 @@ def add_district(areas, snapshot):
     Some areas straddle a boundary, so containment of the centre picks exactly one and the
     answer does not depend on row order.
     """
-    districts = (gpd.read_file(snapshot / "districts_3879.geojson")
-                 .set_crs(3879, allow_override=True)[["nimi_fi", "geometry"]]
-                 .rename(columns={"nimi_fi": "district"}))
-    centres = areas[["geometry"]].copy()
-    centres["geometry"] = areas.geometry.centroid
+    districts = read_metric(snapshot / "districts_3879.geojson")[["nimi_fi", "geometry"]]
+    centres = gpd.GeoDataFrame(geometry=areas.geometry.centroid, crs=areas.crs)
     hit = gpd.sjoin(centres, districts, predicate="within", how="left")
-    areas["district"] = hit["district"]
-    missing = int(areas["district"].isna().sum())
-    print(f"  {areas['district'].nunique()} districts"
-          + (f", {missing} areas outside all of them" if missing else ""))
+    areas["district"] = hit["nimi_fi"]
+    print(f"  {areas['district'].nunique()} districts, "
+          f"{int(areas['district'].isna().sum())} areas outside all of them")
     return areas
 
 
@@ -115,9 +122,7 @@ def main():
     snapshot = latest_snapshot()
     print(f"snapshot: {snapshot.name}")
 
-    # GeoJSON always declares WGS84, so the metric file is mislabelled on read. Correct it,
-    # or every distance and spatial join below is silently wrong.
-    areas = gpd.read_file(snapshot / "parking_areas_3879.geojson").set_crs(3879, allow_override=True)
+    areas = read_metric(snapshot / "parking_areas_3879.geojson")
     check(areas)
 
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
@@ -132,6 +137,8 @@ def main():
 
     target = write_web(areas)
     print(f"  {len(areas)} areas -> {target}")
+    holidays_file, calendar = write_holidays()
+    print(f"  {len(calendar['days'])} dates -> {holidays_file}")
 
 
 if __name__ == "__main__":

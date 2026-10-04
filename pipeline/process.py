@@ -13,11 +13,9 @@ import geopandas as gpd
 import pandas as pd
 
 import rules
+from export_web import write_web
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
-WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
-              "reason", "extra_info"]
-COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
 def latest_snapshot():
@@ -113,20 +111,8 @@ def main():
     print(f"  {len(areas)} areas -> {out / 'parking_rules.parquet'}")
     print(areas["status"].value_counts().to_string())
 
-    # The app needs GPS coordinates and only the display fields.
-    web = areas[WEB_FIELDS + ["geometry"]].to_crs(4326)
-    path = Path("web/public/data/parking_areas.geojson")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
-
-    # Most areas leave most fields empty, and an empty value costs as many bytes as a real one.
-    # The app checks whether a property is present, so absent is the honest encoding of "none".
-    payload = json.loads(path.read_text())
-    for feature in payload["features"]:
-        feature["properties"] = {k: v for k, v in feature["properties"].items()
-                                 if v is not None and v != ""}
-    path.write_text(json.dumps(payload, separators=(",", ":")))
-    print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
+    count = write_web(areas)
+    print(f"  {count} areas -> web/public/data/parking_areas.geojson")
 
 
 if __name__ == "__main__":

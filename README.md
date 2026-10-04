@@ -37,8 +37,9 @@ Everything comes from the City of Helsinki's open data under CC BY 4.0, with no 
 scripts when you want the raw files to poke at, or when you change the pipeline:
 
 ```bash
-.venv/bin/python pipeline/fetch.py     # ~4 s  -> data/raw/YYYY-MM-DD/*.geojson
-.venv/bin/python pipeline/process.py   # ~2 s  -> data/processed/ and web/public/data/
+.venv/bin/python pipeline/fetch.py       # ~2 s  -> data/raw/YYYY-MM-DD/*.geojson
+.venv/bin/python pipeline/process.py     # ~1 s  -> data/processed/ and web/public/data/
+.venv/bin/python pipeline/export_web.py  # ~1 s  -> web/public/data/ from the committed snapshot
 ```
 
 `fetch.py` saves exactly what the city's server returned, one dated folder per run, so you can
@@ -76,7 +77,8 @@ canvas is a submission form and is written by hand.
 
 ## Web app
 
+The app's data file is committed, so this is all it takes:
+
 ```bash
-.venv/bin/python pipeline/process.py   # writes web/public/data/
 cd web && npm install && npm run dev
 ```

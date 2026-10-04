@@ -1,0 +1,41 @@
+# Deploy a branch by hand to test it on a phone before merge: gh workflow run pages.yml --ref <branch>
+# There is one site, so a branch deploy stays live until the next push to main replaces it.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A newer deploy makes an older one pointless, so cancel it rather than queue behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      # The app's data file is committed, so the build needs no Python and no network beyond npm.
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+      - id: deployment
+        uses: actions/deploy-pages@v5

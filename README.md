@@ -98,3 +98,6 @@ The app's data file is committed, so this is all it takes:
 ```bash
 cd web && npm install && npm run dev
 ```
+
+A push to `main` deploys it to https://tercanfurkan.github.io/parkkiko/. To deploy a branch for
+testing on a phone, see the header of `.github/workflows/pages.yml`.

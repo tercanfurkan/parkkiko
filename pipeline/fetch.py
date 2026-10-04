@@ -17,6 +17,9 @@ PAGE = 20000
 # name -> (layer, CRS). EPSG:3879 is metric, so distances come out in metres.
 LAYERS = {
     "parking_areas_3879": ("avoindata:Pysakointipaikat_alue", "EPSG:3879"),
+    # 34 basic districts. Big enough to hold out whole ones in cross-validation, and named
+    # after places people recognise, unlike the 148 sub-areas.
+    "districts_3879": ("avoindata:Piirijako_peruspiiri", "EPSG:3879"),
 }
 
 

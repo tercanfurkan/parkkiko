@@ -32,8 +32,9 @@ Written up as a canvas in [mini-project-canvas.md](mini-project-canvas.md).
 
 ## 2. Data collection
 
-One source: the City of Helsinki parking register, served over WFS, 8,754 street parking areas,
-CC BY 4.0, no key or registration. [`pipeline/fetch.py`](../pipeline/fetch.py) saves a dated
+The City of Helsinki parking register, 8,754 street parking areas, served over WFS under
+CC BY 4.0 with no key or registration, plus the city's district boundaries. Sources and sizes
+are listed in [data.md](data.md). [`pipeline/fetch.py`](../pipeline/fetch.py) saves a dated
 snapshot of exactly what the server returned, so results are reproducible.
 
 Sources, sizes, timings and limits: [data.md](data.md).

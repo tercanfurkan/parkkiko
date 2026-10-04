@@ -5,6 +5,7 @@ or (code, explanation). Codes are the contract; the explanation is prose for the
 can be reworded freely. Parsers fail closed: anything they cannot fully account for becomes
 an issue, never a partial answer.
 """
+import datetime
 import re
 
 MISSING = "missing"          # the register states nothing
@@ -102,6 +103,29 @@ def rule_type(luokka, tyyppi):
     if entry is None:
         return "unknown", None, (UNREADABLE, f"no rule for class {luokka!r}")
     return entry[0], entry[1], None
+
+
+# ----------------------------------------------------------------- windows
+
+# The three windows a sign can state, in the order the register writes them.
+WEEKDAY, SATURDAY, SUNDAY = "mon_fri", "sat", "sun"
+
+
+def window_for(day, holiday_dates):
+    """Which window of a sign applies on a date, given the public holidays around it.
+
+    A public holiday follows the Sunday window, and the day before one follows the Saturday
+    window. Without this, Christmas Day reads as whatever weekday it lands on.
+    """
+    if day in holiday_dates:
+        return SUNDAY
+    if day + datetime.timedelta(days=1) in holiday_dates:
+        return SATURDAY
+    if day.weekday() == 5:
+        return SATURDAY
+    if day.weekday() == 6:
+        return SUNDAY
+    return WEEKDAY
 
 
 # ------------------------------------------------------------------- hours

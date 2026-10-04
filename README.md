@@ -42,6 +42,7 @@ the pipeline:
 .venv/bin/python pipeline/process.py            # parse it     -> data/processed/ and web/public/data/
 .venv/bin/python pipeline/export_web.py         # rebuild just the app's file, offline
 .venv/bin/python pipeline/export_web.py --check # is the committed app file still current?
+.venv/bin/python pipeline/export_holidays.py    # refresh the holiday calendar the app reads
 ```
 
 Measured timings are in [docs/data.md](docs/data.md).

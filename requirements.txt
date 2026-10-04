@@ -5,6 +5,6 @@ duckdb
 matplotlib
 scipy
 scikit-learn
-holidays
+holidays>=0.60          # the calendar the holiday export derives its dates from
 jupyter
 tabulate

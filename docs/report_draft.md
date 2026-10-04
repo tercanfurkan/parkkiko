@@ -1,12 +1,16 @@
-# Parkkiko: technical report (draft)
+# Technical report: raw material
 
-Working draft for the 5-page technical report. Sections follow the six stages of a data science
-project.
+**Not maintained.** This is a scrapbook for whoever writes the report: tables, phrasings and
+checklists of what each section must cover. It is not kept in step with the project, and nothing
+should be cited from it without checking.
 
-The tables in section 4 are copied from [report_stats.md](report_stats.md), which
-`python analysis/report_stats.py --write --figures` regenerates from the committed snapshot.
-Re-copy them before submitting. Figures outside section 4, such as the fines count and the
-measurements of the dataset we rejected, are one-off and are sourced where they appear.
+For the current state of the project read [process.md](process.md). For current figures run
+`python analysis/report_stats.py --write --figures` and take them from
+[report_stats.md](report_stats.md). The fines count and the measurements of the dataset we
+rejected are one-off, and are sourced where they appear below.
+
+The report itself is at most 5 pages plus an appendix, and follows the six stages of a data
+science project.
 
 ---
 

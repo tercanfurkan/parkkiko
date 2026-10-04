@@ -15,8 +15,8 @@ import pandas as pd
 import rules
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
-WEB_FIELDS = ["id", "rule_type", "hours", "duration_min", "season", "status", "reason",
-              "extra_info"]
+WEB_FIELDS = ["id", "rule_type", "class_name_en", "space_type_en", "hours", "duration_min",
+              "season", "status", "reason", "extra_info"]
 COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
@@ -67,6 +67,8 @@ def classify(row):
 
     return {
         "rule_type": rule,
+        "class_name_en": rules.class_name_en(row.get("luokka")),
+        "space_type_en": rules.space_type_en(row.get("tyyppi")),
         "hours": json.dumps(hours) if hours else None,
         "duration_min": minutes,
         "season": json.dumps(season) if season else None,
@@ -89,6 +91,18 @@ def add_roadworks(areas, snapshot):
     return areas
 
 
+def check(areas):
+    """Fail loudly if the register breaks an assumption everything downstream relies on."""
+    if not areas["id"].is_unique or areas["id"].isna().any():
+        raise ValueError("parking area ids must be unique and present")
+    if areas.geometry.isna().any():
+        raise ValueError("every parking area needs a geometry")
+    if areas.crs is None or areas.crs.to_epsg() != 3879:
+        raise ValueError(f"expected EPSG:3879, got {areas.crs}")
+    if not areas.geometry.geom_type.eq("MultiPolygon").all():
+        raise ValueError("expected every geometry to be a MultiPolygon")
+
+
 def main():
     snapshot = latest_snapshot()
     print(f"snapshot: {snapshot.name}")
@@ -96,7 +110,7 @@ def main():
     # GeoJSON always declares WGS84, so the metric file is mislabelled on read. Correct it,
     # or every distance and spatial join below is silently wrong.
     areas = gpd.read_file(snapshot / "parking_areas_3879.geojson").set_crs(3879, allow_override=True)
-    assert areas["id"].is_unique, "parking area ids are not unique"
+    check(areas)
 
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",

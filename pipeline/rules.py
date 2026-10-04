@@ -23,30 +23,53 @@ def _txt(value):
 # ---------------------------------------------------------------- rule type
 
 # The whole domain of luokka, which is 1:1 with luokka_nimi in the register.
-# stated limit comes from the class name ("Kertamaksu enintään 2 tuntia"), so it is data
-# here rather than a regex over Finnish prose at read time.
-LUOKKA_RULES = {                    # luokka: (rule_type, stated limit in minutes)
-    1: ("free_limited", None),      # Ilmainen lyhytaikainen pysäköinti
-    2: ("free_limited", None),      # Ilmainen pitkäaikainen pysäköinti
-    3: ("paid", 60),                # Kertamaksu enintään 1 tunti
-    4: ("paid", 120),               # Kertamaksu enintään 2 tuntia
-    5: ("paid", 240),               # Kertamaksu enintään 4 tuntia
-    6: ("paid", None),              # Maksullinen ilman asukas-/yritystunnusta
-    7: ("paid", 60),                # Kertamaksu enintään 1 h ilman tunnusta
-    8: ("free_limited", None),      # Ilmainen lyhytaikainen, pysäköintikiekko
-    9: ("banned_hours", None),      # Pysäköinti sallittu pysäköintikieltoajan ulkopuolella
-    10: ("paid", None),             # Maksullinen vyöhykehinta
-    11: ("reserved", None),         # Z-tunnus nouto/palautus
+# The stated limit comes from the class name ("Kertamaksu enintään 2 tuntia") and the English
+# name is the driver-facing label, so both are data here rather than prose parsed at read time.
+LUOKKA_RULES = {   # luokka: (rule_type, stated limit in minutes, English name)
+    1: ("free_limited", None, "Free short-term parking"),
+    2: ("free_limited", None, "Free long-term parking"),
+    3: ("paid", 60, "Single payment, up to 1 hour"),
+    4: ("paid", 120, "Single payment, up to 2 hours"),
+    5: ("paid", 240, "Single payment, up to 4 hours"),
+    6: ("paid", None, "Paid without a resident or business permit; hours vary by location"),
+    7: ("paid", 60, "Single payment up to 1 hour without a resident or business permit"),
+    8: ("free_limited", None, "Free short-term parking without a permit; use a parking disc"),
+    9: ("banned_hours", None, "Parking allowed outside the no-parking hours"),
+    10: ("paid", None, "Paid at the zone rate"),
+    11: ("reserved", None, "Z-permit car-sharing pickup and return"),
+}
+# The register leaves 1,926 areas unclassified, either as class 0 or with no class at all.
+# In both the space type carries the rule, so they share one label and no rule of their own.
+NO_CLASS_NAME = "No class in the register; the space type defines the rule"
+
+# Space types, lower-cased, with the label the app shows. Membership decides the rule type.
+BAN_TYPES = {
+    "pysäköintikielto": "No parking",
+    "pysäyttämiskielto": "No stopping",
+}
+RESERVED_TYPES = {
+    "sähköpotkulauta": "Electric scooter", "sähköauto": "Electric car", "taxi": "Taxi",
+    "taksi": "Taxi", "taxi, lataus": "Taxi, charging", "kuormauspaikka": "Loading zone",
+    "inva": "Accessible parking", "matkailuliikenne": "Tourist coach",
+    "cd": "Diplomatic vehicle", "moottoripyörä": "Motorcycle", "polkupyörä": "Bicycle",
+    "virka-auto": "Official vehicle", "poliisi": "Police", "kirjastoauto": "Mobile library",
+    "kuorma-auto": "Lorry", "parklet": "Parklet", "kaupunginkanslia": "City Executive Office",
+    "valtioneuvosto": "Finnish Government", "henkilöauto, pakettiauto": "Car or van",
 }
 
-# Space types, lower-cased. Membership is all we need; the driver-facing wording lives in the app.
-BAN_TYPES = {"pysäköintikielto", "pysäyttämiskielto"}
-RESERVED_TYPES = {
-    "sähköpotkulauta", "sähköauto", "taxi", "taksi", "taxi, lataus", "kuormauspaikka", "inva",
-    "matkailuliikenne", "cd", "moottoripyörä", "polkupyörä", "virka-auto", "poliisi",
-    "kirjastoauto", "kuorma-auto", "parklet", "kaupunginkanslia", "valtioneuvosto",
-    "henkilöauto, pakettiauto",
-}
+
+def class_name_en(luokka):
+    """English name of a parking class, for display and for the report."""
+    try:
+        return LUOKKA_RULES[int(luokka)][2]
+    except (KeyError, TypeError, ValueError):
+        return NO_CLASS_NAME
+
+
+def space_type_en(tyyppi):
+    """English label of a space type, or None when the register states none."""
+    t = _txt(tyyppi).strip().lower()
+    return BAN_TYPES.get(t) or RESERVED_TYPES.get(t)
 
 
 def rule_type(luokka, tyyppi):
@@ -63,7 +86,7 @@ def rule_type(luokka, tyyppi):
     if t and not t.isdigit():
         return "unknown", None, (UNREADABLE, f"unknown space type {tyyppi!r}")
     try:
-        rule, limit = LUOKKA_RULES[int(luokka)]
+        rule, limit, _ = LUOKKA_RULES[int(luokka)]
         return rule, limit, None
     except (KeyError, TypeError, ValueError):
         return "unknown", None, (UNREADABLE, f"no rule for class {luokka!r}")

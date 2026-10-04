@@ -18,14 +18,27 @@ json.dump(fc, open("data/raw/violations_2023.geojson", "w"))
 
 **Why it is interesting.** It is observed ground truth rather than a target we invented. A model
 of where drivers are actually fined would let the app warn "this street is often misread, check
-the sign", which no rule lookup can do.
+the sign", which no rule lookup can do. A street-level density layer is the buildable half of
+this, and is on the task board as the project's stretch goal.
+
+**The weather idea, and why only half of it works.** Enforcement surely varies: rain may keep
+inspectors indoors, and nobody writes tickets at 04:00 on Christmas morning, so a quiet period
+may mean quiet enforcement rather than careful parking. Testing that needs a timestamp, and the
+records carry only `vuosi` and `kuukausi`, a year and a month. There is no day and no hour, so a
+fine cannot be matched to the weather when it was written, and the map cannot be conditioned on
+"it is raining now" or "it is 04:00". What remains possible is monthly: fines per street per
+month against monthly rainfall and temperature, which the Finnish Meteorological Institute
+publishes openly. Earlier years are CSV downloads on the dataset page, so a panel of roughly 120
+months is available. I have not checked their API.
 
 **Why it is not in the project.** The fines are geocoded to street addresses, not to the parked
 car: all 165,724 records sit on 10,932 distinct coordinates, with 3,705 at a single address. Only 15%
 fall within 10 m of a parking area and 41% within 20 m, so a fine cannot be attributed to an area
 or a street side, only to a street. Time resolution is the month, so nothing can be said about the
-hour. Counts also partly reflect where inspectors patrol rather than where rules are broken, which
-would need addressing before publishing anything.
+hour. Counts also partly reflect where inspectors patrol rather than where rules are broken: a quiet
+month may be a staffing change, and nothing in the data separates that from weather or from
+behaviour. Any layer built on this says "where fines happen", never "where you will be fined",
+and never overrides the register's own rule.
 
 Dataset: https://hri.fi/data/en_GB/dataset/pysakointivirheet-helsingissa
 
@@ -74,45 +87,3 @@ area uncertain on that basis is the same unfounded confidence the project exists
 
 What this idea actually needs is a feed of real parking suspensions with real dates. Helsinki does
 not appear to publish one.
-
-## A risk heatmap from historical fines, and weather
-
-The idea: colour the map by how often drivers are actually fined, then make that risk depend on
-the current conditions, on the theory that enforcement varies. Rain might keep inspectors indoors;
-nobody is writing tickets at 04:00 on Christmas morning, so a quiet hour in the data may mean
-quiet enforcement rather than careful parking.
-
-It is a good hypothesis. Half of it is testable with Helsinki's open data and half is not, and the
-dividing line is the time resolution.
-
-**What the fines data actually carries.** Every record has a year and a month, and nothing finer:
-the fields are `vuosi` and `kuukausi`, and there is no day, date or hour anywhere in the layer.
-Location is the street address, not the parked car: 165,724 records sit on 10,932 distinct
-coordinates, 3,705 of them at a single address, and only 15% fall within 10 m of a parking area.
-
-**So the second iteration cannot be built from this source.** Matching a fine to the weather at
-the time it was written needs a timestamp, and conditioning the map on "it is raining now" or "it
-is 04:00" needs the model to have learned an hour-of-day effect that the data cannot show. The
-Christmas-night case is a single day inside a monthly total.
-
-**What is buildable, in order:**
-
-1. **A street-level density layer.** Fines per street, ideally per parking space so long streets
-   do not simply dominate, over 2,701 streets. Street, not area or side: the geocoding cannot
-   support anything finer. This is a genuine product feature, since a street with a clear sign and
-   many fines is a street people misread. **This first step is on the task board as the
-   mini-project's stretch goal.** The rest of this section stays here as a maybe.
-2. **Monthly seasonality.** Twelve points per street per year from the WFS layer, which serves
-   2023 only. Earlier years back to 2014 are CSV downloads on the dataset page, so a multi-year
-   panel of roughly 120 months is possible with some wrangling.
-3. **Monthly weather.** The Finnish Meteorological Institute publishes open observations, which
-   would give rainfall and temperature per month to put beside the fine counts. I have not checked
-   their API. At monthly resolution this tests "are wet months quieter" and nothing sharper.
-
-**The confound to state plainly in any write-up.** Fine counts measure enforcement as much as
-behaviour. A quiet month may mean fewer inspectors, a holiday rota, or a staffing change, and
-nothing in the data separates those from weather. That is a reason to present the layer as "where
-fines happen" rather than "where you will be fined", and never to let it override the register's
-own rule.
-
-Dataset: https://hri.fi/data/en_GB/dataset/pysakointivirheet-helsingissa

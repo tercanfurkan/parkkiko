@@ -33,14 +33,18 @@ Python and fail to import geopandas.
 Everything comes from the City of Helsinki's open data under CC BY 4.0, with no login. See
 [docs/data.md](docs/data.md) for the sources, sizes, timings and known limits.
 
-**The cleaned data is already in git**, so you can explore straight after cloning. Run the two
-scripts when you want the raw files to poke at, or when you change the pipeline:
+**The cleaned data and the app's data file are already in git**, so you can explore, and run the
+map, straight after cloning. Run these when you want the raw files to poke at, or when you change
+the pipeline:
 
 ```bash
-.venv/bin/python pipeline/fetch.py       # ~2 s  -> data/raw/YYYY-MM-DD/*.geojson
-.venv/bin/python pipeline/process.py     # ~1 s  -> data/processed/ and web/public/data/
-.venv/bin/python pipeline/export_web.py  # ~1 s  -> web/public/data/ from the committed snapshot
+.venv/bin/python pipeline/fetch.py              # raw snapshot -> data/raw/YYYY-MM-DD/
+.venv/bin/python pipeline/process.py            # parse it     -> data/processed/ and web/public/data/
+.venv/bin/python pipeline/export_web.py         # rebuild just the app's file, offline
+.venv/bin/python pipeline/export_web.py --check # is the committed app file still current?
 ```
+
+Measured timings are in [docs/data.md](docs/data.md).
 
 `fetch.py` saves exactly what the city's server returned, one dated folder per run, so you can
 open the raw GeoJSON in any map tool and compare it against what we parsed. `process.py` reads
@@ -62,8 +66,8 @@ Three ways, pick whichever suits you.
 .venv/bin/python -c "import duckdb; print(duckdb.sql(\"select status, count(*) from 'data/processed/parking_rules.parquet' group by 1\"))"
 ```
 
-**A map, with no code.** Run `pipeline/process.py`, then drag
-`web/public/data/parking_areas.geojson` into [kepler.gl](https://kepler.gl).
+**A map, with no code.** Drag `web/public/data/parking_areas.geojson` into
+[kepler.gl](https://kepler.gl). It is in the repo, so there is nothing to run first.
 
 ## Report figures
 

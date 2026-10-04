@@ -34,7 +34,7 @@ Then skim, as the task needs:
 - **`docs/report_stats.md`** — the measured figures, generated rather than typed.
 - **`docs/future-work.md`** — ideas we evaluated and rejected, with the numbers. Check here before
   proposing a data source; some have already been measured and dropped.
-- **`docs/report_draft.md`** — raw material for the report. Unmaintained by design; do not cite it.
+- **`docs/report_draft.md`** — raw material for the report. Unmaintained; do not cite it.
 - **`docs/canvas-working-notes.md`** — how the decisions were argued out. Superseded numbers, but
   it explains why things are the way they are.
 - **`docs/mini-project-canvas.md`** — the course submission form.
@@ -43,26 +43,20 @@ Then skim, as the task needs:
 
 ```
 pipeline/     fetch.py downloads a dated snapshot; rules.py parses the register's strings;
-              process.py applies them and writes both outputs
+              process.py applies them; export_web.py writes the app's data file
 analysis/     report_stats.py regenerates every figure the documents quote
 notebooks/    01 what the register contains, 02 the neighbour finding, 03 English labels
 web/          the map app: Vite, React, Leaflet, no backend
-data/         processed/ is committed; raw/ is local and gitignored
+data/         processed/ is committed, raw/ is local and gitignored
 ```
+
+`web/public/data/parking_areas.geojson` is committed too, so the map runs with no Python and no
+network: `cd web && npm install && npm run dev`. Everything else is in the README, which owns the
+setup and run commands.
 
 `pipeline/rules.py` is the best single file to read. It is pure functions with no I/O, and it
-shows what the raw data is really like: 66 spellings of opening hours, 25 ways to write a duration,
-and a parser that refuses to answer rather than guess.
-
-## Get it running
-
-```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m ipykernel install --user --name parkkiko --display-name "Python (parkkiko)"
-.venv/bin/python pipeline/fetch.py      # about 2 s
-.venv/bin/python pipeline/process.py    # about 1 s, writes the app's data file
-cd web && npm install && npm run dev
-```
+shows what the raw data is really like: dozens of spellings of opening hours, several ways to
+write a duration, and a parser that refuses to answer rather than guess.
 
 If the pipeline output does not match the numbers in the docs, say so rather than updating the
 docs: it means the register changed, which is itself a finding.
@@ -74,10 +68,10 @@ the sync point. Claim a task by putting your name in its Owner column in the sam
 first change, and raise anything that needs the other stream in the Open questions table rather
 than deciding it alone.
 
-The shared surface is one generated file, `web/public/data/parking_areas.geojson`, documented in
-the task board. The frontend reads it and does not regenerate it; the backend produces it and does
-not style it. If you need a field it does not carry, ask rather than deriving it in the browser,
-because a value computed in two places will eventually disagree in two ways.
+The shared surface is one file, `web/public/data/parking_areas.geojson`, documented in the task
+board. The frontend reads it and never regenerates it; the backend produces it and never styles
+it. If you need a field it does not carry, ask in Open questions rather than deriving it in the
+browser, because a value computed in two places will eventually disagree in two ways.
 
 ## House rules
 

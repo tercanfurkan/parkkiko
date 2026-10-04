@@ -1,7 +1,7 @@
 """Turn the newest raw snapshot into the two files everything else reads.
 
     data/processed/parking_rules.parquet   analysis snapshot (metric CRS, committed to git)
-    web/public/data/parking_areas.geojson  app data (GPS CRS, build artefact)
+    web/public/data/parking_areas.geojson  app data (GPS CRS, committed so the app just runs)
 
 Usage: python pipeline/process.py
 """
@@ -13,7 +13,7 @@ import geopandas as gpd
 import pandas as pd
 
 import rules
-from export_web import write_web
+from export_web import SOURCE as PARQUET, write_web
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
 
@@ -105,14 +105,13 @@ def main():
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
 
-    out = Path("data/processed")
-    out.mkdir(parents=True, exist_ok=True)
-    areas.to_parquet(out / "parking_rules.parquet", compression="zstd")
-    print(f"  {len(areas)} areas -> {out / 'parking_rules.parquet'}")
+    PARQUET.parent.mkdir(parents=True, exist_ok=True)
+    areas.to_parquet(PARQUET, compression="zstd")
+    print(f"  {len(areas)} areas -> {PARQUET}")
     print(areas["status"].value_counts().to_string())
 
-    count = write_web(areas)
-    print(f"  {count} areas -> web/public/data/parking_areas.geojson")
+    target = write_web(areas)
+    print(f"  {len(areas)} areas -> {target}")
 
 
 if __name__ == "__main__":

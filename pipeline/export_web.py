@@ -1,13 +1,18 @@
 """Rebuild the app's data file from the committed snapshot.
 
-    python pipeline/export_web.py
+    python pipeline/export_web.py            rebuild web/public/data/parking_areas.geojson
+    python pipeline/export_web.py --check    is the committed file still what the data produces?
 
-Reads data/processed/parking_rules.parquet and writes web/public/data/parking_areas.geojson.
-No network and no raw snapshot needed, so anyone who cloned the repo can produce it, and so can
-a deploy job. pipeline/process.py calls the same code after it parses the register.
+The file is committed so the app runs straight after a clone, and it is generated, so the two
+can drift. `--check` is how you find out: it rebuilds to a temporary path and compares bytes.
+
+pipeline/process.py calls write_web() directly after parsing the register, so there is one
+writer whichever way the file is produced.
 """
+import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 
 import geopandas as gpd
@@ -19,7 +24,9 @@ TARGET = Path("web/public/data/parking_areas.geojson")
 # so changing a word is a one-line edit instead of a data rebuild.
 WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
               "reason", "extra_info"]
-COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
+# ~1 m, which is finer than the register's own accuracy and than any phone's GPS. Six decimals
+# cost 19% more on the wire for precision nothing can use; four collapse small polygons entirely.
+COORD_DECIMALS = 5
 
 
 def write_web(areas, target=TARGET):
@@ -35,14 +42,34 @@ def write_web(areas, target=TARGET):
         feature["properties"] = {k: v for k, v in feature["properties"].items()
                                  if v is not None and v != ""}
     target.write_text(json.dumps(payload, separators=(",", ":")))
-    return len(payload["features"])
+    return target
+
+
+def load():
+    if not SOURCE.exists():
+        sys.exit(f"{SOURCE} not found. Run: python pipeline/fetch.py && python pipeline/process.py")
+    return gpd.read_parquet(SOURCE, columns=WEB_FIELDS + ["geometry"])
 
 
 def main():
-    if not SOURCE.exists():
-        sys.exit(f"{SOURCE} not found. Run: python pipeline/process.py")
-    count = write_web(gpd.read_parquet(SOURCE))
-    print(f"{count} areas -> {TARGET} ({TARGET.stat().st_size / 1e6:.2f} MB)")
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--check", action="store_true",
+                    help="compare the committed file against a fresh build, and say if they differ")
+    args = ap.parse_args()
+
+    if args.check:
+        with tempfile.TemporaryDirectory() as tmp:
+            # Same filename: the writer stamps it into the GeoJSON "name" member.
+            fresh = write_web(load(), Path(tmp) / TARGET.name)
+            if not TARGET.exists():
+                sys.exit(f"{TARGET} is missing. Run: python pipeline/export_web.py")
+            if fresh.read_bytes() != TARGET.read_bytes():
+                sys.exit(f"{TARGET} is stale. Run: python pipeline/export_web.py")
+        print(f"{TARGET} matches the committed data")
+        return
+
+    target = write_web(load())
+    print(f"{target} ({target.stat().st_size / 1e6:.2f} MB)")
 
 
 if __name__ == "__main__":

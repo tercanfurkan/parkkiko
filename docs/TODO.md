@@ -24,25 +24,24 @@ this board moved into version control and is no longer kept in step.
 This is the only thing both streams depend on, so change it by agreement rather than in passing.
 
 **`web/public/data/parking_areas.geojson`** is the contract. It is committed, so the app runs
-straight after a clone with no Python and no network. It is still generated: the backend rebuilds
-it with `python pipeline/export_web.py` (0.7 s, offline, from the committed parquet) whenever the
-pipeline or the data changes, and the frontend treats it as read-only input. What the fields mean
-in the register's own terms is in [data.md](data.md); how they are parsed is `pipeline/rules.py`.
+straight after a clone, and it is generated, so only the backend rewrites it. `python
+pipeline/export_web.py --check` says whether the committed copy still matches the data.
 
-| Property | On how many of the 8,754 | Meaning |
+`WEB_FIELDS` in `pipeline/export_web.py` decides which fields are exported. What each field means
+is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters to the app:
+
+| Property | Present on | Note for the app |
 |---|---|---|
-| `id` | 8,754 | the register's own area id |
-| `rule_type` | 8,754 | `paid`, `free_limited`, `banned_hours`, `always_banned`, `reserved`, `unknown` |
-| `status` | 8,754 | `official`, `missing_hours` or `uncertain` |
+| `id`, `rule_type`, `status` | all 8,754 | always there |
 | `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated |
-| `duration_min` | 2,803 | maximum stay in minutes; `0` means explicitly no limit |
-| `tyyppi` | 1,888 | the register's Finnish space type, e.g. `Taxi`; the app maps it to a label |
-| `extra_info` | 1,362 | sign text we deliberately do not parse |
-| `reason` | 385 | why an area is uncertain, in words a driver can read |
-| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}` when the rule is seasonal |
+| `duration_min` | 2,803 | minutes; `0` means explicitly no limit |
+| `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
+| `extra_info` | 1,362 | sign text to show verbatim |
+| `reason` | 385 | why an area is uncertain, already written for a driver to read |
+| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}` |
 
 A property is **absent** rather than null or empty when an area does not have it, so test for
-presence. Geometry is MultiPolygon in WGS84. 8,754 features, 0.40 MB gzipped.
+presence. Geometry is MultiPolygon in WGS84, coordinates to 5 decimals, about 1 m.
 
 **Who owns what.** Backend owns `pipeline/`, `analysis/`, `notebooks/`, `data/`. Frontend owns
 `web/`. Neither edits the other without saying so here first. If the frontend needs a new field,
@@ -96,7 +95,7 @@ add a row to Open questions below rather than computing it in the browser.
 | Error analysis | | todo | Which areas we get wrong and why, on a map. The course asks for exactly this after classification: week 3 exercise 2 step 5 in the reference answers. |
 | Imputation reflection | | todo | What changes for a driver when we predict versus leave unknown, and who is affected. Week 2 exercise 2 closes on this question; our version is the fairness point in the canvas Privacy box. |
 | Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. Districts come from the register; see [data.md](data.md) columns. |
-| Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/process.py`. |
+| Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/export_web.py`. |
 
 ## 6 The app
 
@@ -107,7 +106,7 @@ add a row to Open questions below rather than computing it in the browser.
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
-| Deploy to GitHub Pages | | todo | Static build, base path `/parkkiko/`, already set in `web/vite.config.js`. The data file is committed, so the build needs nothing extra; a job can refresh it with `python pipeline/export_web.py` if you want the published data regenerated. |
+| Deploy to GitHub Pages | | todo | Static build, base path `/parkkiko/`, already set in `web/vite.config.js`. Nothing extra to run: the data file is committed. **Check once deployed** whether Pages compresses it: `curl -sI -H 'Accept-Encoding: gzip' <url>/data/parking_areas.geojson \| grep -i content-encoding`. Uncompressed it is 2.8 MB against 0.32 MB gzipped, which decides whether the app is usable on mobile data. If it is not compressed, serving it as `.json` is worth testing. |
 
 ## UX
 
@@ -120,7 +119,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Technical report | | todo | Max 5 pages plus appendix, structured on the six stages. Write from [process.md](process.md), which is current, using [report_draft.md](report_draft.md) as raw material: tables, phrasings and per-section checklists. That draft is deliberately not maintained. Figures come from `analysis/report_stats.py`, never typed by hand. |
+| Technical report | | todo | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is unmaintained raw material. Figures come from `analysis/report_stats.py`, never typed. |
 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
@@ -131,7 +130,7 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
-| Street-level fine density layer | | stretch | **The one stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a map layer beside the rules. Street level only: the fines are geocoded to addresses, so an area or a side cannot be inferred. Needs the violations fetch, a street-name join and a count per space. Numbers and limits: [future-work.md](future-work.md). |
+| Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
 
@@ -143,9 +142,9 @@ Raise anything here that needs the other stream or the group to decide.
 
 | Question | Raised by | Answer |
 |---|---|---|
-| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend to answer. The parquet also holds the register's raw strings (`voimassaolo`, `kesto`, `kausi`, `lisatieto`), the class (`luokka`, `class_name_en`, filled on all 8,754) and `issue_codes`. Any of them can be added to `WEB_FIELDS` in `pipeline/export_web.py`; say which and why here, and the backend ships it. Not available anywhere yet: district, and the number of spaces per area. |
-| `process.md` and `report_draft.md` overlap. Which is the source? | backend | process.md. report_draft.md is unmaintained raw material for writing the report, and says so at the top. |
-| The app's data file is generated and not in git, so the frontend needs Python and network access before it can see a map. | backend | Both: `pipeline/export_web.py` rebuilds it from the committed parquet offline in 0.7 s, and the file is now committed so a clone just works. Costs 0.49 MB per change in git. |
+| Add new rows at the top of this table, so two streams appending at once do not collide. | | |
+| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. Nobody has district or spaces-per-area yet. |
+| Should the app's data file be committed, generated offline, or built on deploy? | backend | Committed, and rebuildable offline with `pipeline/export_web.py`. Costs ~0.4 MB per change in git. |
 
 ## Known traps
 
@@ -153,4 +152,8 @@ Raise anything here that needs the other stream or the group to decide.
   histogram error, which reads like a corrupt file. `pip install -U "pyarrow>=21"`.
 - **Register the notebook kernel**, or notebooks run against the wrong Python and cannot import
   geopandas. The command is in the README.
-- **`web/public/data/` is committed but still generated.** Only the backend regenerates it, with `python pipeline/export_web.py`. Do not hand-edit it.
+- **`web/public/data/` is committed but still generated.** Only the backend regenerates it, with
+  `python pipeline/export_web.py`. Never hand-edit it, and run `--check` if you suspect it is
+  behind the data.
+- **It is one long line, marked binary in `.gitattributes`.** A merge conflict in it cannot be
+  resolved by hand: take either side and re-run the export.

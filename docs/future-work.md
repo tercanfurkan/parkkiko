@@ -18,14 +18,27 @@ json.dump(fc, open("data/raw/violations_2023.geojson", "w"))
 
 **Why it is interesting.** It is observed ground truth rather than a target we invented. A model
 of where drivers are actually fined would let the app warn "this street is often misread, check
-the sign", which no rule lookup can do.
+the sign", which no rule lookup can do. A street-level density layer is the buildable half of
+this, and is on the task board as the project's stretch goal.
+
+**The weather idea, and why only half of it works.** Enforcement surely varies: rain may keep
+inspectors indoors, and nobody writes tickets at 04:00 on Christmas morning, so a quiet period
+may mean quiet enforcement rather than careful parking. Testing that needs a timestamp, and the
+records carry only `vuosi` and `kuukausi`, a year and a month. There is no day and no hour, so a
+fine cannot be matched to the weather when it was written, and the map cannot be conditioned on
+"it is raining now" or "it is 04:00". What remains possible is monthly: fines per street per
+month against monthly rainfall and temperature, which the Finnish Meteorological Institute
+publishes openly. Earlier years are CSV downloads on the dataset page, so a panel of roughly 120
+months is available. I have not checked their API.
 
 **Why it is not in the project.** The fines are geocoded to street addresses, not to the parked
 car: all 165,724 records sit on 10,932 distinct coordinates, with 3,705 at a single address. Only 15%
 fall within 10 m of a parking area and 41% within 20 m, so a fine cannot be attributed to an area
 or a street side, only to a street. Time resolution is the month, so nothing can be said about the
-hour. Counts also partly reflect where inspectors patrol rather than where rules are broken, which
-would need addressing before publishing anything.
+hour. Counts also partly reflect where inspectors patrol rather than where rules are broken: a quiet
+month may be a staffing change, and nothing in the data separates that from weather or from
+behaviour. Any layer built on this says "where fines happen", never "where you will be fined",
+and never overrides the register's own rule.
 
 Dataset: https://hri.fi/data/en_GB/dataset/pysakointivirheet-helsingissa
 

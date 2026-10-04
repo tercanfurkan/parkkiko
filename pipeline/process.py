@@ -1,7 +1,7 @@
 """Turn the newest raw snapshot into the two files everything else reads.
 
     data/processed/parking_rules.parquet   analysis snapshot (metric CRS, committed to git)
-    web/public/data/parking_areas.geojson  app data (GPS CRS, build artefact)
+    web/public/data/parking_areas.geojson  app data (GPS CRS, committed so the app just runs)
 
 Usage: python pipeline/process.py
 """
@@ -13,11 +13,9 @@ import geopandas as gpd
 import pandas as pd
 
 import rules
+from export_web import SOURCE as PARQUET, write_web
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
-WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
-              "reason", "extra_info"]
-COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
 def latest_snapshot():
@@ -107,24 +105,13 @@ def main():
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
 
-    out = Path("data/processed")
-    out.mkdir(parents=True, exist_ok=True)
-    areas.to_parquet(out / "parking_rules.parquet", compression="zstd")
-    print(f"  {len(areas)} areas -> {out / 'parking_rules.parquet'}")
+    PARQUET.parent.mkdir(parents=True, exist_ok=True)
+    areas.to_parquet(PARQUET, compression="zstd")
+    print(f"  {len(areas)} areas -> {PARQUET}")
     print(areas["status"].value_counts().to_string())
 
-    # The app needs GPS coordinates and only the display fields.
-    web = areas[WEB_FIELDS + ["geometry"]].to_crs(4326)
-    path = Path("web/public/data/parking_areas.geojson")
-    path.parent.mkdir(parents=True, exist_ok=True)
-    web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
-
-    # Most areas leave most fields empty, and a null costs as many bytes as a value.
-    payload = json.loads(path.read_text())
-    for feature in payload["features"]:
-        feature["properties"] = {k: v for k, v in feature["properties"].items() if v is not None}
-    path.write_text(json.dumps(payload, separators=(",", ":")))
-    print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
+    target = write_web(areas)
+    print(f"  {len(areas)} areas -> {target}")
 
 
 if __name__ == "__main__":

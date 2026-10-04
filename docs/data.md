@@ -20,18 +20,25 @@ must have its coordinate system set explicitly on read or every distance comes o
 |---|---|---|---|
 | `data/raw/<date>/*.geojson` | 7.8 MB | no | dated snapshot, exactly as the city served it |
 | `data/processed/parking_rules.parquet` | 0.8 MB | **yes** | analysis snapshot, one row per parking area |
-| `web/public/data/parking_areas.geojson` | 3.9 MB, 0.40 MB gzipped | no | what the app loads |
+| `web/public/data/parking_areas.geojson` | 2.8 MB, 0.32 MB gzipped | **yes** | what the app loads |
 
 The processed file is committed so all three of us analyse identical data and results reproduce.
-Raw snapshots stay out of git and are re-fetched only when re-processing. Both derived files come
-from one script, so the rules in the app and in the analysis cannot drift apart.
+The app's file is committed too, so the map runs straight after a clone with no Python and no
+network. Raw snapshots stay out of git and are re-fetched only when re-processing.
+
+Both derived files are written by one function, `write_web` in `pipeline/export_web.py`, whether
+the pipeline produces them or someone rebuilds them, so the app and the analysis cannot disagree
+about what a rule says. Because the app's file is committed and generated, it can fall behind the
+data it came from: `python pipeline/export_web.py --check` rebuilds it to a temporary path and
+compares, so staleness is something you can test rather than hope about.
 
 ## Timings, measured
 
 | Step | Time |
 |---|---|
 | Fetch the parking register | ~2 s |
-| Process everything into both outputs | ~2 s |
+| Rebuild only the app's file from the committed snapshot | ~0.7 s |
+| Process everything into both outputs | ~1.4 s |
 | Load the processed file in a notebook | <1 s |
 | Build a spatial index over 8,754 areas | 3 ms |
 | Find areas within 50 m of a point | 0.04 ms |

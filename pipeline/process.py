@@ -15,8 +15,8 @@ import pandas as pd
 import rules
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
-WEB_FIELDS = ["id", "rule_type", "class_name_en", "space_type_en", "hours", "duration_min",
-              "season", "status", "reason", "extra_info"]
+WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
+              "reason", "extra_info"]
 COORD_DECIMALS = 6          # ~0.1 m, far finer than the register's own accuracy
 
 
@@ -83,12 +83,15 @@ def check(areas):
     """Fail loudly if the register breaks an assumption everything downstream relies on."""
     if not areas["id"].is_unique or areas["id"].isna().any():
         raise ValueError("parking area ids must be unique and present")
-    if areas.geometry.isna().any():
-        raise ValueError("every parking area needs a geometry")
-    if areas.crs is None or areas.crs.to_epsg() != 3879:
-        raise ValueError(f"expected EPSG:3879, got {areas.crs}")
-    if not areas.geometry.geom_type.eq("MultiPolygon").all():
-        raise ValueError("expected every geometry to be a MultiPolygon")
+    if (areas.geometry.isna() | areas.geometry.is_empty).any():
+        raise ValueError("every parking area needs a geometry we can measure")
+    if not areas.geometry.geom_type.isin({"Polygon", "MultiPolygon"}).all():
+        raise ValueError("expected every geometry to be a polygon")
+    # set_crs asserts the coordinate system rather than verifying it, so check the numbers:
+    # if the server ever returns degrees, they land nowhere near Helsinki in metres.
+    minx, miny, maxx, maxy = areas.total_bounds
+    if not (25_400_000 < minx < 25_600_000 and 6_650_000 < miny < 6_750_000):
+        raise ValueError(f"coordinates are not metres around Helsinki: {areas.total_bounds}")
 
 
 def main():
@@ -115,6 +118,12 @@ def main():
     path = Path("web/public/data/parking_areas.geojson")
     path.parent.mkdir(parents=True, exist_ok=True)
     web.to_file(path, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
+
+    # Most areas leave most fields empty, and a null costs as many bytes as a value.
+    payload = json.loads(path.read_text())
+    for feature in payload["features"]:
+        feature["properties"] = {k: v for k, v in feature["properties"].items() if v is not None}
+    path.write_text(json.dumps(payload, separators=(",", ":")))
     print(f"  {len(web)} areas -> {path} ({path.stat().st_size / 1e6:.2f} MB)")
 
 

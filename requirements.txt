@@ -1,6 +1,6 @@
 pandas
 geopandas
-pyarrow
+pyarrow>=21            # older versions cannot read the parquet this writes
 duckdb
 matplotlib
 scipy

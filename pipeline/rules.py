@@ -58,16 +58,29 @@ RESERVED_TYPES = {
 }
 
 
-def class_name_en(luokka):
-    """English name of a parking class, for display and for the report."""
+def _class_code(luokka):
+    """The register stores the class as a float, and leaves it absent for some areas."""
     try:
-        return LUOKKA_RULES[int(luokka)][2]
-    except (KeyError, TypeError, ValueError):
+        return int(luokka)
+    except (TypeError, ValueError):
+        return None
+
+
+def class_name_en(luokka):
+    """English name of a parking class, for analysis and the report.
+
+    None for a class we do not know, so an unrecognised class is never given a confident
+    name. rule_type flags the same input as an issue.
+    """
+    code = _class_code(luokka)
+    if code is None or code == 0:
         return NO_CLASS_NAME
+    entry = LUOKKA_RULES.get(code)
+    return entry[2] if entry else None
 
 
 def space_type_en(tyyppi):
-    """English label of a space type, or None when the register states none."""
+    """English label of a space type, or None when the register states none we recognise."""
     t = _txt(tyyppi).strip().lower()
     return BAN_TYPES.get(t) or RESERVED_TYPES.get(t)
 
@@ -85,11 +98,10 @@ def rule_type(luokka, tyyppi):
         return "reserved", None, None
     if t and not t.isdigit():
         return "unknown", None, (UNREADABLE, f"unknown space type {tyyppi!r}")
-    try:
-        rule, limit, _ = LUOKKA_RULES[int(luokka)]
-        return rule, limit, None
-    except (KeyError, TypeError, ValueError):
+    entry = LUOKKA_RULES.get(_class_code(luokka))
+    if entry is None:
         return "unknown", None, (UNREADABLE, f"no rule for class {luokka!r}")
+    return entry[0], entry[1], None
 
 
 # ------------------------------------------------------------------- hours

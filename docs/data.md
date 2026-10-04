@@ -63,8 +63,8 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
 |---|---|
 | `id` | the register's own area id, unique |
 | `rule_type` | paid, free_limited, banned_hours, always_banned, reserved, unknown |
-| `class_name_en` | English name of the parking class |
-| `space_type_en` | English name of the space type, where the register states one |
+| `class_name_en` | English name of the parking class, or empty for a class we do not recognise |
+| `space_type_en` | English name of the space type, where the register states one we recognise |
 | `hours` | parsed windows, e.g. `{"mon_fri": [9, 21], "sat": [9, 18]}` |
 | `duration_min` | maximum parking time in minutes; 0 means explicitly no limit |
 | `season` | months and days the rule applies, or empty for all year |
@@ -75,8 +75,12 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
 | `geometry` | MultiPolygon, EPSG:3879 |
 
 Before writing, the pipeline refuses to continue unless ids are unique and present, every area has
-a geometry, the coordinate system is EPSG:3879, and every shape is a MultiPolygon. These are the
-assumptions the distance work and the map both rely on.
+a geometry we can measure, every shape is a polygon, and the coordinates are metres around
+Helsinki. That last one matters: reading the file asserts the coordinate system rather than
+verifying it, so if the server ever returned degrees the numbers would land nowhere near the city.
+
+The parquet is written by pyarrow. Versions before 21 cannot read it (`Repetition level histogram
+size mismatch`), which is why `requirements.txt` pins a floor rather than leaving it open.
 
 ## Known limits
 

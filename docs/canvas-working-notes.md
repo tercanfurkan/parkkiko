@@ -1,5 +1,11 @@
 # Mini Project Canvas — DRAFT
 
+> **Historical working draft, superseded.** These notes record how the project was argued out, so
+> the numbers are snapshots from the time each section was written and several are now out of
+> date. The current figures are generated in [report_stats.md](report_stats.md); the submitted
+> canvas is [mini-project-canvas.md](mini-project-canvas.md).
+
+
 **Title (preliminary):** Parkability — where Helsinki's parking rules are misread
 **Group members:** _TBD (3)_
 **Workshop #:** _TBD_
@@ -40,11 +46,15 @@ pre-formatted hours (`9-21, (9-18)` → `ma-pe 9-21, la 9-18`). Not worth a seco
 | Source | Endpoint / layer | Records | Used for |
 |---|---|---|---|
 | Street parking areas + rules | `https://kartta.hel.fi/ws/geoserver/avoindata/wfs`, `avoindata:Pysakointipaikat_alue` | 8,754 | geometry, class, hours (`voimassaolo`), max duration (`kesto`), bay type (`tyyppi`), season (`kausi`), spaces, sign info (`lisatieto`) |
-| Temporary traffic arrangements | same server, `avoindata:Tilapainen_liikennejarjestely_alue` | 324 | roadworks/closures with start + end dates → mark affected streets uncertain |
 | Finnish public holidays | calendar, e.g. Python `holidays` package | — | holiday = Sunday rules; day before holiday = Saturday (bracketed hours). Eve rule applied by us, not the package. |
 
 Request GPS coordinates with `srsName=EPSG:4326` (default is EPSG:3879). All sources CC BY 4.0,
 no registration or authentication (verified with bare HTTP requests).
+
+**Evaluated and dropped:** temporary traffic arrangements. We built the spatial join and measured
+it: the arrangements run a median of 711 days, and of the 191 parking areas overlapping one only
+18 state a purpose mentioning parking. An overlap meant a permit exists nearby, not that the
+spaces are gone.
 
 **Deliberately out of scope:** parking fines and Digiroad traffic signs. Both are recorded in
 [future-work.md](future-work.md) with the reasons and the endpoints.
@@ -78,12 +88,10 @@ strings and 25 duration strings fit a hand-checkable lookup table).
 6. **Extra info (`lisatieto`, 1,761 filled).** Plain sign codes are kept as metadata. Free-text
    conditions (e.g. night driving ban 22–6) are not parsed: the area is marked uncertain and the
    text is shown to the driver as written, to decide.
-7. **Temporary arrangements.** Spatial overlap with parking areas, keeping start/end dates;
-   active arrangement at query time → uncertain.
-8. **Calendar.** Holiday = Sunday; day before a holiday = Saturday (bracketed hours).
-9. **Spatial index** over parking area geometries for nearest-area lookup from GPS.
+7. **Calendar.** Holiday = Sunday; day before a holiday = Saturday (bracketed hours).
+8. **Spatial index** over parking area geometries for nearest-area lookup from GPS.
 
-**Missing hours (988 areas; 60 in core, 928 outside).** Either left as unknown, or predicted
+**Missing hours (978 areas; the counts below predate the parser fixes).** Either left as unknown, or predicted
 from neighbouring areas, class and district — shown only above a validated confidence threshold
 and labelled as predicted. Decision belongs to the Learning Task block.
 

@@ -21,7 +21,7 @@ of where drivers are actually fined would let the app warn "this street is often
 the sign", which no rule lookup can do.
 
 **Why it is not in the project.** The fines are geocoded to street addresses, not to the parked
-car: 165,724 fines sit on 10,932 distinct coordinates, with 3,705 at a single address. Only 15%
+car: all 165,724 records sit on 10,932 distinct coordinates, with 3,705 at a single address. Only 15%
 fall within 10 m of a parking area and 41% within 20 m, so a fine cannot be attributed to an area
 or a street side, only to a street. Time resolution is the month, so nothing can be said about the
 hour. Counts also partly reflect where inspectors patrol rather than where rules are broken, which

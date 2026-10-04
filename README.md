@@ -3,9 +3,13 @@
 May I park here, and until when? A mobile-friendly map of Helsinki street parking rules, built on
 the city's open data. University of Helsinki, Introduction to Data Science mini-project.
 
+**[How this project was built](docs/process.md)** walks through the six stages of a data science
+project with the code, data and results behind each one.
+
 ## Layout
 
-- `docs/` project canvas, data documentation, SQL guide, task board
+- `docs/` the process walkthrough, project canvas, data documentation and SQL guide
+- `analysis/` regenerates every figure and table quoted in the report
 - `pipeline/` download the data, parse the rules, export for the app
 - `notebooks/` exploration
 - `web/` React and Leaflet map app
@@ -57,6 +61,16 @@ Three ways, pick whichever suits you.
 
 **A map, with no code.** Run `pipeline/process.py`, then drag
 `web/public/data/parking_areas.geojson` into [kepler.gl](https://kepler.gl).
+
+## Report figures
+
+The tables in `docs/report_stats.md` and the charts in `docs/figures/` are generated from the
+committed snapshot, so they can be checked and they follow the register when it changes. The
+canvas is a submission form and is written by hand.
+
+```bash
+.venv/bin/python analysis/report_stats.py --write --figures   # -> docs/report_stats.md, docs/figures/
+```
 
 ## Web app
 

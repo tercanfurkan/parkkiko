@@ -9,7 +9,6 @@ No account, key or registration is needed; we verified this with bare unauthenti
 | Layer | Rows | Used for |
 |---|---|---|
 | `avoindata:Pysakointipaikat_alue` | 8,754 | street parking areas, their rules and geometry |
-| `avoindata:Tilapainen_liikennejarjestely_alue` | 299 | roadworks and closures, with start and end dates |
 
 We download metric coordinates (EPSG:3879), which makes distances come out in metres, and
 convert to GPS coordinates once when exporting for the map. **A GeoJSON file always declares itself as WGS84 even when it is not**, so the metric file
@@ -31,7 +30,7 @@ from one script, so the rules in the app and in the analysis cannot drift apart.
 
 | Step | Time |
 |---|---|
-| Fetch both layers | ~4 s |
+| Fetch the parking register | ~2 s |
 | Process everything into both outputs | ~2 s |
 | Load the processed file in a notebook | <1 s |
 | Build a spatial index over 8,754 areas | 3 ms |
@@ -58,8 +57,6 @@ to branch on, and a `reason` in plain words for the driver. The parsers fail clo
 account for every character of a field, so `7-18 7-15` is flagged as ambiguous rather than read
 as `7-18`, and an unrecognised space type is flagged rather than falling back to the class.
 
-191 areas currently overlap a roadworks arrangement and should not be trusted while it lasts.
-
 ## Columns
 
 | Column | Meaning |
@@ -74,7 +71,6 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
 | `status` | official, missing_hours or uncertain |
 | `issue_codes` | unreadable, ambiguous or note, for code to branch on |
 | `reason` | the same thing in plain words, for the driver |
-| `roadworks_until` | end date of a temporary arrangement covering this area |
 | `luokka`, `luokka_nimi`, `tyyppi`, `voimassaolo`, `kesto`, `kausi`, `lisatieto` | the register's own fields, kept so any parse can be traced back |
 | `geometry` | MultiPolygon, EPSG:3879 |
 
@@ -92,5 +88,6 @@ assumptions the distance work and the map both rely on.
   in a street canyon is comparable to the street width, so the driver picks the side.
 - **Public holidays are not in any source.** A holiday follows Sunday rules and the day before a
   holiday follows Saturday rules, so the app supplies its own calendar.
+- **Temporary traffic arrangements are not usable**, see [future-work.md](future-work.md).
 - **One area's hours are genuinely ambiguous** (`7-9, 15-17`, two ranges with no brackets) and
   stay uncertain by design.

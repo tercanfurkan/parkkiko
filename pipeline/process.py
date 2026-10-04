@@ -79,18 +79,6 @@ def classify(row):
     }
 
 
-def add_roadworks(areas, snapshot):
-    """Flag areas overlapping a temporary traffic arrangement, keeping its end date."""
-    works = gpd.read_file(snapshot / "temporary_arrangements_4326.geojson").to_crs(areas.crs)
-    hit = gpd.sjoin(areas[["geometry"]], works[["geometry", "liikennejarjestely_paattyy"]],
-                    predicate="intersects", how="inner")
-    ends = hit.groupby(hit.index)["liikennejarjestely_paattyy"].max()
-    areas["roadworks_until"] = None
-    areas.loc[ends.index, "roadworks_until"] = ends
-    print(f"  {len(ends)} areas overlap roadworks")
-    return areas
-
-
 def check(areas):
     """Fail loudly if the register breaks an assumption everything downstream relies on."""
     if not areas["id"].is_unique or areas["id"].isna().any():
@@ -115,7 +103,6 @@ def main():
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
-    areas = add_roadworks(areas, snapshot)
 
     out = Path("data/processed")
     out.mkdir(parents=True, exist_ok=True)

@@ -81,15 +81,6 @@ group by 1
 order by missing desc;
 ```
 
-## Roadworks right now
-
-```sql
-select id, rule_type, roadworks_until
-from 'data/processed/parking_rules.parquet'
-where roadworks_until is not null
-order by roadworks_until;
-```
-
 ## Seeing it on a map without code
 
 Run `python pipeline/process.py`, then drag `web/public/data/parking_areas.geojson` onto

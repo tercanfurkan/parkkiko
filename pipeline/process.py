@@ -92,6 +92,25 @@ def check(areas):
         raise ValueError(f"coordinates are not metres around Helsinki: {areas.total_bounds}")
 
 
+def add_district(areas, snapshot):
+    """Name the district each area sits in, by its centre.
+
+    Some areas straddle a boundary, so containment of the centre picks exactly one and the
+    answer does not depend on row order.
+    """
+    districts = (gpd.read_file(snapshot / "districts_3879.geojson")
+                 .set_crs(3879, allow_override=True)[["nimi_fi", "geometry"]]
+                 .rename(columns={"nimi_fi": "district"}))
+    centres = areas[["geometry"]].copy()
+    centres["geometry"] = areas.geometry.centroid
+    hit = gpd.sjoin(centres, districts, predicate="within", how="left")
+    areas["district"] = hit["district"]
+    missing = int(areas["district"].isna().sum())
+    print(f"  {areas['district'].nunique()} districts"
+          + (f", {missing} areas outside all of them" if missing else ""))
+    return areas
+
+
 def main():
     snapshot = latest_snapshot()
     print(f"snapshot: {snapshot.name}")
@@ -104,6 +123,7 @@ def main():
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
                    "lisatieto", "geometry"]].join(parsed)
+    areas = add_district(areas, snapshot)
 
     PARQUET.parent.mkdir(parents=True, exist_ok=True)
     areas.to_parquet(PARQUET, compression="zstd")

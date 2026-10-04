@@ -43,6 +43,11 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 A property is **absent** rather than null or empty when an area does not have it, so test for
 presence. Geometry is MultiPolygon in WGS84, coordinates to 5 decimals, about 1 m.
 
+**`web/public/data/holidays.json`** is the second committed file, 4 KB. It maps the dates whose
+parking window is not simply their weekday: a public holiday follows the Sunday window, the day
+before follows the Saturday one. A date that is absent uses its weekday. An entry carrying
+`uncertain` must be shown as check-the-sign rather than as free parking.
+
 **Who owns what.** Backend owns `pipeline/`, `analysis/`, `notebooks/`, `data/`. Frontend owns
 `web/`. Neither edits the other without saying so here first. If the frontend needs a new field,
 add a row to Open questions below rather than computing it in the browser.
@@ -62,7 +67,7 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`, one layer, about 2 s. Sources and licence: [data.md](data.md). |
 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
-| Finnish holiday calendar | | todo | A holiday follows Sunday hours, the day before follows Saturday. The bracket convention is explained in `pipeline/rules.py` `parse_hours`. `holidays` is already in requirements. Blocks a correct answer on those days, so it gates the app's rule evaluation. |
+| Finnish holiday calendar | | done | `pipeline/export_holidays.py` writes `web/public/data/holidays.json`, committed. A date absent from it uses its weekday. Christmas Eve and Midsummer Eve carry `uncertain`: show check-the-sign, not free. |
 
 ## 3 Preprocessing
 
@@ -89,12 +94,12 @@ add a row to Open questions below rather than computing it in the browser.
 | Build the feature table | | todo | One row per area: neighbour hours, distance, same-street flag, class, district. Label-encode categoricals as in week 2 exercise 1 of the reference answers. The join to copy is `nearest_pairs()` in `analysis/report_stats.py`. |
 | Dummy baseline | | todo | `sklearn.DummyClassifier(strategy="most_frequent")`. The course compares against one explicitly: week 3 exercise 2 of the reference answers. Our hand count is 32.9%; the fitted number should match. |
 | Nearest-neighbour model | | todo | Same-class kNN, distance weighted. Accuracy and macro-F1 against the baseline. Why this method: the measurement in [process.md](process.md) section 4, and the canvas Learning approach box. |
-| Spatially blocked validation | | todo | Hold out whole districts. Neighbouring sections of one street are near-duplicates, so a random split tests on copies of the training data. Reasoning in [canvas-working-notes.md](canvas-working-notes.md), Learning approach. |
+| Spatially blocked validation | | todo | Hold out whole districts, using the `district` column: 30 populated, the largest holding 1,471 areas and several holding one. Neighbouring sections of one street are near-duplicates, so a random split tests on copies of the training data. |
 | Distance-matched test | | todo | Hide close neighbours so test distances match the 978 areas we must predict, median 153 m with 17.7% within 50 m. The gap table is in [report_stats.md](report_stats.md); `prediction_gap()` computes it. |
 | Choose the distance cut-off | | todo | Accuracy against coverage. Accuracy wins: a wrong answer costs a fine, "unknown" costs nothing. Set the target before looking at results. Accuracy by distance: [report_stats.md](report_stats.md). |
 | Error analysis | | todo | Which areas we get wrong and why, on a map. The course asks for exactly this after classification: week 3 exercise 2 step 5 in the reference answers. |
 | Imputation reflection | | todo | What changes for a driver when we predict versus leave unknown, and who is affected. Week 2 exercise 2 closes on this question; our version is the fairness point in the canvas Privacy box. |
-| Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. Districts come from the register; see [data.md](data.md) columns. |
+| Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. The `district` column now exists, 30 populated of 34. |
 | Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/export_web.py`. |
 
 ## 6 The app
@@ -143,7 +148,7 @@ Raise anything here that needs the other stream or the group to decide.
 | Question | Raised by | Answer |
 |---|---|---|
 | Add new rows at the top of this table, so two streams appending at once do not collide. | | |
-| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. Nobody has district or spaces-per-area yet. |
+| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. `district` now exists; nobody has spaces-per-area yet. |
 | Should the app's data file be committed, generated offline, or built on deploy? | backend | Committed, and rebuildable offline with `pipeline/export_web.py`. Costs ~0.4 MB per change in git. |
 
 ## Known traps

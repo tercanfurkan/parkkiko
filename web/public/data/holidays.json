@@ -1,0 +1,246 @@
+{
+ "note": "Dates whose parking window differs from their weekday. Absent means use the weekday: Mon-Fri the first window, Saturday the bracketed one, Sunday the third. An entry with 'uncertain' should be shown as check-the-sign, not as free.",
+ "years": [
+  2026,
+  2028
+ ],
+ "days": {
+  "2026-01-01": {
+   "window": "sun",
+   "name": "New Year's Day"
+  },
+  "2026-01-05": {
+   "window": "sat",
+   "name": "day before Epiphany"
+  },
+  "2026-01-06": {
+   "window": "sun",
+   "name": "Epiphany"
+  },
+  "2026-04-02": {
+   "window": "sat",
+   "name": "day before Good Friday"
+  },
+  "2026-04-03": {
+   "window": "sun",
+   "name": "Good Friday"
+  },
+  "2026-04-06": {
+   "window": "sun",
+   "name": "Easter Monday"
+  },
+  "2026-04-30": {
+   "window": "sat",
+   "name": "day before May Day"
+  },
+  "2026-05-01": {
+   "window": "sun",
+   "name": "May Day"
+  },
+  "2026-05-13": {
+   "window": "sat",
+   "name": "day before Ascension Day"
+  },
+  "2026-05-14": {
+   "window": "sun",
+   "name": "Ascension Day"
+  },
+  "2026-06-18": {
+   "window": "sat",
+   "name": "day before Midsummer Eve"
+  },
+  "2026-06-19": {
+   "window": "sun",
+   "name": "Midsummer Eve",
+   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+  },
+  "2026-06-20": {
+   "window": "sun",
+   "name": "Midsummer Day"
+  },
+  "2026-10-30": {
+   "window": "sat",
+   "name": "day before All Saints' Day"
+  },
+  "2026-10-31": {
+   "window": "sun",
+   "name": "All Saints' Day"
+  },
+  "2026-12-23": {
+   "window": "sat",
+   "name": "day before Christmas Eve"
+  },
+  "2026-12-24": {
+   "window": "sun",
+   "name": "Christmas Eve",
+   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+  },
+  "2026-12-25": {
+   "window": "sun",
+   "name": "Christmas Day"
+  },
+  "2026-12-26": {
+   "window": "sun",
+   "name": "Second Day of Christmas"
+  },
+  "2026-12-31": {
+   "window": "sat",
+   "name": "day before New Year's Day"
+  },
+  "2027-01-01": {
+   "window": "sun",
+   "name": "New Year's Day"
+  },
+  "2027-01-05": {
+   "window": "sat",
+   "name": "day before Epiphany"
+  },
+  "2027-01-06": {
+   "window": "sun",
+   "name": "Epiphany"
+  },
+  "2027-03-25": {
+   "window": "sat",
+   "name": "day before Good Friday"
+  },
+  "2027-03-26": {
+   "window": "sun",
+   "name": "Good Friday"
+  },
+  "2027-03-29": {
+   "window": "sun",
+   "name": "Easter Monday"
+  },
+  "2027-04-30": {
+   "window": "sat",
+   "name": "day before May Day"
+  },
+  "2027-05-01": {
+   "window": "sun",
+   "name": "May Day"
+  },
+  "2027-05-05": {
+   "window": "sat",
+   "name": "day before Ascension Day"
+  },
+  "2027-05-06": {
+   "window": "sun",
+   "name": "Ascension Day"
+  },
+  "2027-06-24": {
+   "window": "sat",
+   "name": "day before Midsummer Eve"
+  },
+  "2027-06-25": {
+   "window": "sun",
+   "name": "Midsummer Eve",
+   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+  },
+  "2027-06-26": {
+   "window": "sun",
+   "name": "Midsummer Day"
+  },
+  "2027-11-05": {
+   "window": "sat",
+   "name": "day before All Saints' Day"
+  },
+  "2027-11-06": {
+   "window": "sun",
+   "name": "All Saints' Day"
+  },
+  "2027-12-06": {
+   "window": "sun",
+   "name": "Independence Day"
+  },
+  "2027-12-23": {
+   "window": "sat",
+   "name": "day before Christmas Eve"
+  },
+  "2027-12-24": {
+   "window": "sun",
+   "name": "Christmas Eve",
+   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+  },
+  "2027-12-25": {
+   "window": "sun",
+   "name": "Christmas Day"
+  },
+  "2027-12-31": {
+   "window": "sat",
+   "name": "day before New Year's Day"
+  },
+  "2028-01-01": {
+   "window": "sun",
+   "name": "New Year's Day"
+  },
+  "2028-01-05": {
+   "window": "sat",
+   "name": "day before Epiphany"
+  },
+  "2028-01-06": {
+   "window": "sun",
+   "name": "Epiphany"
+  },
+  "2028-04-13": {
+   "window": "sat",
+   "name": "day before Good Friday"
+  },
+  "2028-04-14": {
+   "window": "sun",
+   "name": "Good Friday"
+  },
+  "2028-04-17": {
+   "window": "sun",
+   "name": "Easter Monday"
+  },
+  "2028-05-01": {
+   "window": "sun",
+   "name": "May Day"
+  },
+  "2028-05-24": {
+   "window": "sat",
+   "name": "day before Ascension Day"
+  },
+  "2028-05-25": {
+   "window": "sun",
+   "name": "Ascension Day"
+  },
+  "2028-06-22": {
+   "window": "sat",
+   "name": "day before Midsummer Eve"
+  },
+  "2028-06-23": {
+   "window": "sun",
+   "name": "Midsummer Eve",
+   "uncertain": "we have not confirmed the city treats this as a holiday for parking"
+  },
+  "2028-06-24": {
+   "window": "sun",
+   "name": "Midsummer Day"
+  },
+  "2028-11-03": {
+   "window": "sat",
+   "name": "day before All Saints' Day"
+  },
+  "2028-11-04": {
+   "window": "sun",
+   "name": "All Saints' Day"
+  },
+  "2028-12-05": {
+   "window": "sat",
+   "name": "day before Independence Day"
+  },
+  "2028-12-06": {
+   "window": "sun",
+   "name": "Independence Day"
+  },
+  "2028-12-25": {
+   "window": "sun",
+   "name": "Christmas Day"
+  },
+  "2028-12-26": {
+   "window": "sun",
+   "name": "Second Day of Christmas"
+  }
+ }
+}

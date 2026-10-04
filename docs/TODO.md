@@ -99,7 +99,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Neighbour agreement by distance | | done | `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
 | Summary statistics per variable | | todo | Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
 | Bivariate and multivariate views | | todo | Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
 | Outlier check on area sizes | | todo | Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |

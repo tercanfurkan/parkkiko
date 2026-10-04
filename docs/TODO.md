@@ -11,6 +11,9 @@ you are working on, so two streams editing this file rarely touch the same lines
 
 Status values: `todo`, `doing`, `done`, `stretch`, `dropped`.
 
+This file is the source. The spreadsheet in the team's Drive folder is a snapshot from before
+this board moved into version control and is no longer kept in step.
+
 ---
 
 ## The boundary between the two streams

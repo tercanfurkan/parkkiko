@@ -34,6 +34,7 @@ Then skim, as the task needs:
 - **`docs/report_stats.md`** — the measured figures, generated rather than typed.
 - **`docs/future-work.md`** — ideas we evaluated and rejected, with the numbers. Check here before
   proposing a data source; some have already been measured and dropped.
+- **`docs/report_draft.md`** — raw material for the report. Unmaintained by design; do not cite it.
 - **`docs/canvas-working-notes.md`** — how the decisions were argued out. Superseded numbers, but
   it explains why things are the way they are.
 - **`docs/mini-project-canvas.md`** — the course submission form.

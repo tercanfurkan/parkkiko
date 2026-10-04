@@ -119,7 +119,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Technical report | | todo | Max 5 pages plus appendix. Draft: [report_draft.md](report_draft.md), structured on the six stages. Figures come from `analysis/report_stats.py`, never typed by hand. |
+| Technical report | | todo | Max 5 pages plus appendix, structured on the six stages. Write from [process.md](process.md), which is current, using [report_draft.md](report_draft.md) as raw material: tables, phrasings and per-section checklists. That draft is deliberately not maintained. Figures come from `analysis/report_stats.py`, never typed by hand. |
 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
@@ -143,8 +143,8 @@ Raise anything here that needs the other stream or the group to decide.
 | Question | Raised by | Answer |
 |---|---|---|
 | Does the frontend need a field the GeoJSON does not carry? | | |
-| `process.md` and `report_draft.md` overlap by about two thirds. Which one becomes the source? | backend | |
-| Should the unfinished `report_draft.md` sit in a public repo before submission? | backend | |
+| `process.md` and `report_draft.md` overlap. Which is the source? | backend | process.md. report_draft.md is unmaintained raw material for writing the report, and says so at the top. |
+| The app's data file is generated and not in git, so the frontend needs Python and network access before it can see a map. Commit it, generate it from the committed parquet, or build it in the deploy job? | backend | |
 
 ## Known traps
 

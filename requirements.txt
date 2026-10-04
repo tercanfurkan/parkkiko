@@ -8,3 +8,4 @@ scikit-learn
 holidays>=0.60          # the calendar the holiday export derives its dates from
 jupyter
 tabulate
+pytest

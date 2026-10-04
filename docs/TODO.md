@@ -11,6 +11,9 @@ you are working on, so two streams editing this file rarely touch the same lines
 
 Status values: `todo`, `doing`, `done`, `stretch`, `dropped`.
 
+Run `.venv/bin/python -m pytest tests -q` before you push. It takes under a second and checks the
+contract below, so a change that would break the other stream fails locally first.
+
 Every task names where to read first. Follow those links before starting: most of them exist
 because someone already measured the thing you are about to assume.
 
@@ -33,12 +36,12 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | Property | Present on | Note for the app |
 |---|---|---|
 | `id`, `rule_type`, `status` | all 8,754 | always there |
-| `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated |
+| `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated. A real object, not a string: no parsing needed |
 | `duration_min` | 2,803 | minutes; `0` means explicitly no limit |
 | `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
 | `extra_info` | 1,362 | sign text to show verbatim |
 | `reason` | 385 | why an area is uncertain, already written for a driver to read |
-| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}` |
+| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
 
 A property is **absent** rather than null or empty when an area does not have it, so test for
 presence. Geometry is MultiPolygon in WGS84, coordinates to 5 decimals, about 1 m.
@@ -74,7 +77,7 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
-| Finnish holiday calendar | | done | `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
+| Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
 
 ## 3 Preprocessing
 
@@ -82,13 +85,21 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Parse hours, durations, seasons | | done | PR #25. `pipeline/rules.py`. Read its module docstring: the fail-closed contract is the project's core principle, not a style choice. |
 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
+| District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
+
+## Quality
+
+| Task | Owner | Status | Notes |
+|---|---|---|---|
+| Tests for the parsers, the status and the app contract | | done | PR #31. `pytest tests -q`, 76 cases, under a second, no network. Every case expecting a refusal is a regression we shipped once. |
+| Run the tests in CI | | todo | Waiting on the frontend stream's GitHub Actions work; wiring ours in is `pip install -r requirements.txt` then `pytest tests -q`. Run on every pull request, not only when `pipeline/` changes: two of the tests read the committed data files, which is exactly the case a path filter would skip. |
 
 ## 4 Exploration
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Neighbour agreement by distance | | done | `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
 | Summary statistics per variable | | todo | Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
 | Bivariate and multivariate views | | todo | Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
 | Outlier check on area sizes | | todo | Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |

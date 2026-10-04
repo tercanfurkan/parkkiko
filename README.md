@@ -70,6 +70,17 @@ Three ways, pick whichever suits you.
 **A map, with no code.** Drag `web/public/data/parking_areas.geojson` into
 [kepler.gl](https://kepler.gl). It is in the repo, so there is nothing to run first.
 
+## Tests
+
+```bash
+.venv/bin/python -m pytest tests -q      # under a second, no network
+```
+
+`tests/test_rules.py` and `tests/test_status.py` cover the parsers and the status they produce.
+Every case expecting a refusal is one the parsers once answered confidently and wrongly.
+`tests/test_app_data.py` checks the two committed files against the contract in
+[docs/TODO.md](docs/TODO.md), which is what the frontend is written against.
+
 ## Report figures
 
 The tables in `docs/report_stats.md` and the charts in `docs/figures/` are generated from the

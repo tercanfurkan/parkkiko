@@ -131,8 +131,7 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
-| Street-level fine risk heatmap | | stretch | Fines per street, normalised per parking space. Street level only: the fines are geocoded to addresses, so an area or a side cannot be inferred. Numbers and limits: [future-work.md](future-work.md). |
-| Weather-conditioned risk | | stretch | Second iteration of the heatmap. The fines carry year and month only, with no day or hour, so matching weather at the time of a fine and conditioning on "raining now" or "04:00" is not possible from this source. Monthly seasonality against monthly weather is. Read [future-work.md](future-work.md) before starting. |
+| Street-level fine density layer | | stretch | **The one stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a map layer beside the rules. Street level only: the fines are geocoded to addresses, so an area or a side cannot be inferred. Needs the violations fetch, a street-name join and a count per space. Numbers and limits: [future-work.md](future-work.md). |
 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
 

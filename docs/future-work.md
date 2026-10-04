@@ -100,7 +100,8 @@ Christmas-night case is a single day inside a monthly total.
 1. **A street-level density layer.** Fines per street, ideally per parking space so long streets
    do not simply dominate, over 2,701 streets. Street, not area or side: the geocoding cannot
    support anything finer. This is a genuine product feature, since a street with a clear sign and
-   many fines is a street people misread.
+   many fines is a street people misread. **This first step is on the task board as the
+   mini-project's stretch goal.** The rest of this section stays here as a maybe.
 2. **Monthly seasonality.** Twelve points per street per year from the WFS layer, which serves
    2023 only. Earlier years back to 2014 are CSV downloads on the dataset page, so a multi-year
    panel of roughly 120 months is possible with some wrangling.

@@ -64,8 +64,9 @@ Three ways, pick whichever suits you.
 
 ## Report figures
 
-Nothing quoted in the report or the canvas is typed by hand. This regenerates every table and
-chart, so they can be checked and they follow the register when it changes:
+The tables in `docs/report_stats.md` and the charts in `docs/figures/` are generated from the
+committed snapshot, so they can be checked and they follow the register when it changes. The
+canvas is a submission form and is written by hand.
 
 ```bash
 .venv/bin/python analysis/report_stats.py --write --figures   # -> docs/report_stats.md, docs/figures/

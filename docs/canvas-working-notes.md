@@ -1,5 +1,11 @@
 # Mini Project Canvas — DRAFT
 
+> **Historical working draft, superseded.** These notes record how the project was argued out, so
+> the numbers are snapshots from the time each section was written and several are now out of
+> date. The current figures are generated in [report_stats.md](report_stats.md); the submitted
+> canvas is [mini-project-canvas.md](mini-project-canvas.md).
+
+
 **Title (preliminary):** Parkability — where Helsinki's parking rules are misread
 **Group members:** _TBD (3)_
 **Workshop #:** _TBD_
@@ -85,7 +91,7 @@ strings and 25 duration strings fit a hand-checkable lookup table).
 7. **Calendar.** Holiday = Sunday; day before a holiday = Saturday (bracketed hours).
 8. **Spatial index** over parking area geometries for nearest-area lookup from GPS.
 
-**Missing hours (988 areas; 60 in core, 928 outside).** Either left as unknown, or predicted
+**Missing hours (978 areas; the counts below predate the parser fixes).** Either left as unknown, or predicted
 from neighbouring areas, class and district — shown only above a validated confidence threshold
 and labelled as predicted. Decision belongs to the Learning Task block.
 

@@ -3,8 +3,10 @@
 Working draft for the 5-page technical report. Sections follow the six stages of a data science
 project.
 
-Every figure below is generated, not typed. Rerun `python analysis/report_stats.py --write` and
-compare against [report_stats.md](report_stats.md); if the register changes, the report follows.
+The tables in section 4 are copied from [report_stats.md](report_stats.md), which
+`python analysis/report_stats.py --write --figures` regenerates from the committed snapshot.
+Re-copy them before submitting. Figures outside section 4, such as the fines count and the
+measurements of the dataset we rejected, are one-off and are sourced where they appear.
 
 ---
 
@@ -80,16 +82,27 @@ where fines happen, and it is the part a driver cannot see from the car.
 
 ### What "reserved" means in practice
 
-| Reserved for | Areas |
-|---|---|
-| Electric scooter | 312 |
-| Electric car | 187 |
-| Taxi | 122 |
-| Loading zone | 100 |
-| Accessible parking | 88 |
-| Tourist coach | 63 |
-| Diplomatic vehicle | 59 |
-| Motorcycle, bicycle, other | 112 |
+| Reserved for          |   Areas |
+|:----------------------|--------:|
+| Electric scooter      |     312 |
+| Electric car          |     187 |
+| Taxi                  |     122 |
+| Loading zone          |     100 |
+| Accessible parking    |      88 |
+| Tourist coach         |      63 |
+| not stated            |      60 |
+| Diplomatic vehicle    |      59 |
+| Motorcycle            |      17 |
+| Bicycle               |      14 |
+| Taxi, charging        |       8 |
+| Car or van            |       3 |
+| Official vehicle      |       3 |
+| Police                |       2 |
+| City Executive Office |       1 |
+| Mobile library        |       1 |
+| Parklet               |       1 |
+| Finnish Government    |       1 |
+| Lorry                 |       1 |
 
 These look like ordinary spaces from the driver's seat. They are the clearest case for the app:
 not a rule to interpret, just "this space is not for you".

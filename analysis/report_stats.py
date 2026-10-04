@@ -10,22 +10,27 @@ import argparse
 from pathlib import Path
 
 import geopandas as gpd
-import matplotlib
 import pandas as pd
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
 
 SOURCE = Path("data/processed/parking_rules.parquet")
 OUT = Path("docs/report_stats.md")
 FIGURES = Path("docs/figures")
 
-# Okabe-Ito, colour-blind safe, the same palette the app uses.
-COLOURS = {
+# Okabe-Ito, colour-blind safe. RULE_COLOURS mirrors web/src/style.js, so if you recolour the
+# map, recolour it there too. STATUS_COLOURS are deliberately different hues: a reader who has
+# seen the app should not read the status map's orange as "banned at times".
+RULE_COLOURS = {
     "free_limited": "#009E73", "paid": "#0072B2", "banned_hours": "#E69F00",
     "always_banned": "#D55E00", "reserved": "#CC79A7", "unknown": "#999999",
-    "official": "#0072B2", "missing_hours": "#E69F00", "uncertain": "#D55E00",
 }
+STATUS_COLOURS = {"official": "#56B4E9", "missing_hours": "#F0E442", "uncertain": "#CC79A7"}
+STATUS_MEANING = {
+    "official": "Complete rule published",
+    "missing_hours": "Rule type known, hours missing",
+    "uncertain": "Uncertain, with a stated reason",
+}
+DISTANCE_BINS = [0, 10, 50, 200, float("inf")]
+DISTANCE_LABELS = ["0-10 m", "10-50 m", "50-200 m", "over 200 m"]
 
 
 def table(df, title):
@@ -43,43 +48,43 @@ def rule_types(areas):
 
 
 def reserved_for(areas):
-    """What 'reserved' means in practice. Falls back to the Finnish field if labels are absent."""
-    column = "space_type_en" if "space_type_en" in areas.columns else "tyyppi"
-    counts = areas.loc[areas["rule_type"] == "reserved", column].value_counts(dropna=False)
-    df = pd.DataFrame({"Reserved for": counts.index.fillna("not stated"), "Areas": counts.values})
+    """What 'reserved' means in practice, in the words the documents display.
+
+    "not stated" stays its own row: folding it into an "other" bucket would hide the very
+    distinction this project is about.
+    """
+    labels = areas.loc[areas["rule_type"] == "reserved", "space_type_en"]
+    counts = labels.fillna("not stated").value_counts()
+    df = pd.DataFrame({"Reserved for": counts.index, "Areas": counts.values})
     return table(df, "Reserved areas by space type")
 
 
 def coverage(areas):
     counts = areas["status"].value_counts()
-    meaning = {
-        "official": "Complete rule published",
-        "missing_hours": "Rule type known, hours missing",
-        "uncertain": "Uncertain, with a stated reason",
-    }
     df = pd.DataFrame({
-        "Status": [meaning.get(s, s) for s in counts.index],
+        "Status": [STATUS_MEANING.get(s, s) for s in counts.index],
         "Areas": counts.values,
     })
     return table(df, "What the app can answer")
 
 
-def neighbour_accuracy(known):
+def accuracy_by_distance(paired):
+    """Share of correct copies per distance band. Used by both the table and the chart."""
+    bands = pd.cut(paired["dist"], DISTANCE_BINS, labels=DISTANCE_LABELS)
+    return paired.groupby(bands, observed=True)["match"].agg(["mean", "size"])
+
+
+def neighbour_accuracy(paired, by_dist, baseline):
     """Hide each area's hours and copy them from its nearest area of the same class."""
-    paired = nearest_pairs(known)
-    baseline = known["hours"].value_counts().iloc[0] / len(known) * 100
     headline = (
         f"Copying the nearest same-class area is correct "
-        f"**{paired['match'].mean() * 100:.1f}%** of the time "
-        f"({len(paired)} comparisons; ties add a few rows). Always guessing the most common "
-        f"pattern scores **{baseline:.1f}%**.\n"
+        f"**{paired['match'].mean() * 100:.1f}%** of the time, over {len(paired):,} comparisons. "
+        f"Always guessing the most common pattern scores **{baseline:.1f}%**.\n"
     )
-    bins = pd.cut(paired["dist"], [0, 10, 50, 200, float("inf")],
-                  labels=["0-10 m", "10-50 m", "50-200 m", "over 200 m"])
-    by_dist = paired.groupby(bins, observed=True)["match"].agg(["mean", "size"]).reset_index()
-    by_dist.columns = ["Distance to nearest same-class area", "Correct", "Areas"]
-    by_dist["Correct"] = (by_dist["Correct"] * 100).round(1)
-    return headline + "\n" + table(by_dist, "Accuracy by distance")
+    df = by_dist.reset_index().rename(columns={
+        "dist": "Distance to nearest same-class area", "mean": "Correct", "size": "Areas"})
+    df["Correct"] = (df["Correct"] * 100).round(1)
+    return headline + "\n" + table(df, "Accuracy by distance")
 
 
 def prediction_gap(areas, known):
@@ -111,17 +116,21 @@ def nearest_pairs(known):
     return paired
 
 
-def figures(areas, known):
+def figures(areas, paired, by_dist, baseline):
     """Three charts: what the city publishes, what we can answer, where prediction works."""
+    import matplotlib                      # only this path needs a plotting stack
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     FIGURES.mkdir(parents=True, exist_ok=True)
 
     counts = areas["rule_type"].value_counts().sort_values()
     fig, ax = plt.subplots(figsize=(7, 3.5))
-    ax.barh(counts.index, counts.values, color=[COLOURS.get(r, "#999999") for r in counts.index])
+    ax.barh(counts.index, counts.values, color=[RULE_COLOURS[r] for r in counts.index])
     for y, value in enumerate(counts.values):
         ax.text(value + 60, y, f"{value:,}", va="center", fontsize=9)
     ax.set_xlabel("parking areas")
-    ax.set_title("What Helsinki publishes: 8,754 street parking areas")
+    ax.set_title(f"What Helsinki publishes: {len(areas):,} street parking areas")
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
     fig.savefig(FIGURES / "rule_types.png", dpi=150)
@@ -136,8 +145,8 @@ def figures(areas, known):
     fig, ax = plt.subplots(figsize=(11, 11 * (maxy - miny) / (maxx - minx)))
     for status in ("official", "missing_hours", "uncertain"):
         group = areas[areas["status"] == status]
-        group.plot(ax=ax, color=COLOURS[status], linewidth=2.5,
-                   label=f"{status.replace('_', ' ')} ({len(group):,})")
+        group.plot(ax=ax, color=STATUS_COLOURS[status], linewidth=2.5,
+                   label=f"{STATUS_MEANING[status].lower()} ({len(group):,})")
     ax.set_xlim(minx, maxx)
     ax.set_ylim(miny, maxy)
     ax.legend(loc="lower right", frameon=False, fontsize=11)
@@ -146,15 +155,9 @@ def figures(areas, known):
     fig.savefig(FIGURES / "status_map.png", dpi=150, bbox_inches="tight")
     plt.close(fig)
 
-    paired = nearest_pairs(known)
-    bins = pd.cut(paired["dist"], [0, 10, 50, 200, float("inf")],
-                  labels=["0-10 m", "10-50 m", "50-200 m", "over 200 m"])
-    by_dist = paired.groupby(bins, observed=True)["match"].agg(["mean", "size"])
-    baseline = known["hours"].value_counts().iloc[0] / len(known) * 100
-
     fig, ax = plt.subplots(figsize=(7, 3.5))
-    ax.bar(by_dist.index.astype(str), by_dist["mean"] * 100, color="#0072B2")
-    ax.axhline(baseline, color="#D55E00", linestyle="--",
+    ax.bar(by_dist.index.astype(str), by_dist["mean"] * 100, color=RULE_COLOURS["paid"])
+    ax.axhline(baseline, color=RULE_COLOURS["always_banned"], linestyle="--",
                label=f"always guess the most common pattern ({baseline:.0f}%)")
     for x, (share, n) in enumerate(zip(by_dist["mean"], by_dist["size"])):
         ax.text(x, share * 100 + 2, f"{share * 100:.1f}%\nn={n:,}", ha="center", fontsize=9)
@@ -180,19 +183,24 @@ def main():
     areas = gpd.read_parquet(SOURCE)
     known = areas[areas["hours"].notna()]
 
+    # The nearest-neighbour join is the expensive step and both the table and the chart need it.
+    paired = nearest_pairs(known)
+    by_dist = accuracy_by_distance(paired)
+    baseline = known["hours"].value_counts().iloc[0] / len(known) * 100
+
     parts = [
         f"# Report figures\n\nGenerated by `analysis/report_stats.py` from "
         f"`{SOURCE}`: {len(areas)} parking areas, {len(known)} of them with stated hours.\n",
         rule_types(areas),
         reserved_for(areas),
         coverage(areas),
-        neighbour_accuracy(known),
+        neighbour_accuracy(paired, by_dist, baseline),
         prediction_gap(areas, known),
     ]
     text = "\n".join(parts)
     print(text)
     if args.figures:
-        figures(areas, known)
+        figures(areas, paired, by_dist, baseline)
     if args.write:
         OUT.write_text(text)
         print(f"written to {OUT}")

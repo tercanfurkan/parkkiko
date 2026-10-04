@@ -77,7 +77,7 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
-| Finnish holiday calendar | | done | `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
+| Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
 
 ## 3 Preprocessing
 
@@ -85,8 +85,15 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Parse hours, durations, seasons | | done | PR #25. `pipeline/rules.py`. Read its module docstring: the fail-closed contract is the project's core principle, not a style choice. |
 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
-| Tests for the parsers and the app contract | | done | `pytest tests -q`, 76 cases, under a second. |
+| District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
+
+## Quality
+
+| Task | Owner | Status | Notes |
+|---|---|---|---|
+| Tests for the parsers, the status and the app contract | | done | PR #31. `pytest tests -q`, 76 cases, under a second, no network. Every case expecting a refusal is a regression we shipped once. |
+| Run the tests in CI | | todo | Waiting on the frontend stream's GitHub Actions work; wiring ours in is `pip install -r requirements.txt` then `pytest tests -q`. Run on every pull request, not only when `pipeline/` changes: two of the tests read the committed data files, which is exactly the case a path filter would skip. |
 
 ## 4 Exploration
 

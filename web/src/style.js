@@ -51,3 +51,8 @@ export function styleFor(feature) {
 
 // Drawn over the tapped area's own style, so its colour still says what the rule is
 export const SELECTED_STYLE = { weight: 9, opacity: 1, dashArray: null };
+
+// The driver's position. Shares the paid-parking blue; index.css repeats it for the locate button.
+const LOCATION_COLOUR = "#0072B2";
+export const ACCURACY_STYLE = { color: LOCATION_COLOUR, weight: 1, fillOpacity: 0.12 };
+export const POSITION_STYLE = { color: "#fff", weight: 2, fillColor: LOCATION_COLOUR, fillOpacity: 1 };

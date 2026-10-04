@@ -1,0 +1,44 @@
+# Builds web/ and publishes it to https://tercanfurkan.github.io/parkkiko/.
+# Pushes to main deploy automatically. Any branch can be deployed by hand, to test it on a phone
+# before merge: gh workflow run pages.yml --ref <branch>. There is one site, so a branch deploy
+# stays live until the next deploy, and the next push to main puts the merged version back.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# A newer deploy makes an older one pointless, so cancel it rather than queue behind it.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      # The app's data file is committed, so the build needs no Python and no network beyond npm.
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: web/dist
+      - id: deployment
+        uses: actions/deploy-pages@v5

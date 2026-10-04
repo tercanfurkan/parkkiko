@@ -62,6 +62,15 @@ Three ways, pick whichever suits you.
 **A map, with no code.** Run `pipeline/process.py`, then drag
 `web/public/data/parking_areas.geojson` into [kepler.gl](https://kepler.gl).
 
+## Report figures
+
+Nothing quoted in the report or the canvas is typed by hand. This regenerates every table and
+chart, so they can be checked and they follow the register when it changes:
+
+```bash
+.venv/bin/python analysis/report_stats.py --write --figures   # -> docs/report_stats.md, docs/figures/
+```
+
 ## Web app
 
 ```bash

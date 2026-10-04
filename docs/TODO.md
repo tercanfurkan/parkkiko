@@ -11,6 +11,9 @@ you are working on, so two streams editing this file rarely touch the same lines
 
 Status values: `todo`, `doing`, `done`, `stretch`, `dropped`.
 
+Run `.venv/bin/python -m pytest tests -q` before you push. It takes under a second and checks the
+contract below, so a change that would break the other stream fails locally first.
+
 Every task names where to read first. Follow those links before starting: most of them exist
 because someone already measured the thing you are about to assume.
 
@@ -33,12 +36,12 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | Property | Present on | Note for the app |
 |---|---|---|
 | `id`, `rule_type`, `status` | all 8,754 | always there |
-| `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated |
+| `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated. A real object, not a string: no parsing needed |
 | `duration_min` | 2,803 | minutes; `0` means explicitly no limit |
 | `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
 | `extra_info` | 1,362 | sign text to show verbatim |
 | `reason` | 385 | why an area is uncertain, already written for a driver to read |
-| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}` |
+| `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
 
 A property is **absent** rather than null or empty when an area does not have it, so test for
 presence. Geometry is MultiPolygon in WGS84, coordinates to 5 decimals, about 1 m.
@@ -82,6 +85,7 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|
 | Parse hours, durations, seasons | | done | PR #25. `pipeline/rules.py`. Read its module docstring: the fail-closed contract is the project's core principle, not a style choice. |
 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
+| Tests for the parsers and the app contract | | done | `pytest tests -q`, 76 cases, under a second. |
 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
 
 ## 4 Exploration

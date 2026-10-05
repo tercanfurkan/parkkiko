@@ -1,7 +1,13 @@
 import { RULE_TYPES, spaceLabel } from "./style.js";
 
-export default function RulePanel({ area }) {
-  if (!area) return <div className="panel">Tap a street section to see its rule.</div>;
+export default function RulePanel({ area, zoomedIn }) {
+  if (!area) {
+    return (
+      <div className="panel">
+        {zoomedIn ? "Tap a street section to see its rule." : "Zoom in to see parking rules."}
+      </div>
+    );
+  }
   const { label } = RULE_TYPES[area.rule_type] ?? RULE_TYPES.unknown;
   const space = spaceLabel(area.tyyppi);
   return (

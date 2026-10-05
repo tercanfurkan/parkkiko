@@ -124,12 +124,12 @@ add a row to Open questions below rather than computing it in the browser.
 
 | Task | Owner | Status | Notes |
 |---|---|---|---|
-| Host the first version | | todo | The map already draws all 8,754 areas over OpenStreetMap tiles: `web/src/App.jsx`, styling in `web/src/style.js`. Not yet deployed. The city's own map, for comparison, is palvelukartta.hel.fi. |
+| Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
 | Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. |
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
-| Deploy to GitHub Pages | furkan-frontend | doing | `.github/workflows/pages.yml`. Static build, base path `/parkkiko/`, already set in `web/vite.config.js`. Nothing extra to run: the data file is committed. **Check once deployed** whether Pages compresses it: `curl -sI -H 'Accept-Encoding: gzip' <url>/data/parking_areas.geojson \| grep -i content-encoding`. Uncompressed it is 2.8 MB against 0.32 MB gzipped, which decides whether the app is usable on mobile data. If it is not compressed, serving it as `.json` is worth testing. |
+| Deploy to GitHub Pages | furkan-frontend | done | PR #32. `.github/workflows/pages.yml`. Static build, base path `/parkkiko/`, set in `web/vite.config.js`. Nothing extra to run: the data file is committed. **Pages compresses the data file**: `content-encoding: gzip`, 0.33 MB transferred against 2.77 MB raw, measured 2026-10-04 with `curl -sI -H 'Accept-Encoding: gzip' <url>/data/parking_areas.geojson`. No rename to `.json` needed. |
 
 ## UX
 

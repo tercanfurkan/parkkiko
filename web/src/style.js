@@ -49,8 +49,9 @@ export function styleFor(feature) {
   };
 }
 
-// Drawn over the tapped area's own style, so its colour still says what the rule is
-export const SELECTED_STYLE = { weight: 9, opacity: 1, dashArray: null };
+// Drawn over the tapped area's own style, so its colour still says what the rule is. Only the
+// weight changes: an uncertain area must stay faded and dashed when selected, or it looks official.
+export const SELECTED_STYLE = { weight: 9 };
 
 // The driver's position. Shares the paid-parking blue; index.css repeats it for the locate button.
 const LOCATION_COLOUR = "#0072B2";

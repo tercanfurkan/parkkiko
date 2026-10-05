@@ -33,6 +33,7 @@ jobs:
           node-version: 22
       # The app's data file is committed, so the build needs no Python and no network beyond npm.
       - run: npm ci
+      - run: npm test
       - run: npm run build
       - uses: actions/upload-pages-artifact@v5
         with:

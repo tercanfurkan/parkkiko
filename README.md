@@ -81,6 +81,14 @@ Every case expecting a refusal is one the parsers once answered confidently and 
 `tests/test_app_data.py` checks the two committed files against the contract in
 [docs/TODO.md](docs/TODO.md), which is what the frontend is written against.
 
+```bash
+cd web && npm test      # under a second, no network; also runs before every deploy
+```
+
+`web/src/style.test.js` checks that an area whose rule is not fully known never looks official,
+and that the app has a colour and label for every value in the data. `web/src/extent.test.js`
+checks that the area the app treats as Helsinki still covers every parking area.
+
 ## Report figures
 
 The tables in `docs/report_stats.md` and the charts in `docs/figures/` are generated from the

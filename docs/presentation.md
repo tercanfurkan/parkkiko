@@ -3,8 +3,9 @@
 Three minutes, week 42. Three speakers, roughly a minute each. Graded on preparation, so the
 point of this file is that three people can rehearse the same thing.
 
-**Read it aloud with a timer before you trust it.** 390 spoken words times at 2:35 to 3:00
-depending on pace, which leaves the slack for pauses and the hand-off into the demo.
+**Read it aloud with a timer before you trust it.** 366 spoken words times at 2:26 to 2:49
+depending on pace. The slack is deliberate: pauses, the hand-offs, and the demo. A talk always
+runs longer in the room than at a desk.
 
 | | Who | Section | Target |
 |---|---|---|---|
@@ -38,40 +39,35 @@ beat. Nobody can read that at the kerb, and that is the whole gap we close.*
 
 > So we turned it into something you can read while standing next to your car.
 >
-> This is Parkkiko. It opens where you are. You tap the stretch of street you parked on, and
-> choose which side, because the rules differ between the two sides and your phone cannot tell
-> them apart.
+> This is Parkkiko. It opens where you are. You tap the stretch you parked on and pick your side
+> of the street, because the two sides have different rules and your phone cannot tell them apart.
 >
-> Then it tells you one thing. **Paid until nine, then free until nine tomorrow morning.** The
-> answer, and when it changes.
+> Then it tells you one thing. **Paid until nine, then free until nine tomorrow morning.**
 >
-> It knows the awkward cases. This looks like an ordinary space and it is reserved for electric
-> scooters; there are about a thousand of those. It knows a public holiday follows Sunday rules,
-> so on Christmas Day it will not tell you to pay.
+> It knows the awkward cases. This looks ordinary and it is reserved for electric scooters; there
+> are about a thousand of those. And a public holiday follows Sunday rules, so on Christmas Day it
+> will not tell you to pay.
 
 *Demo live if the connection holds, otherwise the recording on slide 4. Decide on the day, and
 whoever is not speaking opens the fallback before the session starts.*
 
 ### 3. Why this, why us, why now (Ömer Furkan, 1:45–2:40)
 
-> Why does this need more than a lookup? Because the city's data does not describe every street
-> perfectly. For about one stretch in six, the rule is incomplete or contradicts itself.
+> The city's data does not describe every street perfectly. For about one stretch in six, the
+> rule is incomplete or contradicts itself.
 >
-> Most apps would guess. We don't. Where the city left the hours out, we predict them from the
-> nearby stretches of the same kind, we say that it is an estimate, and we only do it when we are
-> confident. We measured that: right about ninety-seven times in a hundred.
+> Most apps would guess. We don't. Where the hours are missing we predict them from nearby
+> stretches of the same kind, we say it is an estimate, and only when we are confident. We
+> measured that: right about ninety-seven times in a hundred.
 >
-> Everywhere else we are unsure, Parkkiko says **check the sign**, and shows what the city
-> actually published so you can decide. A wrong "you can park here" costs you a fine. An honest
-> "I'm not sure" costs you nothing.
->
-> And now, because the city opened this data and every one of us is carrying the map in a pocket.
+> Everywhere else, Parkkiko says **check the sign** and shows what the city published. A wrong
+> "you can park here" costs you a fine. An honest "I'm not sure" costs you nothing.
 
 ### 4. The objection, and the close (Ömer Furkan, 2:40–3:00)
 
-> You might think this is just looking rules up in a table. The hard part was that the rules are
-> written for humans, in three ways of saying four hours, and that a sixth of them do not add up.
-> Knowing when not to answer is the work.
+> You might think this is just looking rules up in a table. The rules are written for humans, in
+> three ways of saying four hours, and a sixth of them do not add up. Knowing when not to answer
+> is the work.
 >
 > Parkkiko. It tells you when you can park, and admits when nobody knows.
 

@@ -3,7 +3,7 @@
 Three minutes, week 42. Three speakers, roughly a minute each. Graded on preparation, so the
 point of this file is that three people can rehearse the same thing.
 
-**Read it aloud with a timer before you trust it.** 366 spoken words times at 2:26 to 2:49
+**Read it aloud with a timer before you trust it.** 377 spoken words times at 2:31 to 2:54
 depending on pace. The slack is deliberate: pauses, the hand-offs, and the demo. A talk always
 runs longer in the room than at a desk.
 
@@ -23,8 +23,8 @@ runs longer in the room than at a desk.
 > **We help drivers in Helsinki avoid parking fines, by turning the city's own parking rules into
 > a plain answer on a map.**
 >
-> Here is why that is needed. You have found a space. The sign is somewhere behind you. Is parking
-> free right now? Until when? Is this spot even for you, or is it a loading bay?
+> Here is why that is needed. You have pulled into a space. The sign is somewhere behind you. Is
+> parking free right now? Until when? Is this spot even for you, or is it a loading bay?
 >
 > Most of us guess. Last year Helsinki issued **156,383 parking fines**. Most of those drivers
 > were not being reckless. They misread a sign, or never saw one.
@@ -37,10 +37,12 @@ beat. Nobody can read that at the kerb, and that is the whole gap we close.*
 
 ### 2. The answer (Mai, 0:50–1:45)
 
-> So we turned it into something you can read while standing next to your car.
+> So we turned it into something you can read from the driver's seat, in the ten seconds before
+> you decide whether to stay.
 >
-> This is Parkkiko. It opens where you are. You tap the stretch you parked on and pick your side
-> of the street, because the two sides have different rules and your phone cannot tell them apart.
+> This is Parkkiko. It opens where you are. You tap the stretch you have pulled up on and pick
+> your side of the street, because the two sides have different rules and your phone cannot tell
+> them apart.
 >
 > Then it tells you one thing. **Paid until nine, then free until nine tomorrow morning.**
 >

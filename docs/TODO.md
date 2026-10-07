@@ -125,7 +125,7 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
-| Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. |
+| Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. **Write the tests first**, against a pure `evaluate(area, time, calendar)`. The cases to cover: Helsinki time, not the phone's; whether the end hour of `9-21` is paid; a holiday follows Sunday and its eve Saturday; calendar days marked uncertain stay uncertain; whether season end dates are inclusive; the two clock-change days; `duration_min` 0 (no limit) against absent (none stated); and missing hours or uncertain status never coming out as free. |
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
@@ -166,6 +166,7 @@ Raise anything here that needs the other stream or the group to decide.
 | Question | Raised by | Answer |
 |---|---|---|
 | Add new rows at the top of this table, so two streams appending at once do not collide. | | |
+| Can `WEB_FIELDS` export the class, as `luokka` or `class_name_en`? The 60 car-sharing bays (class 11) are reserved by their class and have no `tyyppi`, so the app can only say "Reserved space" and not who it is for. A `test.todo` in `web/src/style.test.js` waits on it. | furkan-frontend | |
 | Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. `district` now exists; nobody has spaces-per-area yet. |
 | Should the app's data file be committed, generated offline, or built on deploy? | backend | Committed, and rebuildable offline with `pipeline/export_web.py`. Costs ~0.4 MB per change in git. |
 

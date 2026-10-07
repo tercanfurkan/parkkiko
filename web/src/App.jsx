@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, useMapEvents } 
 import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
+import { DATA_EXTENT } from "./extent.js";
 
 const HELSINKI = [60.1699, 24.9384];
 const DATA_URL = `${import.meta.env.BASE_URL}data/parking_areas.geojson`;
@@ -11,10 +12,9 @@ const CITY_ZOOM = 12;       // the whole register fits on a phone screen
 const STREET_ZOOM = 17;     // individual street sections are tappable
 const MIN_RULES_ZOOM = 15;   // below this the areas are a smear of colour, so they are hidden
 
-// Extent of the areas in parking_areas.geojson, padded by a tenth of its span (1.4 km N-S,
-// 1.8 km E-W). A position outside it
-// would land on a map with no rules, so we stay on the city view and say why instead.
-const DATA_BOUNDS = L.latLngBounds([60.14744, 24.84437], [60.27557, 25.17106]).pad(0.1);
+// Padded by a tenth of the span (1.4 km N-S, 1.8 km E-W). A position outside it would land on a
+// map with no rules, so we stay on the city view and say why instead.
+const DATA_BOUNDS = L.latLngBounds(DATA_EXTENT).pad(0.1);
 
 // One canvas instead of 8,754 SVG paths, which phones cannot keep up with. The tolerance widens
 // the tap target: a parking strip is a few metres wide, a few pixels at street zoom.

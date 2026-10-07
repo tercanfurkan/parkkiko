@@ -81,6 +81,12 @@ Every case expecting a refusal is one the parsers once answered confidently and 
 `tests/test_app_data.py` checks the two committed files against the contract in
 [docs/TODO.md](docs/TODO.md), which is what the frontend is written against.
 
+```bash
+cd web && npm test      # under a second, no network; also runs before every deploy
+```
+
+`web/src/*.test.js` check what the app promises drivers about the committed data.
+
 ## Report figures
 
 The tables in `docs/report_stats.md` and the charts in `docs/figures/` are generated from the

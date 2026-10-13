@@ -30,7 +30,8 @@ This is the only thing both streams depend on, so change it by agreement rather 
 straight after a clone, and it is generated, so only the backend rewrites it. `python
 pipeline/export_web.py --check` says whether the committed copy still matches the data.
 
-`WEB_FIELDS` in `pipeline/export_web.py` decides which fields are exported. What each field means
+The file is committed and rebuildable offline, decided in PR #29 and costing about 0.4 MB per
+change in git. `WEB_FIELDS` in `pipeline/export_web.py` decides which fields are exported. What each field means
 is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters to the app:
 
 | Property | Present on | Note for the app |
@@ -163,13 +164,15 @@ add a row to Open questions below rather than computing it in the browser.
 
 ## Open questions
 
-Raise anything here that needs the other stream or the group to decide.
+What needs the other stream or the group to decide. **Add new rows at the top**, so two streams
+appending at once do not collide. Move a row out once it is settled: a decisions table nobody
+trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
-| Add new rows at the top of this table, so two streams appending at once do not collide. | | |
-| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. `district` now exists; nobody has spaces-per-area yet. |
-| Should the app's data file be committed, generated offline, or built on deploy? | backend | Committed, and rebuildable offline with `pipeline/export_web.py`. Costs ~0.4 MB per change in git. |
+| 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
+| Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
+| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Nobody has spaces-per-area yet. |
 
 ## Known traps
 

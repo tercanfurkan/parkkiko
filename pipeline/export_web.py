@@ -22,7 +22,9 @@ TARGET = Path("web/public/data/parking_areas.geojson")
 
 # What the app reads. Register values rather than labels: the wording lives in web/src/style.js,
 # so changing a word is a one-line edit instead of a data rebuild.
-WEB_FIELDS = ["id", "rule_type", "tyyppi", "hours", "duration_min", "season", "status",
+# luokka rides along because 60 car-sharing bays are reserved by their class and state no
+# tyyppi, so without it the app can only say "Reserved space" and not who it is for. 3 KB gzipped.
+WEB_FIELDS = ["id", "rule_type", "luokka", "tyyppi", "hours", "duration_min", "season", "status",
               "reason", "extra_info"]
 # ~1 m, which is finer than the register's own accuracy and than any phone's GPS. Six decimals
 # cost 19% more on the wire for precision nothing can use; four collapse small polygons entirely.
@@ -32,6 +34,9 @@ COORD_DECIMALS = 5
 def write_web(areas, target=TARGET):
     """Write the areas as GPS-coordinate GeoJSON, carrying only what the app displays."""
     web = areas[WEB_FIELDS + ["geometry"]].to_crs(4326)
+    # The register's class is a whole number; pandas reads it as a float, and "11.0" in the
+    # app's data invites a string comparison that silently fails.
+    web["luokka"] = web["luokka"].astype("Int64")
     target.parent.mkdir(parents=True, exist_ok=True)
     web.to_file(target, driver="GeoJSON", COORDINATE_PRECISION=COORD_DECIMALS)
 

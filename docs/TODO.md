@@ -39,6 +39,7 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated. A real object, not a string: no parsing needed |
 | `duration_min` | 2,803 | minutes; `0` means explicitly no limit |
 | `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
+| `luokka` | 8,411 | the register's class number. Only needed for class 11, the 60 car-sharing bays that are reserved with no space type |
 | `extra_info` | 1,362 | sign text to show verbatim |
 | `reason` | 385 | why an area is uncertain, already written for a driver to read |
 | `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
@@ -125,7 +126,8 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
-| Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. |
+| **The answer line** | | todo | **Highest value for the demo.** Replace the rule-type label with what a driver can do: "Park here for 2 hours", "Paid until 21:00, then free", "No parking until 18:00", "Check the sign". Every decision behind that sentence is written out in [rule-evaluation.md](rule-evaluation.md), including worked examples with real area ids to use as tests. 5,532 of 8,754 areas can give a concrete time answer, so the demo will mostly land on one. |
+| Start parking, and remind me | | todo | **Stretch, and the moment that sells it.** A button on the panel starts a stay: store the area id and the start time, show a live countdown to when the driver must move, and notify before it runs out. Keep it in `localStorage` so a refresh does not lose it. Use the Notification API where granted, but **always** show the countdown in the page, because iOS Safari only delivers notifications to an installed PWA and the demo may be on a phone that has not installed one. Pick the end time from the same `evaluate()` as the answer line. Never start a stay on an area that says check the sign. |
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |

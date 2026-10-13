@@ -8,6 +8,9 @@ The shared plan. Two work streams run in parallel and sync through this file.
 New to a task? [todo-context.md](todo-context.md) says what to read and what goes wrong, one
 page.
 
+Tasks have an ID, so one can be handed over by name: 6.2, 5.3. The number before the dot is the
+stage above it.
+
 **Claim a task** by putting your name and stream in the Owner column in the same commit as your
 first change. **Finish a task** by ticking it and naming the pull request. Keep edits to the row
 you are working on, so two streams editing this file rarely touch the same lines.
@@ -71,97 +74,97 @@ add a row to Open questions below rather than computing it in the browser.
 
 ## 1 Purpose
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Settle the app name | | todo | Parkkiko is unused by any parking app; the canvas no longer hedges it. Alternatives and what is taken: ask, the search is in the project history. |
-| Name the related apps in the report | | todo | ParkClear (Los Angeles), Can I Park Here, ParkRight (Copenhagen), EasyPark (market leader in Finland). All answer a similar question; say what we do differently. Context: [process.md](process.md) section 1, [report_draft.md](report_draft.md) section 1. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 1.1 | Settle the app name | | todo | Parkkiko is unused by any parking app; the canvas no longer hedges it. Alternatives and what is taken: ask, the search is in the project history. |
+| 1.2 | Name the related apps in the report | | todo | ParkClear (Los Angeles), Can I Park Here, ParkRight (Copenhagen), EasyPark (market leader in Finland). All answer a similar question; say what we do differently. Context: [process.md](process.md) section 1, [report_draft.md](report_draft.md) section 1. |
 
 ## 2 Data collection
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
-| Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
-| Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 2.1 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
+| 2.2 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
+| 2.3 | Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
 
 ## 3 Preprocessing
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Parse hours, durations, seasons | | done | PR #25. `pipeline/rules.py`. Read its module docstring: the fail-closed contract is the project's core principle, not a style choice. |
-| Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
-| District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
-| Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 3.1 | Parse hours, durations, seasons | | done | PR #25. `pipeline/rules.py`. Read its module docstring: the fail-closed contract is the project's core principle, not a style choice. |
+| 3.2 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
+| 3.3 | District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
+| 3.4 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
 
 ## Quality
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Tests for the parsers, the status and the app contract | | done | PR #31. `pytest tests -q`, 76 cases, under a second, no network. Every case expecting a refusal is a regression we shipped once. |
-| Run the tests in CI | | todo | Waiting on the frontend stream's GitHub Actions work; wiring ours in is `pip install -r requirements.txt` then `pytest tests -q`. Run on every pull request, not only when `pipeline/` changes: two of the tests read the committed data files, which is exactly the case a path filter would skip. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| Q1 | Tests for the parsers, the status and the app contract | | done | PR #31. `pytest tests -q`, 76 cases, under a second, no network. Every case expecting a refusal is a regression we shipped once. |
+| Q2 | Run the tests in CI | | todo | Waiting on the frontend stream's GitHub Actions work; wiring ours in is `pip install -r requirements.txt` then `pytest tests -q`. Run on every pull request, not only when `pipeline/` changes: two of the tests read the committed data files, which is exactly the case a path filter would skip. |
 
 ## 4 Exploration
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
-| Summary statistics per variable | | todo | Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
-| Bivariate and multivariate views | | todo | Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
-| Outlier check on area sizes | | todo | Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
-| Generate the remaining typed counts | | todo | Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| 4.2 | Summary statistics per variable | | todo | Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
+| 4.3 | Bivariate and multivariate views | | todo | Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
+| 4.4 | Outlier check on area sizes | | todo | Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
+| 4.5 | Generate the remaining typed counts | | todo | Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
 
 ## 5 Learning
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Build the feature table | | todo | One row per area: neighbour hours, distance, same-street flag, class, district. Label-encode categoricals as in week 2 exercise 1 of the reference answers. The join to copy is `nearest_pairs()` in `analysis/report_stats.py`. |
-| Dummy baseline | | todo | `sklearn.DummyClassifier(strategy="most_frequent")`. The course compares against one explicitly: week 3 exercise 2 of the reference answers. Our hand count is 32.9%; the fitted number should match. |
-| Nearest-neighbour model | | todo | Same-class kNN, distance weighted. Accuracy and macro-F1 against the baseline. Why this method: the measurement in [process.md](process.md) section 4, and the canvas Learning approach box. |
-| Spatially blocked validation | | todo | Hold out whole districts, using the `district` column. Fold sizes are very uneven, so check the spread first. Neighbouring sections of one street are near-duplicates, so a random split tests on copies of the training data. Reasoning: [canvas-working-notes.md](canvas-working-notes.md), Learning approach. |
-| Distance-matched test | | todo | Hide close neighbours so test distances match the 978 areas we must predict, median 153 m with 17.7% within 50 m. The gap table is in [report_stats.md](report_stats.md); `prediction_gap()` computes it. |
-| Choose the distance cut-off | | todo | Accuracy against coverage. Accuracy wins: a wrong answer costs a fine, "unknown" costs nothing. Set the target before looking at results. Accuracy by distance: [report_stats.md](report_stats.md). |
-| Error analysis | | todo | Which areas we get wrong and why, on a map. The course asks for exactly this after classification: week 3 exercise 2 step 5 in the reference answers. |
-| Imputation reflection | | todo | What changes for a driver when we predict versus leave unknown, and who is affected. Week 2 exercise 2 closes on this question; our version is the fairness point in the canvas Privacy box. |
-| Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. The `district` column now exists; see [data.md](data.md). |
-| Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/export_web.py`. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 5.1 | Build the feature table | | todo | One row per area: neighbour hours, distance, same-street flag, class, district. Label-encode categoricals as in week 2 exercise 1 of the reference answers. The join to copy is `nearest_pairs()` in `analysis/report_stats.py`. |
+| 5.2 | Dummy baseline | | todo | `sklearn.DummyClassifier(strategy="most_frequent")`. The course compares against one explicitly: week 3 exercise 2 of the reference answers. Our hand count is 32.9%; the fitted number should match. |
+| 5.3 | Nearest-neighbour model | | todo | Same-class kNN, distance weighted. Accuracy and macro-F1 against the baseline. Why this method: the measurement in [process.md](process.md) section 4, and the canvas Learning approach box. |
+| 5.4 | Spatially blocked validation | | todo | Hold out whole districts, using the `district` column. Fold sizes are very uneven, so check the spread first. Neighbouring sections of one street are near-duplicates, so a random split tests on copies of the training data. Reasoning: [canvas-working-notes.md](canvas-working-notes.md), Learning approach. |
+| 5.5 | Distance-matched test | | todo | Hide close neighbours so test distances match the 978 areas we must predict, median 153 m with 17.7% within 50 m. The gap table is in [report_stats.md](report_stats.md); `prediction_gap()` computes it. |
+| 5.6 | Choose the distance cut-off | | todo | Accuracy against coverage. Accuracy wins: a wrong answer costs a fine, "unknown" costs nothing. Set the target before looking at results. Accuracy by distance: [report_stats.md](report_stats.md). |
+| 5.7 | Error analysis | | todo | Which areas we get wrong and why, on a map. The course asks for exactly this after classification: week 3 exercise 2 step 5 in the reference answers. |
+| 5.8 | Imputation reflection | | todo | What changes for a driver when we predict versus leave unknown, and who is affected. Week 2 exercise 2 closes on this question; our version is the fairness point in the canvas Privacy box. |
+| 5.9 | Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. The `district` column now exists; see [data.md](data.md). |
+| 5.10 | Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/export_web.py`. |
 
 ## 6 The app
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
-| **The answer line** | | todo | **Highest value for the demo.** Replace the rule-type label with what a driver can do: "Park here for 2 hours", "Paid until 21:00, then free", "No parking until 18:00", "Check the sign". Every decision behind that sentence is written out in [rule-evaluation.md](rule-evaluation.md), including worked examples with real area ids to use as tests. 5,532 of 8,754 areas can give a concrete time answer, so the demo will mostly land on one. |
-| Start parking, and remind me | | todo | **Stretch, and the moment that sells it.** A button on the panel starts a stay: store the area id and the start time, show a live countdown to when the driver must move, and notify before it runs out. Keep it in `localStorage` so a refresh does not lose it. Use the Notification API where granted, but **always** show the countdown in the page, because iOS Safari only delivers notifications to an installed PWA and the demo may be on a phone that has not installed one. Pick the end time from the same `evaluate()` as the answer line. Never start a stay on an area that says check the sign. |
-| Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
-| Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
-| Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
-| Deploy to GitHub Pages | furkan-frontend | done | PR #32. `.github/workflows/pages.yml`. Static build, base path `/parkkiko/`, set in `web/vite.config.js`. Nothing extra to run: the data file is committed. **Pages compresses the data file**: `content-encoding: gzip`, 0.33 MB transferred against 2.77 MB raw, measured 2026-10-04 with `curl -sI -H 'Accept-Encoding: gzip' <url>/data/parking_areas.geojson`. No rename to `.json` needed. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| 6.1 | Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
+| 6.2 | **The answer line** | | todo | **Highest value for the demo.** Replace the rule-type label with what a driver can do: "Park here for 2 hours", "Paid until 21:00, then free", "No parking until 18:00", "Check the sign". Every decision behind that sentence is written out in [rule-evaluation.md](rule-evaluation.md), including worked examples with real area ids to use as tests. 5,532 of 8,754 areas can give a concrete time answer, so the demo will mostly land on one. |
+| 6.3 | Start parking, and remind me | | todo | **Stretch, and the moment that sells it.** A button on the panel starts a stay: store the area id and the start time, show a live countdown to when the driver must move, and notify before it runs out. Keep it in `localStorage` so a refresh does not lose it. Use the Notification API where granted, but **always** show the countdown in the page, because iOS Safari only delivers notifications to an installed PWA and the demo may be on a phone that has not installed one. Pick the end time from the same `evaluate()` as the answer line. Never start a stay on an area that says check the sign. |
+| 6.4 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
+| 6.5 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
+| 6.6 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
+| 6.7 | Deploy to GitHub Pages | furkan-frontend | done | PR #32. `.github/workflows/pages.yml`. Static build, base path `/parkkiko/`, set in `web/vite.config.js`. Nothing extra to run: the data file is committed. **Pages compresses the data file**: `content-encoding: gzip`, 0.33 MB transferred against 2.77 MB raw, measured 2026-10-04 with `curl -sI -H 'Accept-Encoding: gzip' <url>/data/parking_areas.geojson`. No rename to `.json` needed. |
 
 ## UX
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Pen sketches of the main flow | | todo | Open map, tap section, pick side, see answer and timeline, change time. The intended flow is written out in the canvas Communication box. |
-| Figma mockups | | todo | Mobile screens. Colour-blind safe, every colour paired with a text label. The palette in use is `RULE_TYPES` in `web/src/style.js`; week 2 exercise 4 of the reference answers shows how the course grades charts. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| U1 | Pen sketches of the main flow | | todo | Open map, tap section, pick side, see answer and timeline, change time. The intended flow is written out in the canvas Communication box. |
+| U2 | Figma mockups | | todo | Mobile screens. Colour-blind safe, every colour paired with a text label. The palette in use is `RULE_TYPES` in `web/src/style.js`; week 2 exercise 4 of the reference answers shows how the course grades charts. |
 
 ## Report and presentation
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Technical report | | todo | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is unmaintained raw material. Figures come from `analysis/report_stats.py`, never typed. |
-| Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
-| Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
-| Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
-| Showpiece: chart quality | | todo | Colour-blind safe palette, no red and green pairing. Week 2 exercise 4 of the reference answers grades this; lecture 3 warns against red and green. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| R1 | Technical report | | todo | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is unmaintained raw material. Figures come from `analysis/report_stats.py`, never typed. |
+| R2 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
+| R3 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
+| R4 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
+| R5 | Showpiece: chart quality | | todo | Colour-blind safe palette, no red and green pairing. Week 2 exercise 4 of the reference answers grades this; lecture 3 warns against red and green. |
 
 ## Stretch
 
-| Task | Owner | Status | Notes |
-|---|---|---|---|
-| Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
-| Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
-| Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
-| Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
+| ID | Task | Owner | Status | Notes |
+|---|---|---|---|---|
+| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
+| S2 | Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
+| S3 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
+| S4 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
 
 ---
 

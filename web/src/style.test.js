@@ -32,5 +32,5 @@ test("every space type the register gives a reserved area has a label", () => {
   expect([...new Set(unlabelled.map((f) => f.properties.tyyppi))]).toEqual([]);
 });
 
-// Waits on the class field: see the car-sharing row in Open questions, docs/TODO.md
+// The data now carries luokka; this waits on RulePanel naming class 11, the car-sharing bays
 test.todo("a reserved area with no space type says who it is for");

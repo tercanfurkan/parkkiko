@@ -30,7 +30,8 @@ This is the only thing both streams depend on, so change it by agreement rather 
 straight after a clone, and it is generated, so only the backend rewrites it. `python
 pipeline/export_web.py --check` says whether the committed copy still matches the data.
 
-`WEB_FIELDS` in `pipeline/export_web.py` decides which fields are exported. What each field means
+The file is committed and rebuildable offline, decided in PR #29 and costing about 0.4 MB per
+change in git. `WEB_FIELDS` in `pipeline/export_web.py` decides which fields are exported. What each field means
 is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters to the app:
 
 | Property | Present on | Note for the app |
@@ -39,6 +40,7 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | `hours` | 5,823 | `{"mon_fri": [9, 21], "sat": [9, 18]}`, local time, `sun` when stated. A real object, not a string: no parsing needed |
 | `duration_min` | 2,803 | minutes; `0` means explicitly no limit |
 | `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
+| `luokka` | 8,411 | the register's class number. Only needed for class 11, the 60 car-sharing bays that are reserved with no space type |
 | `extra_info` | 1,362 | sign text to show verbatim |
 | `reason` | 385 | why an area is uncertain, already written for a driver to read |
 | `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
@@ -125,7 +127,8 @@ add a row to Open questions below rather than computing it in the browser.
 | Task | Owner | Status | Notes |
 |---|---|---|---|
 | Host the first version | furkan-frontend | done | PR #33, live at https://tercanfurkan.github.io/parkkiko/. Opens on the city, asks for location and zooms to it; areas show from zoom 15 with or without location. `web/src/App.jsx`, styling in `web/src/style.js`. Checked on a phone. The city's own map, for comparison, is palvelukartta.hel.fi. |
-| Rule evaluation | | todo | Rule plus a time gives an answer and a timeline, e.g. paid until 21:00 then free. Hour semantics differ per rule type and are documented in `pipeline/rules.py` `parse_hours` and `LUOKKA_RULES`; the backend will review that reading. |
+| **The answer line** | | todo | **Highest value for the demo.** Replace the rule-type label with what a driver can do: "Park here for 2 hours", "Paid until 21:00, then free", "No parking until 18:00", "Check the sign". Every decision behind that sentence is written out in [rule-evaluation.md](rule-evaluation.md), including worked examples with real area ids to use as tests. 5,532 of 8,754 areas can give a concrete time answer, so the demo will mostly land on one. |
+| Start parking, and remind me | | todo | **Stretch, and the moment that sells it.** A button on the panel starts a stay: store the area id and the start time, show a live countdown to when the driver must move, and notify before it runs out. Keep it in `localStorage` so a refresh does not lose it. Use the Notification API where granted, but **always** show the countdown in the page, because iOS Safari only delivers notifications to an installed PWA and the demo may be on a phone that has not installed one. Pick the end time from the same `evaluate()` as the answer line. Never start a stay on an area that says check the sign. |
 | Location and side of street | | todo | GPS finds nearby sections, the driver taps one and picks the side. GPS cannot tell the sides apart, which is why the driver must: measured in [canvas-working-notes.md](canvas-working-notes.md), Motivation. |
 | Time and stay controls | | todo | Change arrival time and planned stay, and the answer updates. A control that does nothing was removed once before, deliberately: see PR #25. |
 | Show estimates as estimates | | todo | Predicted hours must never look like the city's rule. The honesty principle is in [prompt.md](prompt.md) and the canvas Privacy box. |
@@ -161,13 +164,15 @@ add a row to Open questions below rather than computing it in the browser.
 
 ## Open questions
 
-Raise anything here that needs the other stream or the group to decide.
+What needs the other stream or the group to decide. **Add new rows at the top**, so two streams
+appending at once do not collide. Move a row out once it is settled: a decisions table nobody
+trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
-| Add new rows at the top of this table, so two streams appending at once do not collide. | | |
-| Does the frontend need a field the GeoJSON does not carry? | | Open, for the frontend. The parquet also holds the raw register strings, the class and `issue_codes`; any can be added to `WEB_FIELDS`. Say which and why here. `district` now exists; nobody has spaces-per-area yet. |
-| Should the app's data file be committed, generated offline, or built on deploy? | backend | Committed, and rebuildable offline with `pipeline/export_web.py`. Costs ~0.4 MB per change in git. |
+| 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
+| Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
+| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Nobody has spaces-per-area yet. |
 
 ## Known traps
 

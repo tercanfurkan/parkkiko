@@ -6,7 +6,8 @@ the city's open data. University of Helsinki, Introduction to Data Science mini-
 **[How this project was built](docs/process.md)** walks through the six stages of a data science
 project with the code, data and results behind each one.
 **[The task board](docs/TODO.md)** is the shared plan, and carries the data contract between the
-pipeline and the app. New here? Start with **[docs/prompt.md](docs/prompt.md)**.
+pipeline and the app. **[What the rule means at a given moment](docs/rule-evaluation.md)** is how
+a rule plus a time becomes one sentence for a driver. New here? Start with **[docs/prompt.md](docs/prompt.md)**.
 
 ## Layout
 

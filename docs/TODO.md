@@ -5,6 +5,9 @@ The shared plan. Two work streams run in parallel and sync through this file.
 - **Data and backend** — the pipeline, the learning task, the report.
 - **Frontend** — the map app in `web/`.
 
+New to a task? [todo-context.md](todo-context.md) says what to read and what goes wrong, one
+page.
+
 **Claim a task** by putting your name and stream in the Owner column in the same commit as your
 first change. **Finish a task** by ticking it and naming the pull request. Keep edits to the row
 you are working on, so two streams editing this file rarely touch the same lines.

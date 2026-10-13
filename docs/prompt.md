@@ -23,10 +23,11 @@ supports is a regression even when it looks like an improvement.
 1. **`README.md`** — layout, setup, how to run things.
 2. **`docs/process.md`** — the project walked through stage by stage, with links to the code
    behind each claim. The fastest way to see the whole shape.
-3. **`docs/TODO.md`** — the shared task board. It also carries the data contract between the
+3. **`docs/todo-context.md`** — one page: what to read for each task, and what goes wrong.
+4. **`docs/TODO.md`** — the shared task board. It also carries the data contract between the
    backend and the frontend, who owns which directories, and the known traps. Read the traps
    before running anything; two of them cost an hour each if you hit them cold.
-4. **`docs/data.md`** — sources, licence, file sizes, measured timings, and the limits of what
+5. **`docs/data.md`** — sources, licence, file sizes, measured timings, and the limits of what
    the register can tell us.
 
 Then skim, as the task needs:

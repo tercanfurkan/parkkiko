@@ -38,6 +38,12 @@ export function spaceLabel(tyyppi) {
   return SPACE_TYPES[(tyyppi ?? "").trim().toLowerCase()] ?? null;
 }
 
+// Who a reserved area is for. The car-sharing bays are reserved by their class (luokka 11) and
+// state no space type, so the class is the only way to say it.
+export function reservedFor({ tyyppi, luokka }) {
+  return spaceLabel(tyyppi) ?? (luokka === 11 ? "Car-sharing pickup and return" : null);
+}
+
 export function styleFor(feature) {
   const { rule_type, status } = feature.properties;
   const uncertain = status !== "official";

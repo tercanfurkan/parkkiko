@@ -24,7 +24,7 @@ publishes no hours there, and that is an honest answer on stage rather than a ga
 | Anything touching the map data | the contract in [TODO.md](TODO.md) | the committed GeoJSON | A property is absent, never null or empty. Test for presence. |
 | Labels and colours | `web/src/style.js` | `tyyppi`, `luokka`, `rule_type` | The app owns every word a driver reads. The pipeline ships the register's own values. |
 | Anything in the pipeline | [data.md](data.md) | `pipeline/rules.py` first | Parsers fail closed. A partial answer is the bug, not a feature. |
-| The learning task (5.1-5.9) | the rows in [TODO.md](TODO.md) | `data/processed/parking_rules.parquet` | Neighbouring sections of one street are near-duplicates. A random split tests on copies of the training data. |
+| The learning task (5.1-5.10) | the rows in [TODO.md](TODO.md) | `data/processed/parking_rules.parquet` | Neighbouring sections of one street are near-duplicates. A random split tests on copies of the training data. |
 | Report or talk | [process.md](process.md), [presentation.md](presentation.md) | [report_stats.md](report_stats.md) | Figures are generated, never typed. Rerun `analysis/report_stats.py`. |
 
 ## Where things are

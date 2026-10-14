@@ -60,9 +60,10 @@ changes, looking up to a week ahead through the calendar:
 your car." `0` means
 the register explicitly states no limit, and absent means none was stated: neither caps.
 
-The clock time is the commitment, "until 21:00", exact even on the two days the clocks change.
-Beside it a countdown helps, "6 h 20 min left", **rounded down to the whole minute, never up**, and
-left out past a day, where "until Monday 09:00" says it better.
+The clock time is the commitment, "until 21:00". Beside it a countdown ticks, "11:28:42 left",
+**rounded down to the second, never up**, and left out past a day, where "until Monday 09:00" says
+it better. It counts to the real instant, so on the night the clocks go forward it is an hour
+shorter than the wall clock suggests, not an hour longer.
 
 ## 4. When not to answer
 

@@ -1,8 +1,8 @@
 // The words a driver reads for an evaluated rule. evaluate.js decides; this only phrases it, so
 // the wording can change without touching the logic.
 //
-// The headline answers "can I park, and do I pay". The detail says until when and what follows.
-// A clock time is the commitment; the countdown beside it is help, rounded down, never up.
+// The headline answers "can I park, and do I pay", with the clock time that is the commitment.
+// The countdown is help beside it, ticking; the detail says what follows.
 import { reservedFor } from "./style.js";
 
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -24,15 +24,13 @@ function duration(minutes) {
   return [hours, mins].filter(Boolean).join(" ");
 }
 
-// "6 h 20 min". Past a day a countdown stops helping: "until Monday 09:00" says it
-function countdown(minutes) {
-  if (minutes >= 1440) return null;
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return [h && `${h} h`, m && `${m} min`].filter(Boolean).join(" ");
+/** "11:28:42" for a countdown in milliseconds. Rounded down: never promise time that is not there. */
+export function clock(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map(pad).join(":");
 }
 
-const sentence = (...parts) => parts.filter(Boolean).join(". ") || null;
+const DAY_MS = 86400000;
 
 const CHECK = {
   missing_hours: () => "The register does not publish hours here",
@@ -56,22 +54,25 @@ function after(next) {
 
 const LABEL = { paid: "Paid parking", free: "Free parking", no_parking: "No parking" };
 
-/** { headline, detail } for an area and its evaluate() result. detail may be null. */
-export function answer(area, result) {
+/**
+ * { headline, detail, countdown? } for an area and its evaluate() result at `now`. detail may be
+ * null. countdown is { to, label }: the instant to count down to and how to say it, present only
+ * within a day, since past that "until Monday 09:00" says it better.
+ */
+export function answer(area, result, now) {
   const { kind, until, stay } = result;
   if (kind === "check") return { headline: "Check the sign", detail: CHECK[result.why](result) };
   if (kind === "reserved") {
     const who = reservedFor(area);
     return { headline: "Not for you", detail: who ? `Reserved: ${who}` : "Reserved space" };
   }
-  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Until ${when(until)}, then move your car` };
+  const countdown = until && until.at - now < DAY_MS ? { to: until.at, label: kind === "no_parking" ? "Allowed in" : "left" } : undefined;
+  if (stay) {
+    return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Until ${when(until)}, then move your car`, countdown };
+  }
   if (!until) {
     const always = { no_parking: null, paid: "At all hours", free: "No time limit" };
     return { headline: LABEL[kind], detail: always[kind] };
   }
-  const left = countdown(until.left);
-  return {
-    headline: `${LABEL[kind]} until ${when(until)}`,
-    detail: sentence(left && (kind === "no_parking" ? `Allowed in ${left}` : `${left} left`), after(result.then)),
-  };
+  return { headline: `${LABEL[kind]} until ${when(until)}`, detail: after(result.then), countdown };
 }

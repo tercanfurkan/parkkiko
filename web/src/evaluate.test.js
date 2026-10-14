@@ -160,3 +160,24 @@ describe("Helsinki time, whatever the phone says", () => {
     );
   });
 });
+
+describe("the deadline as a real moment, for the countdown", () => {
+  test("is the instant the wall-clock time happens in Helsinki", () => {
+    const answer = evaluate(area(8001), at("2026-10-13T14:40:30"), calendar);
+    expect(answer.until.at).toBe(Date.parse("2026-10-13T21:00+03:00"));
+  });
+
+  test("is an hour nearer across the night the clocks go forward", () => {
+    // Saturday 21:00 (UTC+2) to Sunday 09:00 (UTC+3) is 11 hours, not 12: a wall-clock countdown
+    // would promise an hour that does not exist
+    const sundays = { id: 3, rule_type: "paid", status: "official", hours: { mon_fri: [9, 18], sun: [9, 18] } };
+    const answer = evaluate(sundays, at("2026-03-28T21:00", "+02:00"), calendar);
+    expect(answer.until.at - Date.parse("2026-03-28T21:00+02:00")).toBe(11 * 3600000);
+  });
+
+  test("is an hour further across the night the clocks go back", () => {
+    const sundays = { id: 3, rule_type: "paid", status: "official", hours: { mon_fri: [9, 18], sun: [9, 18] } };
+    const answer = evaluate(sundays, at("2026-10-24T21:00"), calendar);
+    expect(answer.until.at - Date.parse("2026-10-24T21:00+03:00")).toBe(13 * 3600000);
+  });
+});

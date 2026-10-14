@@ -2,8 +2,8 @@
 // docs/rule-evaluation.md; this file implements it and evaluate.test.js holds it to the examples.
 //
 // Times are Helsinki wall-clock minutes counted from the evaluated day's midnight, so 21:00
-// tomorrow is { offset: 1, minute: 1260 }. Wall-clock arithmetic is exact for "until 21:00"; only a
-// stay running across a clock change could be an hour out, and no official area's hours do.
+// tomorrow is { offset: 1, minute: 1260 }, and each carries `at`, the instant it happens, so a
+// countdown to it is exact even across the nights the clocks change.
 
 const DAY = 1440;
 const LOOK_AHEAD_DAYS = 7;   // every area with hours has a mon_fri window, so a week always finds the next start
@@ -14,9 +14,24 @@ const HELSINKI = new Intl.DateTimeFormat("en-CA", {
   year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
 });
 
+function helsinkiParts(instant) {
+  return Object.fromEntries(HELSINKI.formatToParts(instant).map(({ type, value }) => [type, Number(value)]));
+}
+
 function helsinkiNow(instant) {
-  const p = Object.fromEntries(HELSINKI.formatToParts(instant).map(({ type, value }) => [type, Number(value)]));
-  return { midnight: Date.UTC(p.year, p.month - 1, p.day), minute: p.hour * 60 + p.minute, second: p.second };
+  const p = helsinkiParts(instant);
+  return { midnight: Date.UTC(p.year, p.month - 1, p.day), minute: p.hour * 60 + p.minute };
+}
+
+// The instant a Helsinki wall-clock time happens. wall is that time written as if it were UTC.
+// Correcting by the zone's offset at the guess, twice, lands right on either side of a clock change.
+function instantOf(wall) {
+  let guess = wall;
+  for (let i = 0; i < 2; i++) {
+    const p = helsinkiParts(guess);
+    guess += wall - Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, p.second);
+  }
+  return guess;
 }
 
 // The calendar day `offset` days from the evaluated one: which window applies, or null when the
@@ -71,9 +86,13 @@ function nextChange(line, minute) {
   return null;
 }
 
+// A time on the answer's clock, and `at`, the instant it happens, for a countdown
 function moment(midnight, minute) {
   const offset = Math.floor(minute / DAY);
-  return { offset, minute: minute - offset * DAY, weekday: new Date(midnight + offset * DAY * 60000).getUTCDay() };
+  return {
+    offset, minute: minute - offset * DAY, weekday: new Date(midnight + offset * DAY * 60000).getUTCDay(),
+    at: instantOf(midnight + minute * 60000),
+  };
 }
 
 function inSeason(season, midnight) {
@@ -114,7 +133,7 @@ export function evaluate(area, now, calendar) {
     return { kind: "check", why: "unknown" };
   }
 
-  const { midnight, minute, second } = helsinkiNow(now);
+  const { midnight, minute } = helsinkiNow(now);
   if (season && !inSeason(season, midnight)) return { kind: "check", why: "season" };
   if (rule_type === "always_banned") return { kind: "no_parking" };
   if (rule_type === "reserved") return { kind: "reserved" };
@@ -128,8 +147,7 @@ export function evaluate(area, now, calendar) {
   }
 
   const kind = state === "in" ? INSIDE[rule_type] : OUTSIDE[rule_type];
-  // left: whole minutes from now, rounded down, so a part-gone minute is not promised
-  const at = (m) => ({ ...moment(midnight, m), left: m - minute - (second > 0 ? 1 : 0) });
+  const at = (m) => moment(midnight, m);
   const change = nextChange(line, minute);
 
   // The time limit ends the stay before the rule changes: move by then, nothing follows

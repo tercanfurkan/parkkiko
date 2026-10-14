@@ -5,8 +5,8 @@ the decisions behind that sentence. They are written down because they are judge
 Finnish parking signs, not facts in the data, and because guessing them differently in the
 browser than in the pipeline would make the app and the analysis disagree.
 
-Implement `evaluate(area, now, calendar)` as a pure function and test it against the worked
-examples at the bottom.
+Implemented as `evaluate(area, now, calendar)` in `web/src/evaluate.js`, held to the worked examples
+at the bottom by `evaluate.test.js`. The wording a driver reads is `web/src/answer.js`.
 
 ## 1. Which window applies today
 
@@ -30,9 +30,9 @@ The same window means different things. This is the part most likely to be got b
 
 | Rule type | Inside the window | Outside it |
 |---|---|---|
-| `paid` | you pay, and `duration_min` caps the stay if present | free, no limit |
-| `free_limited` | free, but `duration_min` caps the stay | free, no limit |
-| `banned_hours` | you may not park | you may park, no limit |
+| `paid` | you pay, and `duration_min` caps the stay if present | free until the window next starts |
+| `free_limited` | free, but `duration_min` caps the stay | free until the window next starts |
+| `banned_hours` | you may not park | you may park until the window next starts; a `duration_min` caps it |
 | `always_banned` | never, whatever the hours say | never |
 | `reserved` | not for you, whatever the hours say | not for you |
 | `unknown` | check the sign | check the sign |
@@ -40,18 +40,31 @@ The same window means different things. This is the part most likely to be got b
 `9-21` is in force from 09:00 to 20:59. **At 21:00 it is over.** A range that wraps, like
 `22-05`, runs from 22:00 to 04:59 the next morning.
 
-## 3. How long the driver may stay
+## 3. Until when, and never "no limit" while the rule comes back
 
-Take the earlier of two things:
+**A window ending is not the end of the rule.** A ban that ends at 18:00 starts again at 07:00
+tomorrow, and a car left overnight is fined. So the answer always runs to the next time the rule
+changes, looking up to a week ahead through the calendar:
 
-- the time the window ends, if it ends something that limits them
-- now plus `duration_min`
+- Back-to-back windows count as one: `0-24` Monday to Friday is paid until Saturday 00:00, not
+  until midnight.
+- A free stay that starts inside a free-limited window and outlasts it runs on to the next start:
+  at 18:30 with a 4-hour limit ending 20:00, park until 08:00 tomorrow. That errs safe; a parking
+  disc may well allow longer.
+- The look-ahead stops where the calendar stops being sure, an uncertain day or a date past its
+  range: "Park here until midnight. Then check the sign."
+- Only a rule in force at no hour of the coming week gives "no limit". No official area has one,
+  since every area with hours has a `mon_fri` window.
 
-`duration_min` of `0` means the register explicitly states no limit. **Absent means no limit was
-stated**, which is not the same thing but leads to the same answer: do not cap.
+`duration_min` caps the stay when it ends first: "Free parking, 2 hours max. Park now and move by
+16:00." There is no countdown for it: the limit runs from when the driver leaves the car, not from
+when they look. `0` means
+the register explicitly states no limit, and absent means none was stated: neither caps.
 
-Round down to a whole number the driver can use. "2 hours", not "2 hours 7 minutes". If under an
-hour, use minutes.
+The clock time is the commitment, "until 21:00". Beside it a countdown ticks, "11:28:42 left",
+**rounded down to the second, never up**, and left out past a day, where "until Monday 09:00" says
+it better. It counts to the real instant, so on the night the clocks go forward it is an hour
+shorter than the wall clock suggests, not an hour longer.
 
 ## 4. When not to answer
 
@@ -69,25 +82,27 @@ Real areas from the committed file. Times are Europe/Helsinki.
 
 | Area | Rule | When | Expected |
 |---|---|---|---|
-| 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid parking, until 21:00. Then free. |
-| 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Free, no limit. |
-| 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free, no limit. No Sunday window means no rule. |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Park here for 4 hours. |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Park here for 1 hour 30 minutes, until the rule ends at 20:00. After that, no limit. |
-| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. |
-| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Park here, no limit. |
+| 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid parking until 21:00. 7 h left. Free after that until 09:00 tomorrow |
+| 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Free parking until 09:00 tomorrow. 12 h left. Paid after that |
+| 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free parking until 09:00 tomorrow. No Sunday window means no rule today |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Park now and move by 18:00 |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. 4 hours max after that |
+| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Allowed in 6 h. Free after that until 07:00 tomorrow |
+| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Free parking until 07:00 tomorrow. 12 h left. No parking after that |
 | 8139 | paid, no hours, 60 min | any | The register does not publish hours here. Check the sign. |
 | any | paid, `mon_fri 9-21` | 25 Dec 14:00 | Christmas Day follows Sunday, so free. |
+| 8001 | paid, `mon_fri 9-21` | Tue 22 Dec 21:00 | Free parking until midnight. 3 h left. Check the sign after that: the 23rd rests on Christmas Eve |
 | any | paid, `mon_fri 9-21` | 24 Dec 14:00 | Check the sign: the calendar marks the day uncertain. |
 
 ## What the driver should read
 
-The sentence is the product. Lead with what they can do, then when it changes.
+The sentence is the product. The headline answers "can I park, and do I pay"; the line under it
+says until when and what follows.
 
-- **Park here for 2 hours.** Free until 20:00.
-- **Park here for 4 hours**, paid. 21:00 onwards is free.
-- **No parking** until 18:00.
-- **Check the sign.** We cannot read this one: *(the reason)*.
-- **Not for you.** Reserved for taxis.
+- **Free parking, 2 hours max.** Park now and move by 16:00
+- **Paid parking until 21:00.** 6 h 20 min left. Free after that until 09:00 tomorrow
+- **No parking until 18:00.** Allowed in 3 h. Free after that until 07:00 tomorrow
+- **Check the sign.** *(the reason)*
+- **Not for you.** Reserved: Taxi
 
 Never print a rule type as a label on its own. "Free, time limited" is a category, not an answer.

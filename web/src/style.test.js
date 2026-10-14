@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { expect, test } from "vitest";
-import { RULE_TYPES, SELECTED_STYLE, spaceLabel, styleFor } from "./style.js";
+import { RULE_TYPES, SELECTED_STYLE, reservedFor, spaceLabel, styleFor } from "./style.js";
 
 const features = JSON.parse(readFileSync(new URL("../public/data/parking_areas.geojson", import.meta.url))).features;
 const reserved = features.filter((f) => f.properties.rule_type === "reserved");
@@ -32,5 +32,6 @@ test("every space type the register gives a reserved area has a label", () => {
   expect([...new Set(unlabelled.map((f) => f.properties.tyyppi))]).toEqual([]);
 });
 
-// The data now carries luokka; this waits on RulePanel naming class 11, the car-sharing bays
-test.todo("a reserved area with no space type says who it is for");
+test("every reserved area says who it is for", () => {
+  expect(reserved.filter((f) => !reservedFor(f.properties)).map((f) => f.properties.id)).toEqual([]);
+});

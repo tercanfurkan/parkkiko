@@ -3,10 +3,12 @@ import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, useMapEvents } 
 import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
+import About from "./About.jsx";
 import { DATA_EXTENT } from "./extent.js";
 
 const HELSINKI = [60.1699, 24.9384];
 const DATA_URL = `${import.meta.env.BASE_URL}data/parking_areas.geojson`;
+const CALENDAR_URL = `${import.meta.env.BASE_URL}data/holidays.json`;
 
 const CITY_ZOOM = 12;       // the whole register fits on a phone screen
 const STREET_ZOOM = 17;     // individual street sections are tappable
@@ -27,8 +29,8 @@ const NOTICES = {
   failed: "Could not find your location. Zoom in on the map instead.",
 };
 
-function ZoomWatcher({ onZoom }) {
-  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()) });
+function MapEvents({ onZoom, onEmptyClick }) {
+  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()), click: onEmptyClick });
   return null;
 }
 
@@ -39,12 +41,25 @@ export default function App() {
   const [selected, setSelected] = useState(null);
   const [position, setPosition] = useState(null);
   const [notice, setNotice] = useState(null);
+  const [calendar, setCalendar] = useState(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  const [now, setNow] = useState(() => new Date());
   const layersRef = useRef(null);
   const selectedLayer = useRef(null);
+  const sheetRef = useRef(null);
 
   useEffect(() => {
     fetch(DATA_URL).then((r) => r.json()).then(setAreas);
+    fetch(CALENDAR_URL).then((r) => r.json()).then(setCalendar);
   }, []);
+
+  // The answer is for this minute, so keep it current while it is on screen: 20:59 becomes 21:00
+  useEffect(() => {
+    if (!selected) return;
+    setNow(new Date());
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, [selected]);
 
   const locate = useCallback(() => {
     if (!navigator.geolocation) return setNotice(NOTICES.failed);
@@ -70,22 +85,35 @@ export default function App() {
     if (map) locate();
   }, [map, locate]);
 
+  const deselect = () => {
+    if (selectedLayer.current) layersRef.current?.resetStyle(selectedLayer.current);
+    selectedLayer.current = null;
+    setSelected(null);
+  };
+
   // One listener on the layer group rather than one per area, so mounting it binds 1 handler, not 8,754
-  const onAreaClick = ({ propagatedFrom: layer }) => {
+  const onAreaClick = (e) => {
+    L.DomEvent.stopPropagation(e);   // a tap on an area is not a tap on empty map
+    const layer = e.propagatedFrom;
     if (selectedLayer.current) layersRef.current.resetStyle(selectedLayer.current);
     layer.setStyle(SELECTED_STYLE);
     selectedLayer.current = layer;
     setSelected(layer.feature.properties);
   };
 
+  // The panel grows over the bottom of the map, so pan the tapped area clear of it
+  useEffect(() => {
+    if (!selected || !selectedLayer.current) return;
+    const covered = sheetRef.current.offsetHeight - sheetRef.current.parentElement.offsetHeight;
+    // The strip's southern end, so all of it clears the panel, not just its middle
+    const bounds = selectedLayer.current.getBounds();
+    map.panInside([bounds.getSouth(), bounds.getCenter().lng], { paddingTopLeft: [0, 24], paddingBottomRight: [0, covered + 24] });
+  }, [selected, map]);
+
   const onZoom = (zoom) => {
     const nowZoomedIn = zoom >= MIN_RULES_ZOOM;
     setZoomedIn(nowZoomedIn);
-    if (!nowZoomedIn) {
-      // the areas unmount, and the selected one with them
-      selectedLayer.current = null;
-      setSelected(null);
-    }
+    if (!nowZoomedIn) deselect();   // the areas unmount, and the selected one with them
   };
 
   const showAreas = areas && zoomedIn;
@@ -98,7 +126,7 @@ export default function App() {
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="© OpenStreetMap contributors"
           />
-          <ZoomWatcher onZoom={onZoom} />
+          <MapEvents onZoom={onZoom} onEmptyClick={deselect} />
           {showAreas && <GeoJSON ref={layersRef} data={areas} eventHandlers={{ click: onAreaClick }} style={styleFor} />}
           {position && (
             <>
@@ -112,13 +140,20 @@ export default function App() {
             {notice}
           </button>
         )}
-        <button className="locate" onClick={locate} aria-label="Show my location" title="Show my location">
-          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-            <path d="M21 3 3 10.5l7.5 3 3 7.5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-          </svg>
-        </button>
+        <button className="about-button" onClick={() => setAboutOpen(true)} aria-label="About Parkkiko" title="About Parkkiko">i</button>
       </div>
-      <RulePanel area={selected} zoomedIn={zoomedIn} />
+      {/* The slot keeps the collapsed panel's height in the layout; the sheet grows up from it over the map */}
+      <div className="sheet-slot">
+        <div className="sheet" ref={sheetRef}>
+          <button className="locate" onClick={locate} aria-label="Show my location" title="Show my location">
+            <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+              <path d="M21 3 3 10.5l7.5 3 3 7.5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <RulePanel area={selected} zoomedIn={zoomedIn} calendar={calendar} now={now} onClose={deselect} />
+        </div>
+      </div>
+      {aboutOpen && <About onClose={() => setAboutOpen(false)} />}
     </div>
   );
 }

@@ -67,3 +67,9 @@ html, body, #root { height: 100%; margin: 0; font-family: system-ui, sans-serif;
 .about h2 { margin: 0 0 8px; }
 .about p { margin: 0 0 12px; line-height: 1.4; }
 .about .version { color: #555; font-size: 0.9rem; }
+.parked-bar {
+  width: 100%; border: 0; text-align: left; font: inherit; cursor: pointer;
+  background: #1f2937; color: #fff;
+}
+.parked-bar strong { font-variant-numeric: tabular-nums; }
+div.remind { cursor: default; }

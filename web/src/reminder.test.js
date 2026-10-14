@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { evaluate } from "./evaluate.js";
-import { calendarFile, reminderFor } from "./reminder.js";
+import { actionFor, calendarFile, reminderFor, stayFor } from "./reminder.js";
 
 const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url)));
 const features = read("../public/data/parking_areas.geojson").features;
@@ -15,7 +15,6 @@ const instant = (local, offset = "+03:00") => Date.parse(`${local}${offset}`);
 
 describe("a reminder is offered when something gets worse at the deadline", () => {
   test.each([
-    ["the time limit ends", 8006, "2026-10-13T14:40", "Move your car", "2026-10-13T18:40"],
     ["free turns paid", 8001, "2026-10-13T21:30", "Paid parking starts", "2026-10-14T09:00"],
     ["free turns no parking", 8011, "2026-10-13T19:00", "No parking starts", "2026-10-14T07:00"],
     ["a time limit starts", 8006, "2026-10-13T18:30", "The time limit starts", "2026-10-14T08:00"],
@@ -42,6 +41,41 @@ describe("no reminder when there is nothing to warn about", () => {
   test("less than ten minutes before the deadline, when it would already be late", () => {
     expect(remind(8001, "2026-10-14T08:51")).toBeNull();
     expect(remind(8001, "2026-10-14T08:49")).not.toBeNull();
+  });
+});
+
+describe("the action beside the answer", () => {
+  const action = (id, local) => {
+    const now = new Date(`${local}+03:00`);
+    return actionFor(evaluate(area(id), now, calendar), now.getTime());
+  };
+
+  test("a time limit is started by the driver, since it runs from when they leave the car", () => {
+    expect(action(8006, "2026-10-13T14:40")).toEqual({ type: "start" });
+  });
+
+  test("a fixed deadline that gets worse is a reminder", () => {
+    expect(action(8001, "2026-10-13T21:30")).toEqual(expect.objectContaining({ type: "remind" }));
+  });
+
+  test("nothing when nothing gets worse", () => {
+    expect(action(8001, "2026-10-13T14:40")).toBeNull();
+  });
+});
+
+describe("a started stay", () => {
+  test("runs the time limit from the moment it starts, with the reminder ten minutes before the end", () => {
+    const start = new Date("2026-10-13T14:40+03:00");
+    expect(stayFor(area(8006), evaluate(area(8006), start, calendar))).toEqual({
+      areaId: 8006, title: "Move your car", deadline: instant("2026-10-13T18:40"), at: instant("2026-10-13T18:30"),
+    });
+  });
+
+  test("is not offered when the window ends before the limit would", () => {
+    // 8006 at 19:00: the 4-hour limit outlasts the window ending at 20:00, so there is no limit to
+    // start. The answer is a fixed deadline instead, with "Remind me".
+    const late = new Date("2026-10-13T19:00+03:00");
+    expect(stayFor(area(8006), evaluate(area(8006), late, calendar))).toBeNull();
   });
 });
 

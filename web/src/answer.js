@@ -25,6 +25,11 @@ function duration(minutes) {
   return [hours, mins].filter(Boolean).join(" ");
 }
 
+const HELSINKI_CLOCK = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Helsinki", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** "18:40", the Helsinki clock time of an instant */
+export const clockTime = (ms) => HELSINKI_CLOCK.format(ms);
+
 /** "11:28:42" for a countdown in milliseconds. Rounded down: never promise time that is not there. */
 export function clock(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));

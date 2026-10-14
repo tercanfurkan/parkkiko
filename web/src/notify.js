@@ -2,7 +2,10 @@
 // keeps the page running. Phones pause background tabs, and iOS Safari only notifies an installed
 // app, so the calendar event is the reminder and this never stands in for it.
 
+import { calendarFile } from "./reminder.js";
+
 const KEY = "parkkiko.reminder";
+const STAY_KEY = "parkkiko.stay";
 const SW_URL = `${import.meta.env.BASE_URL}sw.js`;
 let timer = null;
 
@@ -41,5 +44,36 @@ export function restoreNotification() {
     if (saved?.at > Date.now() && Notification.permission === "granted") arm(saved);
   } catch {
     // no storage, or nothing saved
+  }
+}
+
+function download(name, content) {
+  const url = URL.createObjectURL(new Blob([content], { type: "text/calendar" }));
+  const a = Object.assign(document.createElement("a"), { href: url, download: name });
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/** The calendar event, which is the reminder, and the notification as a bonus. Call from a tap. */
+export function addReminder(reminder, { detail, deadlineText }) {
+  download("parkkiko-reminder.ics", calendarFile(reminder, { detail, url: location.href }));
+  scheduleNotification({ title: reminder.title, body: `At ${deadlineText}. Tap to open Parkkiko.`, at: reminder.at });
+}
+
+/** The stay the driver started, if it has not run out yet. Survives a reload. */
+export function loadStay() {
+  try {
+    const stay = JSON.parse(localStorage.getItem(STAY_KEY));
+    return stay?.deadline > Date.now() ? stay : null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveStay(stay) {
+  try {
+    localStorage.setItem(STAY_KEY, JSON.stringify(stay));
+  } catch {
+    // private mode: the stay lasts until the page closes
   }
 }

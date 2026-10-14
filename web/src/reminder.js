@@ -12,11 +12,27 @@ const WORSE = { paid: "Paid parking starts", no_parking: "No parking starts", li
  */
 export function reminderFor(result, now) {
   const { kind, until, stay, then } = result;
-  if (!until) return null;
-  const title = stay ? "Move your car" : (kind === "free" || then?.kind === "check") && WORSE[then?.kind];
+  if (!until || stay) return null;
+  const title = (kind === "free" || then?.kind === "check") && WORSE[then?.kind];
   if (!title) return null;
   const at = until.at - LEAD_MS;
   return at > now ? { title, deadline: until.at, at } : null;
+}
+
+/**
+ * What the driver can do beside the answer: { type: "start" } for a time limit, which runs from
+ * when they leave the car; { type: "remind", reminder } for a fixed deadline that gets worse; or null.
+ */
+export function actionFor(result, now) {
+  if (result.stay) return { type: "start" };
+  const reminder = reminderFor(result, now);
+  return reminder && { type: "remind", reminder };
+}
+
+/** A stay started now, from a result evaluated at the moment the driver taps: null if no limit applies. */
+export function stayFor(area, result) {
+  if (!result.stay) return null;
+  return { areaId: area.id, title: "Move your car", deadline: result.until.at, at: result.until.at - LEAD_MS };
 }
 
 const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");

@@ -56,11 +56,13 @@ changes, looking up to a week ahead through the calendar:
 - Only a rule in force at no hour of the coming week gives "no limit". No official area has one,
   since every area with hours has a `mon_fri` window.
 
-`duration_min` caps the stay when it ends first: "Park here for 2 hours. Move by 16:00." `0` means
+`duration_min` caps the stay when it ends first: "Free parking, 2 hours max. Until 16:00, then move
+your car." `0` means
 the register explicitly states no limit, and absent means none was stated: neither caps.
 
-Times are said as clock times, "until 21:00", rather than as durations, so they are exact on
-the two days the clocks change.
+The clock time is the commitment, "until 21:00", exact even on the two days the clocks change.
+Beside it a countdown helps, "6 h 20 min left", **rounded down to the whole minute, never up**, and
+left out past a day, where "until Monday 09:00" says it better.
 
 ## 4. When not to answer
 
@@ -78,26 +80,27 @@ Real areas from the committed file. Times are Europe/Helsinki.
 
 | Area | Rule | When | Expected |
 |---|---|---|---|
-| 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid until 21:00. Then free until 09:00 tomorrow. |
-| 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Park here until 09:00 tomorrow. Free until then, then paid. |
-| 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Park here until 09:00 tomorrow. No Sunday window means no rule today. |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Park here for 4 hours. Move by 18:00. |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Park here until 08:00 tomorrow. Then a limit of 4 hours. |
-| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Then park here until 07:00 tomorrow. |
-| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Park here until 07:00 tomorrow. Then no parking. |
+| 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid parking until 21:00. 7 h left. Free after that until 09:00 tomorrow |
+| 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Free parking until 09:00 tomorrow. 12 h left. Paid after that |
+| 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free parking until 09:00 tomorrow. No Sunday window means no rule today |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Until 18:00, then move your car |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. 4 hours max after that |
+| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Allowed in 6 h. Free after that until 07:00 tomorrow |
+| 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Free parking until 07:00 tomorrow. 12 h left. No parking after that |
 | 8139 | paid, no hours, 60 min | any | The register does not publish hours here. Check the sign. |
 | any | paid, `mon_fri 9-21` | 25 Dec 14:00 | Christmas Day follows Sunday, so free. |
-| 8001 | paid, `mon_fri 9-21` | Tue 22 Dec 21:00 | Park here until midnight. Then check the sign: the 23rd rests on Christmas Eve. |
+| 8001 | paid, `mon_fri 9-21` | Tue 22 Dec 21:00 | Free parking until midnight. 3 h left. Check the sign after that: the 23rd rests on Christmas Eve |
 | any | paid, `mon_fri 9-21` | 24 Dec 14:00 | Check the sign: the calendar marks the day uncertain. |
 
 ## What the driver should read
 
-The sentence is the product. Lead with what they can do, then when it changes.
+The sentence is the product. The headline answers "can I park, and do I pay"; the line under it
+says until when and what follows.
 
-- **Park here for 2 hours.** Move by 16:00.
-- **Paid until 21:00.** Then free until 09:00 tomorrow.
-- **No parking until 18:00.** Then park here until 07:00 tomorrow.
+- **Free parking, 2 hours max.** Until 16:00, then move your car
+- **Paid parking until 21:00.** 6 h 20 min left. Free after that until 09:00 tomorrow
+- **No parking until 18:00.** Allowed in 3 h. Free after that until 07:00 tomorrow
 - **Check the sign.** *(the reason)*
-- **Not for you.** Reserved: Taxi.
+- **Not for you.** Reserved: Taxi
 
 Never print a rule type as a label on its own. "Free, time limited" is a category, not an answer.

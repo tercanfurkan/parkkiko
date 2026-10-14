@@ -11,12 +11,12 @@ const WINDOW_BY_WEEKDAY = ["sun", "mon_fri", "mon_fri", "mon_fri", "mon_fri", "m
 
 const HELSINKI = new Intl.DateTimeFormat("en-CA", {
   timeZone: "Europe/Helsinki",
-  year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23",
+  year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
 });
 
 function helsinkiNow(instant) {
   const p = Object.fromEntries(HELSINKI.formatToParts(instant).map(({ type, value }) => [type, Number(value)]));
-  return { midnight: Date.UTC(p.year, p.month - 1, p.day), minute: p.hour * 60 + p.minute };
+  return { midnight: Date.UTC(p.year, p.month - 1, p.day), minute: p.hour * 60 + p.minute, second: p.second };
 }
 
 // The calendar day `offset` days from the evaluated one: which window applies, or null when the
@@ -114,7 +114,7 @@ export function evaluate(area, now, calendar) {
     return { kind: "check", why: "unknown" };
   }
 
-  const { midnight, minute } = helsinkiNow(now);
+  const { midnight, minute, second } = helsinkiNow(now);
   if (season && !inSeason(season, midnight)) return { kind: "check", why: "season" };
   if (rule_type === "always_banned") return { kind: "no_parking" };
   if (rule_type === "reserved") return { kind: "reserved" };
@@ -128,7 +128,8 @@ export function evaluate(area, now, calendar) {
   }
 
   const kind = state === "in" ? INSIDE[rule_type] : OUTSIDE[rule_type];
-  const at = (m) => moment(midnight, m);
+  // left: whole minutes from now, rounded down, so a part-gone minute is not promised
+  const at = (m) => ({ ...moment(midnight, m), left: m - minute - (second > 0 ? 1 : 0) });
   const change = nextChange(line, minute);
 
   // The time limit ends the stay before the rule changes: move by then, nothing follows

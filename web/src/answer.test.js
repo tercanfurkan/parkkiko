@@ -13,26 +13,33 @@ const say = (id, local, offset = "+03:00") => {
 };
 
 test.each([
-  [8001, "2026-10-13T14:00", "Paid until 21:00.", "Then free until 09:00 tomorrow."],
-  [8001, "2026-10-13T21:00", "Park here until 09:00 tomorrow.", "Free until then, then paid."],
-  [8006, "2026-10-13T14:00", "Park here for 4 hours.", "Move by 18:00."],
-  [8006, "2026-10-13T18:30", "Park here until 08:00 tomorrow.", "Then a limit of 4 hours."],
-  [8011, "2026-10-13T12:00", "No parking until 18:00.", "Then park here until 07:00 tomorrow."],
-  [8011, "2026-10-16T19:00", "Park here until 09:00 tomorrow.", "Then no parking."],
-  [8269, "2026-10-13T14:00", "Park here for 1 hour, paid.", "Move by 15:00."],
-  [8139, "2026-10-13T14:00", "Check the sign.", "The register does not publish hours here."],
-  [8016, "2026-10-13T14:00", "Not for you.", "Reserved: Car-sharing pickup and return."],
+  [8001, "2026-10-13T14:40", "Paid parking until 21:00", "6 h 20 min left. Free after that until 09:00 tomorrow"],
+  [8001, "2026-10-13T21:30", "Free parking until 09:00 tomorrow", "11 h 30 min left. Paid after that"],
+  [8006, "2026-10-13T14:40", "Free parking, 4 hours max", "Until 18:40, then move your car"],
+  [8006, "2026-10-13T18:30", "Free parking until 08:00 tomorrow", "13 h 30 min left. 4 hours max after that"],
+  [8011, "2026-10-13T12:00", "No parking until 18:00", "Allowed in 6 h. Free after that until 07:00 tomorrow"],
+  [8011, "2026-10-13T17:00", "No parking until 18:00", "Allowed in 1 h. Free after that until 07:00 tomorrow"],
+  [8011, "2026-10-16T19:00", "Free parking until 09:00 tomorrow", "14 h left. No parking after that"],
+  [8269, "2026-10-13T14:40", "Paid parking, 1 hour max", "Until 15:40, then move your car"],
+  [8139, "2026-10-13T14:00", "Check the sign", "The register does not publish hours here"],
+  [8016, "2026-10-13T14:00", "Not for you", "Reserved: Car-sharing pickup and return"],
 ])("area %i at %s", (id, local, headline, detail) => {
   expect(say(id, local)).toEqual({ headline, detail });
 });
 
-test("a time two or more days ahead names the weekday", () => {
-  // Friday 21:00 to Monday 09:00
-  expect(say(8001, "2026-10-16T21:00").headline).toBe("Park here until 09:00 Monday.");
+test("past a day the countdown is left out and the weekday named", () => {
+  // Friday 21:00 to Monday 09:00 is 60 hours: "until Monday 09:00" says it better
+  expect(say(8001, "2026-10-16T21:00")).toEqual({ headline: "Free parking until Monday 09:00", detail: "Paid after that" });
+});
+
+test("the countdown rounds down, never promising time the driver does not have", () => {
+  // At 14:40:59 there are 6 h 19 min 1 s left before 21:00: say 6 h 19 min, not 6 h 20 min
+  const a = area(8001);
+  expect(answer(a, evaluate(a, new Date("2026-10-13T14:40:59+03:00"), calendar)).detail).toMatch(/^6 h 19 min left/);
 });
 
 test("the look-ahead says where the calendar stops being sure", () => {
-  expect(say(8001, "2026-12-22T21:00", "+02:00")).toEqual({ headline: "Park here until midnight.", detail: "Then check the sign." });
+  expect(say(8001, "2026-12-22T21:00", "+02:00")).toEqual({ headline: "Free parking until midnight", detail: "3 h left. Check the sign after that" });
 });
 
 test("every area in the data gets a complete sentence, at any hour", () => {

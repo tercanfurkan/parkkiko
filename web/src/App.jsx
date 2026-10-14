@@ -4,6 +4,10 @@ import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
 import About from "./About.jsx";
+import { addReminder, loadStay, restoreNotification, saveStay } from "./notify.js";
+import { evaluate } from "./evaluate.js";
+import { stayFor } from "./reminder.js";
+import { clockTime } from "./answer.js";
 import { DATA_EXTENT } from "./extent.js";
 
 const HELSINKI = [60.1699, 24.9384];
@@ -43,6 +47,7 @@ export default function App() {
   const [notice, setNotice] = useState(null);
   const [calendar, setCalendar] = useState(null);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [stay, setStay] = useState(loadStay);
   const [now, setNow] = useState(() => new Date());
   const layersRef = useRef(null);
   const selectedLayer = useRef(null);
@@ -51,6 +56,7 @@ export default function App() {
   useEffect(() => {
     fetch(DATA_URL).then((r) => r.json()).then(setAreas);
     fetch(CALENDAR_URL).then((r) => r.json()).then(setCalendar);
+    restoreNotification();   // a reminder set before a reload
   }, []);
 
   // The answer is for this minute, so keep it current while it is on screen: 20:59 becomes 21:00
@@ -118,6 +124,35 @@ export default function App() {
 
   const showAreas = areas && zoomedIn;
 
+  // Highlight the selected area once its layer exists: after opening a stay from the bar the map
+  // is still flying there, and the areas mount only when it arrives at street zoom
+  useEffect(() => {
+    if (!selected || selectedLayer.current || !layersRef.current) return;
+    layersRef.current.eachLayer((layer) => {
+      if (layer.feature.properties.id !== selected.id) return;
+      layer.setStyle(SELECTED_STYLE);
+      selectedLayer.current = layer;
+    });
+  }, [selected, showAreas]);
+
+  // The limit runs from this tap, so evaluate again now rather than reuse the panel's minute
+  const startParking = (area) => {
+    const started = stayFor(area, evaluate(area, new Date(), calendar));
+    if (!started) return;
+    saveStay(started);
+    setStay(started);
+    const deadlineText = clockTime(started.deadline);
+    addReminder(started, { detail: `Parked. Move by ${deadlineText}`, deadlineText });
+  };
+
+  const openStay = () => {
+    const feature = areas?.features.find((f) => f.properties.id === stay.areaId);
+    if (!feature) return;
+    deselect();
+    map.flyTo(L.geoJSON(feature).getBounds().getCenter(), STREET_ZOOM);
+    setSelected(feature.properties);
+  };
+
   return (
     <div className="app">
       <div className="map-wrap">
@@ -150,7 +185,10 @@ export default function App() {
               <path d="M21 3 3 10.5l7.5 3 3 7.5z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
             </svg>
           </button>
-          <RulePanel area={selected} zoomedIn={zoomedIn} calendar={calendar} now={now} onClose={deselect} />
+          <RulePanel
+            area={selected} zoomedIn={zoomedIn} calendar={calendar} now={now} onClose={deselect}
+            stay={stay} onStart={startParking} onOpenStay={openStay}
+          />
         </div>
       </div>
       {aboutOpen && <About onClose={() => setAboutOpen(false)} />}

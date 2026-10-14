@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, useMapEvents } 
 import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
+import About from "./About.jsx";
 import { DATA_EXTENT } from "./extent.js";
 
 const HELSINKI = [60.1699, 24.9384];
@@ -41,6 +42,7 @@ export default function App() {
   const [position, setPosition] = useState(null);
   const [notice, setNotice] = useState(null);
   const [calendar, setCalendar] = useState(null);
+  const [aboutOpen, setAboutOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
   const layersRef = useRef(null);
   const selectedLayer = useRef(null);
@@ -138,6 +140,7 @@ export default function App() {
             {notice}
           </button>
         )}
+        <button className="about-button" onClick={() => setAboutOpen(true)} aria-label="About Parkkiko" title="About Parkkiko">i</button>
       </div>
       {/* The slot keeps the collapsed panel's height in the layout; the sheet grows up from it over the map */}
       <div className="sheet-slot">
@@ -150,6 +153,7 @@ export default function App() {
           <RulePanel area={selected} zoomedIn={zoomedIn} calendar={calendar} now={now} onClose={deselect} />
         </div>
       </div>
+      {aboutOpen && <About onClose={() => setAboutOpen(false)} />}
     </div>
   );
 }

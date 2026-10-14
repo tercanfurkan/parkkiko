@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { RULE_TYPES } from "./style.js";
 import { evaluate } from "./evaluate.js";
-import { answer, clock } from "./answer.js";
+import { answer, clock, when } from "./answer.js";
+import { reminderFor } from "./reminder.js";
+import ReminderButton from "./ReminderButton.jsx";
 
 // The map colour of what applies now, so the panel and the strip on the map read as one
 const TINT = { free: "free_limited", paid: "paid", no_parking: "always_banned", reserved: "reserved", check: "unknown" };
@@ -16,7 +18,7 @@ function Countdown({ to, label }) {
   return <div className="countdown">{label === "left" ? <>{time} left</> : <>{label} {time}</>}</div>;
 }
 
-export default function RulePanel({ area, zoomedIn, calendar, now, onClose, action }) {
+export default function RulePanel({ area, zoomedIn, calendar, now, onClose }) {
   if (!area) {
     return (
       <div className="panel">
@@ -28,6 +30,7 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, acti
   const result = calendar && evaluate(area, now, calendar);
   const { headline, detail, countdown } = result ? answer(area, result, now.getTime()) : { headline: "Checking…" };
   const tint = RULE_TYPES[TINT[result?.kind] ?? "unknown"].colour;
+  const reminder = result && reminderFor(result, now.getTime());
   return (
     <div className="panel open">
       <div className="info" style={{ "--tint": tint }}>
@@ -37,7 +40,16 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, acti
         {detail && <div>{detail}</div>}
         {area.extra_info && <div className="note">Sign note: {area.extra_info}</div>}
       </div>
-      {action && <div className="action">{action}</div>}
+      {reminder && (
+        <div className="action">
+          <ReminderButton
+            key={`${area.id}-${reminder.deadline}`}
+            reminder={reminder}
+            deadlineText={when(result.until)}
+            detail={[headline, detail].filter(Boolean).join(". ")}
+          />
+        </div>
+      )}
     </div>
   );
 }

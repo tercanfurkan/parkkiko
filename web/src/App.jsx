@@ -4,6 +4,7 @@ import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
 import RulePanel from "./RulePanel.jsx";
 import About from "./About.jsx";
+import { restoreNotification } from "./notify.js";
 import { DATA_EXTENT } from "./extent.js";
 
 const HELSINKI = [60.1699, 24.9384];
@@ -51,6 +52,7 @@ export default function App() {
   useEffect(() => {
     fetch(DATA_URL).then((r) => r.json()).then(setAreas);
     fetch(CALENDAR_URL).then((r) => r.json()).then(setCalendar);
+    restoreNotification();   // a reminder set before a reload
   }, []);
 
   // The answer is for this minute, so keep it current while it is on screen: 20:59 becomes 21:00

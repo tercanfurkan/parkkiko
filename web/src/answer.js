@@ -9,7 +9,8 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 const pad = (n) => String(n).padStart(2, "0");
 
-function when({ offset, minute, weekday }) {
+/** "21:00", "09:00 tomorrow", "Monday 09:00" */
+export function when({ offset, minute, weekday }) {
   const clock = `${pad(Math.floor(minute / 60))}:${pad(minute % 60)}`;
   if (offset === 0) return clock;
   if (offset === 1) return minute === 0 ? "midnight" : `${clock} tomorrow`;

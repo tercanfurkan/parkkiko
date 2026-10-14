@@ -16,11 +16,11 @@ const say = (id, local, offset = "+03:00") => {
 test.each([
   [8001, "2026-10-13T14:40", "Paid parking until 21:00", "Free after that until 09:00 tomorrow"],
   [8001, "2026-10-13T21:30", "Free parking until 09:00 tomorrow", "Paid after that"],
-  [8006, "2026-10-13T14:40", "Free parking, 4 hours max", "Until 18:40, then move your car"],
+  [8006, "2026-10-13T14:40", "Free parking, 4 hours max", "Park now and move by 18:40"],
   [8006, "2026-10-13T18:30", "Free parking until 08:00 tomorrow", "4 hours max after that"],
   [8011, "2026-10-13T12:00", "No parking until 18:00", "Free after that until 07:00 tomorrow"],
   [8011, "2026-10-16T19:00", "Free parking until 09:00 tomorrow", "No parking after that"],
-  [8269, "2026-10-13T14:40", "Paid parking, 1 hour max", "Until 15:40, then move your car"],
+  [8269, "2026-10-13T14:40", "Paid parking, 1 hour max", "Park now and move by 15:40"],
   [8139, "2026-10-13T14:00", "Check the sign", "The register does not publish hours here"],
   [8016, "2026-10-13T14:00", "Not for you", "Reserved: Car-sharing pickup and return"],
 ])("area %i at %s", (id, local, headline, detail) => {
@@ -30,7 +30,6 @@ test.each([
 test.each([
   ["counts down to a deadline", 8001, "2026-10-13T14:40", { to: Date.parse("2026-10-13T21:00+03:00"), label: "left" }],
   ["counts down to when parking is allowed", 8011, "2026-10-13T12:00", { to: Date.parse("2026-10-13T18:00+03:00"), label: "Allowed in" }],
-  ["counts down a time limit", 8006, "2026-10-13T14:40", { to: Date.parse("2026-10-13T18:40+03:00"), label: "left" }],
 ])("the countdown %s", (_, id, local, countdown) => {
   expect(say(id, local).countdown).toEqual(countdown);
 });
@@ -39,6 +38,7 @@ test.each([
   ["past a day, where 'until Monday 09:00' says it better", 8001, "2026-10-16T21:00"],
   ["when nothing is counting down", 8139, "2026-10-13T14:00"],
   ["for a space that is not yours", 8016, "2026-10-13T14:00"],
+  ["for a time limit, which starts when the driver leaves the car, not when they look", 8006, "2026-10-13T14:40"],
 ])("no countdown %s", (_, id, local) => {
   expect(say(id, local).countdown).toBeUndefined();
 });

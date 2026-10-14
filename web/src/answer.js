@@ -66,10 +66,9 @@ export function answer(area, result, now) {
     const who = reservedFor(area);
     return { headline: "Not for you", detail: who ? `Reserved: ${who}` : "Reserved space" };
   }
+  // A time limit runs from when the driver leaves the car, so there is nothing to count down yet
+  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Park now and move by ${when(until)}` };
   const countdown = until && until.at - now < DAY_MS ? { to: until.at, label: kind === "no_parking" ? "Allowed in" : "left" } : undefined;
-  if (stay) {
-    return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Until ${when(until)}, then move your car`, countdown };
-  }
   if (!until) {
     const always = { no_parking: null, paid: "At all hours", free: "No time limit" };
     return { headline: LABEL[kind], detail: always[kind] };

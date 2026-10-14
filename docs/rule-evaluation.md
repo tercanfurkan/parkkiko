@@ -56,8 +56,9 @@ changes, looking up to a week ahead through the calendar:
 - Only a rule in force at no hour of the coming week gives "no limit". No official area has one,
   since every area with hours has a `mon_fri` window.
 
-`duration_min` caps the stay when it ends first: "Free parking, 2 hours max. Until 16:00, then move
-your car." `0` means
+`duration_min` caps the stay when it ends first: "Free parking, 2 hours max. Park now and move by
+16:00." There is no countdown for it: the limit runs from when the driver leaves the car, not from
+when they look. `0` means
 the register explicitly states no limit, and absent means none was stated: neither caps.
 
 The clock time is the commitment, "until 21:00". Beside it a countdown ticks, "11:28:42 left",
@@ -84,7 +85,7 @@ Real areas from the committed file. Times are Europe/Helsinki.
 | 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid parking until 21:00. 7 h left. Free after that until 09:00 tomorrow |
 | 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Free parking until 09:00 tomorrow. 12 h left. Paid after that |
 | 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free parking until 09:00 tomorrow. No Sunday window means no rule today |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Until 18:00, then move your car |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Park now and move by 18:00 |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. 4 hours max after that |
 | 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Allowed in 6 h. Free after that until 07:00 tomorrow |
 | 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Free parking until 07:00 tomorrow. 12 h left. No parking after that |
@@ -98,7 +99,7 @@ Real areas from the committed file. Times are Europe/Helsinki.
 The sentence is the product. The headline answers "can I park, and do I pay"; the line under it
 says until when and what follows.
 
-- **Free parking, 2 hours max.** Until 16:00, then move your car
+- **Free parking, 2 hours max.** Park now and move by 16:00
 - **Paid parking until 21:00.** 6 h 20 min left. Free after that until 09:00 tomorrow
 - **No parking until 18:00.** Allowed in 3 h. Free after that until 07:00 tomorrow
 - **Check the sign.** *(the reason)*

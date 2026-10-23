@@ -48,7 +48,7 @@ validation, and the Finnish public holidays from the `holidays` package, since a
 Sunday rules. All are CC BY 4.0 and need no key. `pipeline/fetch.py` saves a dated snapshot and
 everything downstream runs on it, so every result is reproducible; the processed snapshot is
 committed to git, so the team, the report and the app share one copy. The stage is walked
-through in `notebooks/02_data_collection.ipynb`, which fetches the live data.
+through in `notebooks/stages/02_data_collection.ipynb`, which fetches the live data.
 
 Reading a snapshot back held the project's most instructive bug. The server declares its metric
 coordinate system, but our saved file kept only the features, and a GeoJSON file without a
@@ -94,7 +94,7 @@ Every area ends with a status, an issue code a program can branch on, and a reas
 for the driver. Of the 385 areas that end up uncertain, 301 carry free text we do not parse, 86 an
 unreadable field and one genuinely ambiguous hours. Re-running the parsers on the committed raw
 fields reproduces every parsed value exactly. The stage is walked through in
-`notebooks/03_preprocessing.ipynb`, which also found that 116 of the uncertain areas are flagged
+`notebooks/stages/03_preprocessing.ipynb`, which also found that 116 of the uncertain areas are flagged
 only because a note holds a traffic sign code with a letter, such as `C41`, which the parser does
 not recognise as a reference: safe, but probably too cautious.
 
@@ -102,7 +102,7 @@ not recognise as a reference: safe, but probably too cautious.
 
 We carried out every view the canvas's exploration box planned, and two of them found things we
 had not been looking for. The stage is walked through, with the code behind each finding, in
-`notebooks/04_exploration.ipynb`.
+`notebooks/stages/04_exploration.ipynb`.
 
 Following the course's practice of describing the typical case before plotting anything, we took
 the mode of each category and the median of each number (Table B2). The typical area is paid,

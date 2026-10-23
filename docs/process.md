@@ -37,7 +37,7 @@ CC BY 4.0 with no key or registration, plus the city's district boundaries. Sour
 are listed in [data.md](data.md). [`pipeline/fetch.py`](../pipeline/fetch.py) saves a dated
 snapshot of exactly what the server returned, so results are reproducible.
 
-The whole stage is walked through in [02 data collection](../notebooks/02_data_collection.ipynb),
+The whole stage is walked through in [02 data collection](../notebooks/stages/02_data_collection.ipynb),
 which fetches the live data. Sources, sizes, timings and limits: [data.md](data.md).
 
 **A dataset we evaluated and rejected.** The city also publishes "temporary traffic arrangements",
@@ -64,7 +64,7 @@ are in [future-work.md](future-work.md).
 answered confidently from the part it recognised: it read `7-15, Maksullinen (9-18)` as plain
 hours and dropped the word *Maksullinen*, "paid". Those 8 areas were still flagged, but only
 because their time-limit field was; they are now flagged on their own evidence. The comparison is
-generated in [03 preprocessing](../notebooks/03_preprocessing.ipynb), section 7, which walks
+generated in [03 preprocessing](../notebooks/stages/03_preprocessing.ipynb), section 7, which walks
 through the whole stage. Every area carries a status, a machine-readable issue code, and a reason
 in plain words.
 
@@ -76,7 +76,7 @@ last one matters because reading the file asserts the coordinate system rather t
 
 ## 4. Exploration
 
-The whole stage is walked through in [04 exploration](../notebooks/04_exploration.ipynb), which
+The whole stage is walked through in [04 exploration](../notebooks/stages/04_exploration.ipynb), which
 calls the same functions that generate the tables in [report_stats.md](report_stats.md) and the
 charts below.
 

@@ -77,7 +77,7 @@ It does not describe what its name suggests. The arrangements run for years, not
 of 711 days and a maximum of 3,204. They are construction projects and event permits, not
 roadworks closures, so nothing about them is live.
 
-Measured on 4 October 2026; [notebook 02](../notebooks/02_data_collection.ipynb), section 9,
+Measured on 4 October 2026; [notebook 02](../notebooks/stages/02_data_collection.ipynb), section 9,
 reruns the measurement on current data. The link to parking is also inferred rather than stated.
 Of 8,754 parking areas, 191 overlap an
 arrangement, 45 of those only overlap one that has already ended, and of the 146 that remain only

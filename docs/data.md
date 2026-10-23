@@ -99,7 +99,7 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
 - **Free text is not parsed.** 301 areas carry text the parser treats as a condition, such as a
   night driving ban. 116 of them hold only a traffic sign code with a letter (`C41`), which the
   parser does not recognise as a reference, so they are flagged more cautiously than they need to
-  be; see [notebook 03](../notebooks/03_preprocessing.ipynb), section 6.
+  be; see [notebook 03](../notebooks/stages/03_preprocessing.ipynb), section 6.
   These are marked uncertain and shown to the driver verbatim to judge.
 - **Side of the street cannot be determined from GPS.** Rules differ per side, and phone accuracy
   in a street canyon is comparable to the street width, so the driver picks the side.

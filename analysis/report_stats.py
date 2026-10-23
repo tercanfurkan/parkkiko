@@ -282,9 +282,12 @@ def plot_status_map(areas):
     pad = 0.02 * max(maxx - minx, maxy - miny)
     minx, maxx, miny, maxy = minx - pad, maxx + pad, miny - pad, maxy + pad
     fig, ax = plt.subplots(figsize=(11, 11 * (maxy - miny) / (maxx - minx)))
+    # A street section is a few metres wide, under a pixel at city scale, so its fill alone renders
+    # as a faint tint. An outline in the same colour is what makes it visible.
     for status in ("official", "missing_hours", "uncertain"):
         group = areas[areas["status"] == status]
-        group.plot(ax=ax, color=STATUS_COLOURS[status], linewidth=2.5,
+        colour = STATUS_COLOURS[status]
+        group.plot(ax=ax, color=colour, edgecolor=colour, linewidth=1.5,
                    label=f"{STATUS_MEANING[status].lower()} ({len(group):,})")
     ax.set_xlim(minx, maxx)
     ax.set_ylim(miny, maxy)

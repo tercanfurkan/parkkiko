@@ -86,6 +86,7 @@ add a row to Open questions below rather than computing it in the browser.
 | 2.1 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
 | 2.2 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
 | 2.3 | Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
+| 2.4 | Walk the stage through in a notebook | | done | PR #PRNUM. `notebooks/02_data_collection.ipynb`, live data: the source, a raw record, the fields we drop (spaces per area, resident zone), the coordinate trap, districts, the calendar, the snapshot check, the rejected roadworks layer remeasured, and a reflection against the canvas. |
 
 ## 3 Preprocessing
 
@@ -95,6 +96,7 @@ add a row to Open questions below rather than computing it in the browser.
 | 3.2 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
 | 3.3 | District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
 | 3.4 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
+| 3.5 | Walk the stage through in a notebook | | done | PR #PRNUM. `notebooks/03_preprocessing.ipynb`, offline: every raw spelling and what it became, rule types, the fail-closed history, the status, the checks failing on purpose, the outputs, a full reproduction of the committed data, and a reflection against the canvas. |
 
 ## Quality
 
@@ -153,15 +155,15 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|---|
 | R1 | Technical report | | doing | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is the maintained draft, updated as each stage closes; the brief and the grading criteria are in [report-spec.md](report-spec.md). Figures come from `analysis/report_stats.py`, never typed. |
 | R2 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
-| R3 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
-| R4 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
+| R3 | Showpiece: the coordinate system bug | | done | PR #PRNUM. Reproduced end to end, zero of 8,754 matched and then all of them, in `notebooks/02_data_collection.ipynb` section 5; in the report's section 2. A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
+| R4 | Showpiece: fail-closed parsing | | done | PR #PRNUM. Generated, not remembered: `notebooks/03_preprocessing.ipynb` section 7 loads the first parser from git history and runs both versions over every spelling in the register. Only `7-15/7-18, Maksullinen (9-18)` changed, 8 areas, and they were already flagged by their time-limit field. The examples once quoted here (`7-18 7-15`, `max 60 min lauantai`) were planned traps, never wrong answers from a committed parser. In the report's section 3. |
 | R5 | Showpiece: chart quality | | todo | Colour-blind safe palette, no red and green pairing. Week 2 exercise 4 of the reference answers grades this; lecture 3 warns against red and green. |
 
 ## Stretch
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
+| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold text the parser treats as a condition, carried as `extra_info`; 116 of those are only lettered sign codes (open question below), leaving about 185 in prose. Week 4 of the course covers transformers. First thing to cut. |
 | S2 | Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
 | S3 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | S4 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
@@ -176,11 +178,12 @@ trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
+| 116 areas, all reserved or always banned, are uncertain only because `lisatieto` holds a traffic sign code with a letter (`C41, E8`, `7539, C39`). `parse_extra` accepts only digits as a sign reference, so the app says check the sign where the rule does not depend on the note. Errs safe; probably too safe. Accept lettered codes as references? Changes the app's data and the status counts. Found in notebook 03, section 6. | backend | |
 | 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
 | Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |
 | 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
 | Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
-| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Nobody has spaces-per-area yet. |
+| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Spaces per area exists in the register as `paikat_ala` (37,544 spaces in 6,800 areas) and the pipeline drops it; see notebook 02, section 3. |
 
 ## Known traps
 

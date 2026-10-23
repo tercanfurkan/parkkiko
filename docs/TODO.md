@@ -178,6 +178,7 @@ trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
+| **Parking disc.** Class 8, *free short-term parking without a permit; use a parking disc*, covers 1,599 areas. The app answers "Free parking, 4 hours max" and never says to display a disc, and in a disc zone no disc means a fine. The class is already in the app's data (`luokka`), so the fix is wording in `web/src/answer.js`, not a data change: say "set your parking disc" when `luokka` is 8. Fix before anything else on the app? Found in notebook 03, section 2. | backend | |
 | 116 areas, all reserved or always banned, are uncertain only because `lisatieto` holds a traffic sign code with a letter (`C41, E8`, `7539, C39`). `parse_extra` accepts only digits as a sign reference, so the app says check the sign where the rule does not depend on the note. Errs safe; probably too safe. Accept lettered codes as references? Changes the app's data and the status counts. Found in notebook 03, section 6. | backend | |
 | 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
 | Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |

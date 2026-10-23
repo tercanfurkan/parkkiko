@@ -9,7 +9,8 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 
 const pad = (n) => String(n).padStart(2, "0");
 
-function when({ offset, minute, weekday }) {
+/** "21:00", "09:00 tomorrow", "Monday 09:00" */
+export function when({ offset, minute, weekday }) {
   const clock = `${pad(Math.floor(minute / 60))}:${pad(minute % 60)}`;
   if (offset === 0) return clock;
   if (offset === 1) return minute === 0 ? "midnight" : `${clock} tomorrow`;
@@ -23,6 +24,11 @@ function duration(minutes) {
   const mins = m && `${m} minute${m === 1 ? "" : "s"}`;
   return [hours, mins].filter(Boolean).join(" ");
 }
+
+const HELSINKI_CLOCK = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Helsinki", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+
+/** "18:40", the Helsinki clock time of an instant */
+export const clockTime = (ms) => HELSINKI_CLOCK.format(ms);
 
 /** "11:28:42" for a countdown in milliseconds. Rounded down: never promise time that is not there. */
 export function clock(ms) {

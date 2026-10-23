@@ -7,9 +7,11 @@
 Nothing here is typed by hand: if the register changes, rerun this and the report follows.
 """
 import argparse
+import json
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 
 SOURCE = Path("data/processed/parking_rules.parquet")
@@ -29,6 +31,8 @@ STATUS_MEANING = {
     "missing_hours": "Rule type known, hours missing",
     "uncertain": "Uncertain, with a stated reason",
 }
+RAW_FIELDS = {"voimassaolo": "Hours", "kesto": "Time limit", "kausi": "Season",
+              "tyyppi": "Space type", "lisatieto": "Free-text note"}
 DISTANCE_BINS = [0, 10, 50, 200, float("inf")]
 DISTANCE_LABELS = ["0-10 m", "10-50 m", "50-200 m", "over 200 m"]
 
@@ -68,6 +72,129 @@ def coverage(areas):
     return table(df, "What the app can answer")
 
 
+def readable(value):
+    """'{"mon_fri": [9, 21]}' as 'mon_fri 9-21', so a table shows the rule and not its storage."""
+    if not isinstance(value, str) or not value.startswith("{"):
+        return value
+    rule = json.loads(value)
+    if "start" in rule:
+        (m1, d1), (m2, d2) = rule["start"], rule["end"]
+        return f"{d1}.{m1}.-{d2}.{m2}."
+    return ", ".join(f"{window} {a}-{b}" for window, (a, b) in rule.items())
+
+
+def summary_statistics(areas):
+    """The typical value of every variable: the mode of a category, the median of a number.
+
+    Missing stays its own column. For hours and the time limit it is not noise to drop: it is the
+    gap the learning task exists to close.
+    """
+    rows = []
+    categorical = {
+        "Rule type": areas["rule_type"], "Status": areas["status"],
+        "Space type": areas["space_type_en"], "District": areas["district"],
+        "Hours": areas["hours"], "Season": areas["season"],
+    }
+    for name, col in categorical.items():
+        counts = col.value_counts()
+        rows.append({
+            "Variable": name, "Typical value": readable(counts.index[0]),
+            "Share of stated": f"{counts.iloc[0] / counts.sum() * 100:.1f}%",
+            "Distinct": col.nunique(), "Missing": col.isna().sum(),
+        })
+    numeric = {"Time limit, minutes": areas["duration_min"], "Area, m²": areas.geometry.area}
+    for name, col in numeric.items():
+        q1, median, q3 = col.quantile([0.25, 0.5, 0.75])
+        rows.append({
+            "Variable": name, "Typical value": f"{median:.0f} (middle half {q1:.0f}-{q3:.0f})",
+            "Share of stated": "", "Distinct": "", "Missing": col.isna().sum(),
+        })
+    return table(pd.DataFrame(rows), "Summary statistics: mode or median of each variable")
+
+
+def duration_label(minutes):
+    if pd.isna(minutes):
+        return "none stated"
+    if minutes == 0:
+        return "no limit, stated"
+    return f"{minutes / 60:g} h" if minutes >= 60 else f"{minutes:.0f} min"
+
+
+def duration_by_rule_type(areas):
+    """Which time limits go with which rule. Only paid and free-limited areas should carry one."""
+    labels = areas["duration_min"].map(duration_label)
+    order = sorted(labels.unique(), key=lambda l: areas.loc[labels == l, "duration_min"].fillna(-1).iloc[0])
+    df = pd.crosstab(labels, areas["rule_type"]).reindex(order)
+    df.index.name = "Time limit"
+    return table(df.reset_index(), "Time limit against rule type")
+
+
+def size_bounds(areas):
+    """Each area's size in m², and the outlier bounds: the interquartile rule on log10 of the size.
+
+    Sizes span three orders of magnitude, so on the raw scale every large polygon would be an
+    outlier and no small one could be.
+    """
+    size = areas.geometry.area
+    q1, q3 = np.log10(size).quantile([0.25, 0.75])
+    spread = 1.5 * (q3 - q1)
+    return size, 10 ** (q1 - spread), 10 ** (q3 + spread)
+
+
+def large_overlaps(areas):
+    """The large outliers, and each (area, large outlier) pair that intersects.
+
+    A large polygon lying over a smaller one decides what a tap there selects.
+    """
+    size, _, high = size_bounds(areas)
+    large = areas[size > high]
+    pairs = gpd.sjoin(areas[["id", "geometry"]], large[["id", "geometry"]], predicate="intersects")
+    return large, pairs[pairs["id_left"] != pairs["id_right"]]
+
+
+def area_outliers(areas):
+    """Polygon sizes, the outliers by size_bounds(), and how many large ones overlap an area."""
+    size, low, high = size_bounds(areas)
+    summary = pd.DataFrame({
+        "Measure": ["Median area", "Smallest", "Largest", "Outlier bounds",
+                    "Below the lower bound", "Above the upper bound"],
+        "Value": [f"{size.median():.0f} m²", f"{size.min():.1f} m²", f"{size.max():,.0f} m²",
+                  f"{low:.1f} to {high:,.0f} m²", f"{(size < low).sum()}", f"{(size > high).sum()}"],
+    })
+    sized = areas.assign(size=size)
+    picked = pd.concat([sized[sized["size"] < low], sized.nlargest(5, "size")])
+    examples = pd.DataFrame({
+        "Id": picked["id"], "Rule type": picked["rule_type"],
+        "Space type": picked["space_type_en"].fillna("not stated"),
+        "District": picked["district"], "Area, m²": picked["size"].round(1),
+    })
+    large, overlaps = large_overlaps(areas)
+    note = (f"{overlaps['id_right'].nunique()} of the {len(large)} large outliers overlap another "
+            f"area, {overlaps['id_left'].nunique()} areas in all.\n")
+    return (table(summary, "Area sizes and outliers")
+            + "\n" + table(examples, "The smallest outliers and the five largest areas")
+            + "\n" + note)
+
+
+def raw_spellings(areas):
+    """How many ways the register writes each field: the work the parsers do."""
+    rows = []
+    for field, name in RAW_FIELDS.items():
+        col = areas[field].where(areas[field].str.strip() != "")
+        rows.append({"Field": f"{name} (`{field}`)", "Distinct spellings": col.nunique(),
+                     "Missing or blank": col.isna().sum()})
+    return table(pd.DataFrame(rows), "Distinct raw spellings per field")
+
+
+def issue_codes(areas):
+    """Why an area is uncertain. An area can carry more than one code, so codes outnumber areas."""
+    codes = areas["issue_codes"].dropna().str.split(",").explode().value_counts()
+    df = pd.DataFrame({"Issue code": codes.index, "Areas": codes.values})
+    note = (f"{areas['issue_codes'].notna().sum()} uncertain areas, "
+            f"{(areas['issue_codes'].str.contains(',', na=False)).sum()} with more than one code.\n")
+    return table(df, "Issue codes") + "\n" + note
+
+
 def accuracy_by_distance(paired):
     """Share of correct copies per distance band. Used by both the table and the chart."""
     bands = pd.cut(paired["dist"], DISTANCE_BINS, labels=DISTANCE_LABELS)
@@ -105,25 +232,34 @@ def prediction_gap(areas, known):
     return table(df, "Distance from a missing-hours area to the nearest area we can learn from")
 
 
-def nearest_pairs(known):
-    """Pair every area with its nearest other area of the same class."""
+def nearest_pairs(known, same_class=True):
+    """Pair every area with its nearest other area: of the same class, unless same_class is False."""
+    groups = known.groupby("luokka") if same_class else [(None, known)]
     paired = pd.concat(
         gpd.sjoin_nearest(g[["geometry", "hours"]], g[["geometry", "hours"]],
                           exclusive=True, distance_col="dist")
-        for _, g in known.groupby("luokka") if len(g) > 1
+        for _, g in groups if len(g) > 1
     )
     paired["match"] = paired["hours_left"] == paired["hours_right"]
     return paired
 
 
-def figures(areas, paired, by_dist, baseline):
-    """Three charts: what the city publishes, what we can answer, where prediction works."""
-    import matplotlib                      # only this path needs a plotting stack
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
+def baseline_accuracy(known):
+    """Percent correct when always guessing the most common hours pattern: the score to beat."""
+    return known["hours"].value_counts().iloc[0] / len(known) * 100
 
-    FIGURES.mkdir(parents=True, exist_ok=True)
 
+# One function per chart, each returning its figure: save_figures() writes them for the report,
+# and a notebook shows the same figure without writing anything.
+
+def _pyplot():
+    import matplotlib.pyplot as plt      # only the chart path needs a plotting stack
+    return plt
+
+
+def plot_rule_types(areas):
+    """What the city publishes."""
+    plt = _pyplot()
     counts = areas["rule_type"].value_counts().sort_values()
     fig, ax = plt.subplots(figsize=(7, 3.5))
     ax.barh(counts.index, counts.values, color=[RULE_COLOURS[r] for r in counts.index])
@@ -133,9 +269,12 @@ def figures(areas, paired, by_dist, baseline):
     ax.set_title(f"What Helsinki publishes: {len(areas):,} street parking areas")
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
-    fig.savefig(FIGURES / "rule_types.png", dpi=150)
-    plt.close(fig)
+    return fig
 
+
+def plot_status_map(areas):
+    """Where the register is complete, silent, or self-contradicting."""
+    plt = _pyplot()
     # A couple of outlying areas would otherwise stretch the frame over empty sea.
     centres = areas.geometry.centroid
     minx, maxx = centres.x.quantile([0.002, 0.998])
@@ -143,18 +282,24 @@ def figures(areas, paired, by_dist, baseline):
     pad = 0.02 * max(maxx - minx, maxy - miny)
     minx, maxx, miny, maxy = minx - pad, maxx + pad, miny - pad, maxy + pad
     fig, ax = plt.subplots(figsize=(11, 11 * (maxy - miny) / (maxx - minx)))
+    # A street section is a few metres wide, under a pixel at city scale, so its fill alone renders
+    # as a faint tint. An outline in the same colour is what makes it visible.
     for status in ("official", "missing_hours", "uncertain"):
         group = areas[areas["status"] == status]
-        group.plot(ax=ax, color=STATUS_COLOURS[status], linewidth=2.5,
+        colour = STATUS_COLOURS[status]
+        group.plot(ax=ax, color=colour, edgecolor=colour, linewidth=1.5,
                    label=f"{STATUS_MEANING[status].lower()} ({len(group):,})")
     ax.set_xlim(minx, maxx)
     ax.set_ylim(miny, maxy)
     ax.legend(loc="lower right", frameon=False, fontsize=11)
     ax.set_title("Where the register is complete, silent, or self-contradicting", fontsize=13)
     ax.set_axis_off()
-    fig.savefig(FIGURES / "status_map.png", dpi=150, bbox_inches="tight")
-    plt.close(fig)
+    return fig
 
+
+def plot_accuracy_by_distance(by_dist, baseline):
+    """Where prediction from a neighbour works."""
+    plt = _pyplot()
     fig, ax = plt.subplots(figsize=(7, 3.5))
     ax.bar(by_dist.index.astype(str), by_dist["mean"] * 100, color=RULE_COLOURS["paid"])
     ax.axhline(baseline, color=RULE_COLOURS["always_banned"], linestyle="--",
@@ -167,8 +312,70 @@ def figures(areas, paired, by_dist, baseline):
     ax.legend(frameon=False, loc="lower left")
     ax.spines[["top", "right"]].set_visible(False)
     fig.tight_layout()
-    fig.savefig(FIGURES / "accuracy_by_distance.png", dpi=150)
-    plt.close(fig)
+    return fig
+
+
+def plot_rule_type_by_district(areas):
+    """Rule type per district, sorted by total: bar length is where the register is, colour what
+    it says there."""
+    plt = _pyplot()
+    counts = pd.crosstab(areas["district"].fillna("outside any district"), areas["rule_type"])
+    counts = counts.loc[counts.sum(axis=1).sort_values().index]
+    order = [r for r in RULE_COLOURS if r in counts.columns]
+    fig, ax = plt.subplots(figsize=(8, 9))
+    left = pd.Series(0, index=counts.index)
+    for rule in order:
+        ax.barh(counts.index, counts[rule], left=left, color=RULE_COLOURS[rule], label=rule)
+        left += counts[rule]
+    for y, total in enumerate(left):
+        ax.text(total + 15, y, f"{total:,}", va="center", fontsize=8)
+    ax.set_xlabel("parking areas")
+    ax.set_title("Rule types per district: the register is a city-centre register")
+    ax.legend(frameon=False, loc="lower right")
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.tick_params(axis="y", labelsize=8)
+    fig.tight_layout()
+    return fig
+
+
+def plot_area_sizes(areas):
+    """The spread of polygon sizes, with the median and the outlier bounds."""
+    plt = _pyplot()
+    size, low, high = size_bounds(areas)
+    log = np.log10(size)
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+    ax.hist(size, bins=np.logspace(log.min(), log.max(), 50), color=RULE_COLOURS["paid"])
+    ax.set_xscale("log")
+    ax.axvline(size.median(), color="black", label=f"median {size.median():.0f} m²")
+    for bound in (low, high):
+        ax.axvline(bound, color=RULE_COLOURS["always_banned"], linestyle="--")
+    ax.plot([], [], color=RULE_COLOURS["always_banned"], linestyle="--",
+            label=f"outlier bounds, {(size < low).sum()} below and {(size > high).sum()} above")
+    ax.set_xlabel("area of the polygon, m² (log scale)")
+    ax.set_ylabel("parking areas")
+    ax.set_title("Polygon sizes span three orders of magnitude")
+    ax.legend(frameon=False, fontsize=8)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    return fig
+
+
+def save_figures(areas, by_dist, baseline):
+    """Write every chart to docs/figures. Agg draws without a screen."""
+    import matplotlib
+    matplotlib.use("Agg")
+    plt = _pyplot()
+    FIGURES.mkdir(parents=True, exist_ok=True)
+    charts = [
+        ("rule_types.png", plot_rule_types(areas), {}),
+        ("status_map.png", plot_status_map(areas), {"bbox_inches": "tight"}),
+        ("accuracy_by_distance.png", plot_accuracy_by_distance(by_dist, baseline), {}),
+        ("rule_type_by_district.png", plot_rule_type_by_district(areas), {}),
+        ("area_sizes.png", plot_area_sizes(areas), {}),
+    ]
+    for name, fig, options in charts:
+        fig.savefig(FIGURES / name, dpi=150, **options)
+        plt.close(fig)
     print(f"figures written to {FIGURES}/")
 
 
@@ -186,7 +393,7 @@ def main():
     # The nearest-neighbour join is the expensive step and both the table and the chart need it.
     paired = nearest_pairs(known)
     by_dist = accuracy_by_distance(paired)
-    baseline = known["hours"].value_counts().iloc[0] / len(known) * 100
+    baseline = baseline_accuracy(known)
 
     parts = [
         f"# Report figures\n\nGenerated by `analysis/report_stats.py` from "
@@ -194,13 +401,18 @@ def main():
         rule_types(areas),
         reserved_for(areas),
         coverage(areas),
+        summary_statistics(areas),
+        duration_by_rule_type(areas),
+        area_outliers(areas),
+        raw_spellings(areas),
+        issue_codes(areas),
         neighbour_accuracy(paired, by_dist, baseline),
         prediction_gap(areas, known),
     ]
     text = "\n".join(parts)
     print(text)
     if args.figures:
-        figures(areas, paired, by_dist, baseline)
+        save_figures(areas, by_dist, baseline)
     if args.write:
         OUT.write_text(text)
         print(f"written to {OUT}")

@@ -107,11 +107,11 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
-| 4.2 | Summary statistics per variable | | todo | Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
-| 4.3 | Bivariate and multivariate views | | todo | Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
-| 4.4 | Outlier check on area sizes | | todo | Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
-| 4.5 | Generate the remaining typed counts | | todo | Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
+| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. Now section 8 of `notebooks/04_exploration.ipynb` (PR #42). This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| 4.2 | Summary statistics per variable | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
+| 4.3 | Bivariate and multivariate views | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
+| 4.4 | Outlier check on area sizes | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
+| 4.5 | Generate the remaining typed counts | | done | PR #42. Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
 
 ## 5 Learning
 
@@ -151,7 +151,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| R1 | Technical report | | todo | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is unmaintained raw material. Figures come from `analysis/report_stats.py`, never typed. |
+| R1 | Technical report | | doing | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is the maintained draft, updated as each stage closes; the brief and the grading criteria are in [report-spec.md](report-spec.md). Figures come from `analysis/report_stats.py`, never typed. |
 | R2 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
 | R3 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
 | R4 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
@@ -176,6 +176,8 @@ trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
+| 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
+| Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |
 | 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
 | Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
 | Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Nobody has spaces-per-area yet. |

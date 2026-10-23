@@ -96,7 +96,10 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
 
 - **The register describes the plan, not the street.** A repainted bay or a bagged sign is
   invisible to us, and there is no feedback channel to detect it.
-- **Free text is not parsed.** 301 areas carry conditions in prose, such as a night driving ban.
+- **Free text is not parsed.** 301 areas carry text the parser treats as a condition, such as a
+  night driving ban. 116 of them hold only a traffic sign code with a letter (`C41`), which the
+  parser does not recognise as a reference, so they are flagged more cautiously than they need to
+  be; see [notebook 03](../notebooks/03_preprocessing.ipynb), section 6.
   These are marked uncertain and shown to the driver verbatim to judge.
 - **Side of the street cannot be determined from GPS.** Rules differ per side, and phone accuracy
   in a street canyon is comparable to the street width, so the driver picks the side.

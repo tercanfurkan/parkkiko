@@ -73,10 +73,9 @@ last one matters because reading the file asserts the coordinate system rather t
 
 ## 4. Exploration
 
-Notebooks: [01 what the register contains](../notebooks/01_parking_rules.ipynb),
-[02 can neighbours predict missing hours](../notebooks/02_missing_hours_neighbours.ipynb),
-[03 English labels and lookup tables](../notebooks/03_cleaning_preparation.ipynb).
-Generated tables: [report_stats.md](report_stats.md).
+The whole stage is walked through in [04 exploration](../notebooks/04_exploration.ipynb), which
+calls the same functions that generate the tables in [report_stats.md](report_stats.md) and the
+charts below.
 
 ### What the city publishes
 

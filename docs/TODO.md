@@ -107,10 +107,10 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. `notebooks/02_missing_hours_neighbours.ipynb`. This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
-| 4.2 | Summary statistics per variable | | done | PR #42. Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
-| 4.3 | Bivariate and multivariate views | | done | PR #42. Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
-| 4.4 | Outlier check on area sizes | | done | PR #42. Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
+| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. Now section 8 of `notebooks/04_exploration.ipynb` (PR #42). This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| 4.2 | Summary statistics per variable | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
+| 4.3 | Bivariate and multivariate views | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
+| 4.4 | Outlier check on area sizes | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
 | 4.5 | Generate the remaining typed counts | | done | PR #42. Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
 
 ## 5 Learning

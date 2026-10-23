@@ -75,7 +75,8 @@ condition we do not parse, 86 an unreadable field and one genuinely ambiguous ho
 ## 4. Exploration
 
 We carried out every view the canvas's exploration box planned, and two of them found things we
-had not been looking for.
+had not been looking for. The stage is walked through, with the code behind each finding, in
+`notebooks/04_exploration.ipynb`.
 
 Following the course's practice of describing the typical case before plotting anything, we took
 the mode of each category and the median of each number (Table B2). The typical area is paid,

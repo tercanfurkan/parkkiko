@@ -7,9 +7,11 @@
 Nothing here is typed by hand: if the register changes, rerun this and the report follows.
 """
 import argparse
+import json
 from pathlib import Path
 
 import geopandas as gpd
+import numpy as np
 import pandas as pd
 
 SOURCE = Path("data/processed/parking_rules.parquet")
@@ -29,6 +31,8 @@ STATUS_MEANING = {
     "missing_hours": "Rule type known, hours missing",
     "uncertain": "Uncertain, with a stated reason",
 }
+RAW_FIELDS = {"voimassaolo": "Hours", "kesto": "Time limit", "kausi": "Season",
+              "tyyppi": "Space type", "lisatieto": "Free-text note"}
 DISTANCE_BINS = [0, 10, 50, 200, float("inf")]
 DISTANCE_LABELS = ["0-10 m", "10-50 m", "50-200 m", "over 200 m"]
 
@@ -66,6 +70,116 @@ def coverage(areas):
         "Areas": counts.values,
     })
     return table(df, "What the app can answer")
+
+
+def readable(value):
+    """'{"mon_fri": [9, 21]}' as 'mon_fri 9-21', so a table shows the rule and not its storage."""
+    if not isinstance(value, str) or not value.startswith("{"):
+        return value
+    rule = json.loads(value)
+    if "start" in rule:
+        (m1, d1), (m2, d2) = rule["start"], rule["end"]
+        return f"{d1}.{m1}.-{d2}.{m2}."
+    return ", ".join(f"{window} {a}-{b}" for window, (a, b) in rule.items())
+
+
+def summary_statistics(areas):
+    """The typical value of every variable: the mode of a category, the median of a number.
+
+    Missing stays its own column. For hours and the time limit it is not noise to drop: it is the
+    gap the learning task exists to close.
+    """
+    rows = []
+    categorical = {
+        "Rule type": areas["rule_type"], "Status": areas["status"],
+        "Space type": areas["space_type_en"], "District": areas["district"],
+        "Hours": areas["hours"], "Season": areas["season"],
+    }
+    for name, col in categorical.items():
+        counts = col.value_counts()
+        rows.append({
+            "Variable": name, "Typical value": readable(counts.index[0]),
+            "Share of stated": f"{counts.iloc[0] / counts.sum() * 100:.1f}%",
+            "Distinct": col.nunique(), "Missing": col.isna().sum(),
+        })
+    numeric = {"Time limit, minutes": areas["duration_min"], "Area, m²": areas.geometry.area}
+    for name, col in numeric.items():
+        q1, median, q3 = col.quantile([0.25, 0.5, 0.75])
+        rows.append({
+            "Variable": name, "Typical value": f"{median:.0f} (middle half {q1:.0f}-{q3:.0f})",
+            "Share of stated": "", "Distinct": "", "Missing": col.isna().sum(),
+        })
+    return table(pd.DataFrame(rows), "Summary statistics: mode or median of each variable")
+
+
+def duration_label(minutes):
+    if pd.isna(minutes):
+        return "none stated"
+    if minutes == 0:
+        return "no limit, stated"
+    return f"{minutes / 60:g} h" if minutes >= 60 else f"{minutes:.0f} min"
+
+
+def duration_by_rule_type(areas):
+    """Which time limits go with which rule. Only paid and free-limited areas should carry one."""
+    labels = areas["duration_min"].map(duration_label)
+    order = sorted(labels.unique(), key=lambda l: areas.loc[labels == l, "duration_min"].fillna(-1).iloc[0])
+    df = pd.crosstab(labels, areas["rule_type"]).reindex(order)
+    df.index.name = "Time limit"
+    return table(df.reset_index(), "Time limit against rule type")
+
+
+def area_outliers(areas):
+    """Polygon sizes, with outliers by the interquartile rule on a log scale.
+
+    Sizes span three orders of magnitude, so the rule is applied to log10 of the area: on the raw
+    scale every large polygon would be an outlier and no small one could be.
+    """
+    size = areas.geometry.area
+    log = np.log10(size)
+    q1, q3 = log.quantile([0.25, 0.75])
+    low, high = 10 ** (q1 - 1.5 * (q3 - q1)), 10 ** (q3 + 1.5 * (q3 - q1))
+    summary = pd.DataFrame({
+        "Measure": ["Median area", "Smallest", "Largest", "Outlier bounds",
+                    "Below the lower bound", "Above the upper bound"],
+        "Value": [f"{size.median():.0f} m²", f"{size.min():.1f} m²", f"{size.max():,.0f} m²",
+                  f"{low:.1f} to {high:,.0f} m²", f"{(size < low).sum()}", f"{(size > high).sum()}"],
+    })
+    sized = areas.assign(size=size)
+    picked = pd.concat([sized[sized["size"] < low], sized.nlargest(5, "size")])
+    examples = pd.DataFrame({
+        "Id": picked["id"], "Rule type": picked["rule_type"],
+        "Space type": picked["space_type_en"].fillna("not stated"),
+        "District": picked["district"], "Area, m²": picked["size"].round(1),
+    })
+    # A large polygon over a smaller one decides what a tap there selects
+    large = areas[size > high]
+    overlaps = gpd.sjoin(areas[["id", "geometry"]], large[["id", "geometry"]], predicate="intersects")
+    overlaps = overlaps[overlaps["id_left"] != overlaps["id_right"]]
+    note = (f"{overlaps['id_right'].nunique()} of the {len(large)} large outliers overlap another "
+            f"area, {overlaps['id_left'].nunique()} areas in all.\n")
+    return (table(summary, "Area sizes and outliers")
+            + "\n" + table(examples, "The smallest outliers and the five largest areas")
+            + "\n" + note)
+
+
+def raw_spellings(areas):
+    """How many ways the register writes each field: the work the parsers do."""
+    rows = []
+    for field, name in RAW_FIELDS.items():
+        col = areas[field].where(areas[field].str.strip() != "")
+        rows.append({"Field": f"{name} (`{field}`)", "Distinct spellings": col.nunique(),
+                     "Missing or blank": col.isna().sum()})
+    return table(pd.DataFrame(rows), "Distinct raw spellings per field")
+
+
+def issue_codes(areas):
+    """Why an area is uncertain. An area can carry more than one code, so codes outnumber areas."""
+    codes = areas["issue_codes"].dropna().str.split(",").explode().value_counts()
+    df = pd.DataFrame({"Issue code": codes.index, "Areas": codes.values})
+    note = (f"{areas['issue_codes'].notna().sum()} uncertain areas, "
+            f"{(areas['issue_codes'].str.contains(',', na=False)).sum()} with more than one code.\n")
+    return table(df, "Issue codes") + "\n" + note
 
 
 def accuracy_by_distance(paired):
@@ -172,6 +286,56 @@ def figures(areas, paired, by_dist, baseline):
     print(f"figures written to {FIGURES}/")
 
 
+def exploration_figures(areas):
+    """Rule type per district, and the spread of polygon sizes."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    FIGURES.mkdir(parents=True, exist_ok=True)
+
+    # Sorted by total, so the bar lengths show where the register is and the colours what it says
+    counts = pd.crosstab(areas["district"].fillna("outside any district"), areas["rule_type"])
+    counts = counts.loc[counts.sum(axis=1).sort_values().index]
+    order = [r for r in RULE_COLOURS if r in counts.columns]
+    fig, ax = plt.subplots(figsize=(8, 9))
+    left = pd.Series(0, index=counts.index)
+    for rule in order:
+        ax.barh(counts.index, counts[rule], left=left, color=RULE_COLOURS[rule], label=rule)
+        left += counts[rule]
+    for y, total in enumerate(left):
+        ax.text(total + 15, y, f"{total:,}", va="center", fontsize=8)
+    ax.set_xlabel("parking areas")
+    ax.set_title("Rule types per district: the register is a city-centre register")
+    ax.legend(frameon=False, loc="lower right")
+    ax.spines[["top", "right"]].set_visible(False)
+    ax.tick_params(axis="y", labelsize=8)
+    fig.tight_layout()
+    fig.savefig(FIGURES / "rule_type_by_district.png", dpi=150)
+    plt.close(fig)
+
+    size = areas.geometry.area
+    log = np.log10(size)
+    q1, q3 = log.quantile([0.25, 0.75])
+    low, high = 10 ** (q1 - 1.5 * (q3 - q1)), 10 ** (q3 + 1.5 * (q3 - q1))
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+    ax.hist(size, bins=np.logspace(log.min(), log.max(), 50), color=RULE_COLOURS["paid"])
+    ax.set_xscale("log")
+    ax.axvline(size.median(), color="black", label=f"median {size.median():.0f} m²")
+    for bound in (low, high):
+        ax.axvline(bound, color=RULE_COLOURS["always_banned"], linestyle="--")
+    ax.plot([], [], color=RULE_COLOURS["always_banned"], linestyle="--",
+            label=f"outlier bounds, {(size < low).sum()} below and {(size > high).sum()} above")
+    ax.set_xlabel("area of the polygon, m² (log scale)")
+    ax.set_ylabel("parking areas")
+    ax.set_title("Polygon sizes span three orders of magnitude")
+    ax.legend(frameon=False, fontsize=8)
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    fig.savefig(FIGURES / "area_sizes.png", dpi=150)
+    plt.close(fig)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--write", action="store_true", help=f"also write {OUT}")
@@ -194,6 +358,11 @@ def main():
         rule_types(areas),
         reserved_for(areas),
         coverage(areas),
+        summary_statistics(areas),
+        duration_by_rule_type(areas),
+        area_outliers(areas),
+        raw_spellings(areas),
+        issue_codes(areas),
         neighbour_accuracy(paired, by_dist, baseline),
         prediction_gap(areas, known),
     ]
@@ -201,6 +370,7 @@ def main():
     print(text)
     if args.figures:
         figures(areas, paired, by_dist, baseline)
+        exploration_figures(areas)
     if args.write:
         OUT.write_text(text)
         print(f"written to {OUT}")

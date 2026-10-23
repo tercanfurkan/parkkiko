@@ -86,6 +86,24 @@ Three quarters of street parking allows parking in some form. The remaining quar
 banned, is where fines happen and is exactly what a driver cannot see from the car. Reserved areas
 are mostly e-scooter, electric car, taxi and loading spaces: they look ordinary, and they are not.
 
+### The typical area, where the register is, and its outliers
+
+The mode of each category and the median of each number, per the course's practice: the typical
+area is paid, Monday to Friday 9-21 and Saturday 9-18, 4 hours where a limit is stated, 46 m², in
+Kampinmalmi. Full table in [report_stats.md](report_stats.md).
+
+![Rule types per district](figures/rule_type_by_district.png)
+
+The register is a city-centre register, and rule type clusters by district: the centre is paid,
+Lauttasaari, Munkkiniemi and Haaga are free with a time limit. Holding out a district in
+validation therefore also holds out a rule regime. The time-limit crosstab surfaces register
+errors no single-column check finds, such as "always banned" areas with a 4-hour limit.
+
+![Polygon sizes](figures/area_sizes.png)
+
+Outliers by the interquartile rule on log area. The largest are whole no-parking squares, and 13
+of the 35 large outliers overlap another area, which decides what a tap there selects.
+
 ### What the app can answer
 
 ![Rule status across the city](figures/status_map.png)

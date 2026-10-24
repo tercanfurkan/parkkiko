@@ -120,16 +120,16 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| 5.1 | Build the feature table | | todo | One row per area: neighbour hours, distance, same-street flag, class, district. Label-encode categoricals as in week 2 exercise 1 of the reference answers. The join to copy is `nearest_pairs()` in `analysis/report_stats.py`. |
-| 5.2 | Dummy baseline | | todo | `sklearn.DummyClassifier(strategy="most_frequent")`. The course compares against one explicitly: week 3 exercise 2 of the reference answers. Our hand count is 32.9%; the fitted number should match. |
-| 5.3 | Nearest-neighbour model | | todo | Same-class kNN, distance weighted. Accuracy and macro-F1 against the baseline. Why this method: the measurement in [process.md](process.md) section 4, and the canvas Learning approach box. |
-| 5.4 | Spatially blocked validation | | todo | Hold out whole districts, using the `district` column. Fold sizes are very uneven, so check the spread first. Neighbouring sections of one street are near-duplicates, so a random split tests on copies of the training data. Reasoning: [canvas-working-notes.md](canvas-working-notes.md), Learning approach. |
-| 5.5 | Distance-matched test | | todo | Hide close neighbours so test distances match the 978 areas we must predict, median 153 m with 17.7% within 50 m. The gap table is in [report_stats.md](report_stats.md); `prediction_gap()` computes it. |
-| 5.6 | Choose the distance cut-off | | todo | Accuracy against coverage. Accuracy wins: a wrong answer costs a fine, "unknown" costs nothing. Set the target before looking at results. Accuracy by distance: [report_stats.md](report_stats.md). |
-| 5.7 | Error analysis | | todo | Which areas we get wrong and why, on a map. The course asks for exactly this after classification: week 3 exercise 2 step 5 in the reference answers. |
-| 5.8 | Imputation reflection | | todo | What changes for a driver when we predict versus leave unknown, and who is affected. Week 2 exercise 2 closes on this question; our version is the fairness point in the canvas Privacy box. |
-| 5.9 | Coverage per district | | todo | Turns the fairness claim on the canvas into a measured table. The `district` column now exists; see [data.md](data.md). |
-| 5.10 | Ship predictions to the app | | todo | Adds a `predicted` flag and a source to the GeoJSON. Changes the contract above, so agree it in Open questions first. Producer is `WEB_FIELDS` in `pipeline/export_web.py`. |
+| 5.1 | Build the feature table | | done | PR #PRNUM. Class, district, location, and the nearest same-class areas' patterns and distances, in `analysis/learning.py`. No same-street flag: the register has no street names. |
+| 5.2 | Dummy baseline | | done | PR #PRNUM. Two: the most common pattern (28%) and the class's most common (48%), on the same test as the model. |
+| 5.3 | Nearest-neighbour model | | done | PR #PRNUM. Same-class, distance-weighted vote, k from 1, 3, 5. 62% at the real distances, macro F1 about 0.2. |
+| 5.4 | Spatially blocked validation | | done | PR #PRNUM. Whole districts held out, `GroupKFold`: 64%, and at the cut-off 98.5% on the 7% it answers. |
+| 5.5 | Distance-matched test | | done | PR #PRNUM. Class-matched too: for each of the 978, a same-class stand-in with neighbours hidden out to its real gap, 20 rounds. A test checks nothing closer leaks. |
+| 5.6 | Choose the distance cut-off | | done | PR #PRNUM. Target fixed before results: 95% accurate, under 1% unsafe. 5 neighbours within 150 m, all agreeing: 99.4% and 0.3% on held-out rounds, 373 of 978 answered. Unsafe answers set the limit. |
+| 5.7 | Error analysis | | done | PR #PRNUM. `notebooks/stages/05_learning.ipynb` §6: without the cut-off, class 1 is 11% accurate; the errors it lets through are mostly the Saturday question. |
+| 5.8 | Imputation reflection | | done | PR #PRNUM. In the reflection of `notebooks/stages/05_learning.ipynb`. |
+| 5.9 | Coverage per district | | done | PR #PRNUM. Vallila 46% to 87% answered; Reijola, the largest gap, 43% to 52%: its gap is class 1. In `docs/report_stats.md`. |
+| 5.10 | Ship predictions to the app | | todo | Next PR. Decided 24 Oct: ship the 373 that pass the cut-off, labelled in plain words, e.g. "ESTIMATE Paid parking until 21:00. The city publishes no hours here. Estimated from the same kind of parking 40 m away: right about 99 times in 100 at this distance. If the sign differs, trust the sign." Changes the data contract above: agree it here first. |
 
 ## 6 The app
 
@@ -184,7 +184,6 @@ trusts to be current is worse than no table.
 | 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
 | Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |
 | 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
-| Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
 | Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Spaces per area exists in the register as `paikat_ala` (37,544 spaces in 6,800 areas) and the pipeline drops it; see notebook 02, §2. |
 
 ## Known traps

@@ -12,7 +12,7 @@ Maintained draft of the technical report. Updated as each stage closes; a sectio
   where they appear.
 - Comments like this one do not render in the PDF.
 
-Status: stages 1-4 written, 5-6 and the reflection to come.
+Status: stages 1-4 written, each with its notebook (02, 03, 04); 5-6 and the reflection to come.
 -->
 
 # Parkkiko: technical report
@@ -46,12 +46,21 @@ type and the hours, time limit and season written as text. Two sources support i
 basic districts (`avoindata:Piirijako_peruspiiri`), used to measure coverage and to split data for
 validation, and the Finnish public holidays from the `holidays` package, since a holiday follows
 Sunday rules. All are CC BY 4.0 and need no key. `pipeline/fetch.py` saves a dated snapshot and
-everything downstream runs on it, so every result is reproducible.
+everything downstream runs on it, so every result is reproducible; the processed snapshot is
+committed to git, so the team, the report and the app share one copy. The stage is walked
+through in `notebooks/stages/02_data_collection.ipynb`, which fetches the live data.
 
-The canvas also planned to use live roadworks. Measured, the city's temporary traffic arrangements
-run a median of 711 days, and of the 191 parking areas overlapping one, only 18 state a purpose
-that mentions parking. An overlap told us a permit exists nearby, not that the spaces are gone, so
-we dropped the source rather than include it because it existed.
+Reading a snapshot back held the project's most instructive bug. Our saved file kept the
+server's features but not its declaration of a metric coordinate system, and a GeoJSON file
+without one is WGS84 by definition. Metres were read as degrees, and a spatial join matched zero
+of 8,754 areas without an error. Every read now asserts the real system, and a check refuses
+coordinates that are not metres around Helsinki.
+
+The canvas also planned live roadworks. The city's temporary traffic arrangements last a median
+of 711 days, and of the 191 parking areas overlapping one on 4 October, only 18 had a stated
+purpose that mentions parking. An overlap shows a permit nearby, not closed spaces, so we dropped
+the source. The register also carries fields we do not use, chiefly the number of spaces in each
+area (37,544 on 23 October) and the resident-permit zone (section 8).
 
 ## 3. Preprocessing
 
@@ -63,20 +72,32 @@ from `4 h`, `4h` and `4 H` to inline Russian and two ways of writing "no limit" 
 rule type comes from the class and the space type together, because the class alone is
 ambiguous: class 0 holds both parking bans and reserved bays.
 
-The parsers fail closed: each must account for every character of a field. Earlier versions
-returned a confident answer for the part they recognised, so `7-18 7-15` became `7-18`, and
-`max 60 min lauantai` became 60 minutes with the Saturday condition silently dropped. Now both are
-flagged. Every area ends with a status, an issue code a program can branch on, and a reason in
-plain words for the driver. Of the 385 areas that end up uncertain, 301 carry a free-text
-condition we do not parse, 86 an unreadable field and one genuinely ambiguous hours.
+The parsers fail closed: each must account for every character of a field, and anything it
+cannot read becomes an issue with a reason, never a partial answer. Our first parser did not, and
+running it from git history over every spelling in the register shows what that meant:
 
-> *To add: the before-and-after table of parser output (board task R4).*
+| Raw hours | First parser | Today |
+|---|---|---|
+| `7-15, Maksullinen (9-18)` (5 areas) | weekdays 7-15, Saturday 9-18 | flagged: *Maksullinen* is unread |
+| `7-18, Maksullinen (9-18)` (3 areas) | weekdays 7-18, Saturday 9-18 | flagged: *Maksullinen* is unread |
+
+*Maksullinen* means "paid": on Saturday these areas are paid, not banned. They were flagged anyway,
+but only because their limit field, `max 60 min lauantai`, was: right by luck. Each field now fails
+closed on its own evidence.
+
+Every area ends with a status, an issue code a program can branch on, and a reason in plain words
+for the driver. Of the 385 areas that end up uncertain, 301 carry free text we do not parse, 86 an
+unreadable field, and one a split weekday window, `7-9, 15-17`, which our one-range-per-day model
+cannot hold yet. A test re-derives every parsed value from the committed raw fields and finds no
+difference. The stage is walked through in `notebooks/stages/03_preprocessing.ipynb`, which also
+found 116 areas flagged only because a note is a sign code with a letter, such as `C41`: safe,
+but probably too cautious.
 
 ## 4. Exploration
 
 We carried out every view the canvas's exploration box planned, and two of them found things we
 had not been looking for. The stage is walked through, with the code behind each finding, in
-`notebooks/04_exploration.ipynb`.
+`notebooks/stages/04_exploration.ipynb`.
 
 Following the course's practice of describing the typical case before plotting anything, we took
 the mode of each category and the median of each number (Table B2). The typical area is paid,
@@ -162,16 +183,20 @@ next time the rule changes.
 declares itself WGS84 even when it holds metric coordinates, so our metric file was read as
 degrees. Nothing crashed; a spatial join simply matched zero rows, and we noticed only because
 zero was implausible. We would also check a dataset before trusting its name, since "temporary"
-traffic arrangements last years, and make the parsers fail closed from the first version: ours
-first silently truncated what they did not understand, which in an app about honesty is the worst
-failure available.
+traffic arrangements last years; make the parsers fail closed from the first version, per field,
+rather than rely on a neighbouring field to catch what one drops; profile every field before
+deciding what to keep, since the spaces per area we discarded is what coverage per space needs;
+and look at every generated figure at the size it will be read, since our status map was
+unreadable for weeks before anyone did.
 
 ## 8. Future steps
 
 > *To be written. Candidates, each measured in `docs/future-work.md`: traffic signs from Digiroad
 > as a second source (14,386 parking signs in Helsinki, as points with a facing direction and
 > typed time panels, measured 14 Oct 2026 from `digiroad:dr_liikennemerkit`), street-level fine
-> density, and other cities with open parking registers.*
+> density per parking space, the register fields we drop (spaces per area, the resident-permit zone,
+> which would open the app to permit holders), lettered sign codes accepted as references, and other
+> cities with open parking registers.*
 
 ## 9. Learning outcomes
 

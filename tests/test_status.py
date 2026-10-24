@@ -6,7 +6,7 @@ them into another either hides a gap or cries wolf, and both have happened here 
 """
 import pytest
 
-from process import classify
+from process import classify, reparse
 
 
 def area(**overrides):
@@ -63,3 +63,12 @@ def test_sign_text_we_do_not_parse_is_carried_through_for_the_driver():
 def test_plain_sign_codes_are_not_treated_as_conditions():
     """lisatieto often holds a reference number, which says nothing about the rule."""
     assert classify(area(lisatieto="7522"))["status"] == "official"
+
+
+def test_the_committed_snapshot_is_what_the_parsers_make_of_it():
+    """Every parsed column, re-derived from the raw fields kept beside it. A parser change that is
+    not followed by rerunning process.py fails here, before the app or the report drift."""
+    import geopandas as gpd
+    from pathlib import Path
+    areas = gpd.read_parquet(Path(__file__).resolve().parent.parent / "data/processed/parking_rules.parquet")
+    assert reparse(areas).sum() == 0, reparse(areas)[reparse(areas) > 0].to_dict()

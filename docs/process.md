@@ -37,11 +37,12 @@ CC BY 4.0 with no key or registration, plus the city's district boundaries. Sour
 are listed in [data.md](data.md). [`pipeline/fetch.py`](../pipeline/fetch.py) saves a dated
 snapshot of exactly what the server returned, so results are reproducible.
 
-Sources, sizes, timings and limits: [data.md](data.md).
+The whole stage is walked through in [02 data collection](../notebooks/stages/02_data_collection.ipynb),
+which fetches the live data. Sources, sizes, timings and limits: [data.md](data.md).
 
 **A dataset we evaluated and rejected.** The city also publishes "temporary traffic arrangements",
-which sounded like live roadworks. Measured, they run a median of 711 days, and of the 191 parking
-areas overlapping one, only 18 state a purpose mentioning parking. An overlap told us a permit
+which sounded like live roadworks. Measured on 4 October, they ran a median of 711 days, and of
+the 191 parking areas overlapping one, only 18 state a purpose mentioning parking. An overlap told us a permit
 exists nearby, not that the spaces are gone, so we dropped it. The measurement and the reasoning
 are in [future-work.md](future-work.md).
 
@@ -59,11 +60,10 @@ are in [future-work.md](future-work.md).
 | `ei aikarajaa` | no limit |
 | class 0 plus space type `Taxi` | reserved, taxi |
 
-**The parsers fail closed.** Each must account for every character of a field. An earlier version
-answered confidently from the part it recognised: `7-18 7-15` became `7-18`, and
-`max 60 min lauantai` became 60 minutes with the Saturday condition silently dropped. Both are now
-flagged instead. Every area carries a status, a machine-readable issue code, and a reason in plain
-words.
+**The parsers fail closed.** Each must account for every character of a field; what our first
+parser did instead is shown in [03 preprocessing](../notebooks/stages/03_preprocessing.ipynb), §6,
+which walks through the whole stage. Every area carries a status, a machine-readable issue code,
+and a reason in plain words.
 
 The pipeline also refuses to write unless ids are unique and present, every area has a geometry
 it can measure, every shape is a polygon, and the coordinates are metres around Helsinki. That
@@ -73,7 +73,7 @@ last one matters because reading the file asserts the coordinate system rather t
 
 ## 4. Exploration
 
-The whole stage is walked through in [04 exploration](../notebooks/04_exploration.ipynb), which
+The whole stage is walked through in [04 exploration](../notebooks/stages/04_exploration.ipynb), which
 calls the same functions that generate the tables in [report_stats.md](report_stats.md) and the
 charts below.
 
@@ -171,5 +171,5 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
   even when it holds metric coordinates, so our metric file was read as degrees. Nothing crashed.
   A spatial join simply matched zero rows, and we only noticed because zero was implausible.
 - **Check a dataset before trusting its name.** "Temporary traffic arrangements" last years.
-- **Fail closed from the first version.** Our first parsers silently truncated what they did not
+- **Fail closed from the first version.** Our first hours parser silently dropped words it did not
   understand, which in an app about honesty is the worst failure mode available.

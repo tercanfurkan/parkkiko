@@ -86,6 +86,7 @@ add a row to Open questions below rather than computing it in the browser.
 | 2.1 | Fetch script, dated snapshots | | done | PR #25. `pipeline/fetch.py`. Sources, sizes and timings: [data.md](data.md). |
 | 2.2 | Evaluate temporary traffic arrangements | | done | PR #27 dropped it after measuring. Read [future-work.md](future-work.md) before proposing any new source: it holds what we measured and rejected, and why. |
 | 2.3 | Finnish holiday calendar | | done | PR #30. `pipeline/export_holidays.py` writes `web/public/data/holidays.json`. Contract is in the boundary section above. |
+| 2.4 | Walk the stage through in a notebook | | done | PR #43. `notebooks/stages/02_data_collection.ipynb`, on live data. |
 
 ## 3 Preprocessing
 
@@ -95,6 +96,8 @@ add a row to Open questions below rather than computing it in the browser.
 | 3.2 | Class and space type to rule type | | done | PR #25, English labels in PR #27. `LUOKKA_RULES` and the space-type maps in `pipeline/rules.py` own the whole vocabulary. |
 | 3.3 | District per area | | done | PR #30. `add_district()` in `pipeline/process.py`, by the area's centre, since 23 areas straddle a boundary. Feeds blocked validation, coverage per district and the district views below. |
 | 3.4 | Register checks on every run | | done | PR #27. `check()` in `pipeline/process.py`. Why the coordinate check is a range and not an equality: the comment above it. |
+| 3.5 | Walk the stage through in a notebook | | done | PR #43. `notebooks/stages/03_preprocessing.ipynb`. A test now re-derives every parsed column from the raw fields, so a parser change without a rerun of `process.py` fails. |
+| 3.6 | Richer hours: several ranges per day, and a rule type per window | | todo | Two shapes `hours` cannot hold, both flagged today: a split day, `7-9, 15-17` (area 16866, whose stored reason wrongly says ambiguous), and the 8 `Maksullinen` areas, banned on weekdays but paid on Saturday. Meaning of both in notebook 03, §3 and §6. Changes the data contract above, `parse_hours`, `evaluate()` and the tests. Deferred on 24 Oct: nine areas against the whole contract. |
 
 ## Quality
 
@@ -107,10 +110,10 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. Now section 8 of `notebooks/04_exploration.ipynb` (PR #42). This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
-| 4.2 | Summary statistics per variable | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/01_parking_rules.ipynb`. |
-| 4.3 | Bivariate and multivariate views | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
-| 4.4 | Outlier check on area sizes | | done | PR #42. Walked through in `notebooks/04_exploration.ipynb`. Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
+| 4.1 | Neighbour agreement by distance | | done | PR #1, remeasured over every area in PR #25. Now section 8 of `notebooks/stages/04_exploration.ipynb` (PR #42). This measurement chose the method, which is the step the course chapter asks for. Figures: [report_stats.md](report_stats.md). |
+| 4.2 | Summary statistics per variable | | done | PR #42. Walked through in `notebooks/stages/04_exploration.ipynb`. Mode of each categorical field, median area size. The course's own answers do this before any plot: see week 2 exercise 2 in `~/tcm/ids/ds/exercise_reference_answers`. Start from `notebooks/other/01_parking_rules.ipynb`. |
+| 4.3 | Bivariate and multivariate views | | done | PR #42. Walked through in `notebooks/stages/04_exploration.ipynb`. Rule type against district and against duration, colour-encoded. Pattern to copy: the pairplot and stacked-bar cells of week 2 exercise 2 in the reference answers. |
+| 4.4 | Outlier check on area sizes | | done | PR #42. Walked through in `notebooks/stages/04_exploration.ipynb`. Histogram, log scale. Tiny or huge polygons are likely register errors and affect which area a tap selects. Geometry is metric in the parquet, so `.area` is m². |
 | 4.5 | Generate the remaining typed counts | | done | PR #42. Distinct raw spellings per field and counts per issue code, added to `analysis/report_stats.py`, then delete the hand-typed versions from [report_draft.md](report_draft.md) and [data.md](data.md). Follow the existing table builders in that file. |
 
 ## 5 Learning
@@ -153,15 +156,15 @@ add a row to Open questions below rather than computing it in the browser.
 |---|---|---|---|---|
 | R1 | Technical report | | doing | Max 5 pages plus appendix, on the six stages. Write from [process.md](process.md); [report_draft.md](report_draft.md) is the maintained draft, updated as each stage closes; the brief and the grading criteria are in [report-spec.md](report-spec.md). Figures come from `analysis/report_stats.py`, never typed. |
 | R2 | Spotlight talk | | todo | 3 minutes in week 42, slides plus a live demo. Requirements are on slide 20 of the first lecture, `~/tcm/ids/IntroDS-01.pdf`. |
-| R3 | Showpiece: the coordinate system bug | | todo | A GeoJSON always declares WGS84, so the metric file read as degrees and a spatial join matched nothing. Week 3 exercise 1 of the reference answers is this exact problem. The fix and its comment are in `pipeline/process.py` `main()`. |
-| R4 | Showpiece: fail-closed parsing | | todo | Input that used to give a confident wrong answer is now flagged. Before and after examples are in the PR #27 description and `pipeline/rules.py`. |
+| R3 | Showpiece: the coordinate system bug | | done | PR #43. Reproduced in notebook 02, §3; in the report's section 2. |
+| R4 | Showpiece: fail-closed parsing | | done | PR #43. Generated from git history in notebook 03, §6; in the report's section 3. `7-18 7-15` was never in the register; the real case is `Maksullinen`. |
 | R5 | Showpiece: chart quality | | todo | Colour-blind safe palette, no red and green pairing. Week 2 exercise 4 of the reference answers grades this; lecture 3 warns against red and green. |
 
 ## Stretch
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold conditions in Finnish prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
+| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold text the parser treats as a condition, carried as `extra_info`; 116 of those are only lettered sign codes (open question below), leaving about 185 in prose. Week 4 of the course covers transformers. First thing to cut. |
 | S2 | Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
 | S3 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | S4 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
@@ -176,11 +179,13 @@ trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
+| **Parking disc.** 1,650 areas of free parking under a limit of less than 24 hours answered without saying a disc is needed (`docs/report_stats.md`, notebook 03 §2). | backend | Fixed in PR #44, with the rounding to the next half or full hour. Move this row out once #44 merges. |
+| 116 areas, all reserved or always banned, are uncertain only because `lisatieto` holds a traffic sign code with a letter (`C41, E8`, `7539, C39`). `parse_extra` accepts only digits as a sign reference, so the app says check the sign where the rule does not depend on the note. Errs safe; probably too safe. Accept lettered codes as references? Changes the app's data and the status counts. Counted in `docs/report_stats.md`; notebook 03, §5. | backend | |
 | 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
 | Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |
 | 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
 | Do predicted hours ship before the spotlight demo? 978 areas say "the register does not publish hours here" until the learning task lands. | backend | Proposed: no. The model is unstarted, and "check the sign" is an honest answer in the demo. Say otherwise if the demo needs the coverage. |
-| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Nobody has spaces-per-area yet. |
+| Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Spaces per area exists in the register as `paikat_ala` (37,544 spaces in 6,800 areas) and the pipeline drops it; see notebook 02, §2. |
 
 ## Known traps
 

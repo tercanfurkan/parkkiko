@@ -14,7 +14,8 @@ a rule plus a time becomes one sentence for a driver. New here? Start with **[do
 - `docs/` the task board, process walkthrough, project canvas, data documentation and SQL guide
 - `analysis/` regenerates every figure and table quoted in the report
 - `pipeline/` download the data, parse the rules, export for the app
-- `notebooks/` one notebook per stage, numbered by stage: how the team walks through what was done and found
+- `notebooks/stages/` one notebook per stage, numbered by stage: how the team walks through what was done and found
+- `notebooks/other/` earlier notebooks, kept for reference
 - `web/` React and Leaflet map app
 - `data/processed/` the analysis snapshot, committed so everyone works on identical data
 - `data/raw/` local snapshots, not in git
@@ -62,9 +63,9 @@ Three ways, pick whichever suits you.
 .venv/bin/python -m jupyter notebook notebooks/
 ```
 
-Each stage of the project has a notebook, numbered by its stage (`04_exploration.ipynb` is
-stage 4). It is how the team communicates the stage: what was done to the data, why, and what it
-found. Notebooks are where we experiment; `pipeline/` and `analysis/` are where we apply what we
+Each stage of the project has a notebook in `notebooks/stages/`, numbered by its stage
+(`04_exploration.ipynb` is stage 4). It is how the team communicates the stage: what was done to
+the data, why, what it found, and a closing reflection against the canvas. Notebooks are where we experiment; `pipeline/` and `analysis/` are where we apply what we
 learned. So imports go one way. A notebook may import from `pipeline/` or `analysis/`, never the
 reverse, and once a notebook finding is quoted in the report or used by the app, its code moves
 into a `.py` file and the notebook calls it instead of keeping its own copy. Before pushing, run

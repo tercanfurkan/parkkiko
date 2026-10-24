@@ -6,6 +6,7 @@
 // countdown to it is exact even across the nights the clocks change.
 
 const DAY = 1440;
+const HALF_HOUR = 30;        // a parking disc is set to the next half or full hour
 const LOOK_AHEAD_DAYS = 7;   // every area with hours has a mon_fri window, so a week always finds the next start
 const WINDOW_BY_WEEKDAY = ["sun", "mon_fri", "mon_fri", "mon_fri", "mon_fri", "mon_fri", "sat"];
 
@@ -123,10 +124,8 @@ const LIMITED = { paid: "in", free_limited: "in", banned_hours: "out" };
  * - { kind: "reserved" }                 not for this driver
  * - { kind, until, stay?, then, disc? } kind is paid, free or no_parking until `until`; `stay`
  *                                         is set when the time limit ends the stay first; `then`
- *                                         is what follows: { kind: "move" } when the driver must
- *                                         move then, or null when the time limit ends the stay;
- *                                         `disc` is the time to set a parking disc to, when one is
- *                                         needed
+ *                                         is what follows, { kind: "move" } when the driver must
+ *                                         leave; `disc` is the time to set a parking disc to
  */
 export function evaluate(area, now, calendar) {
   const { rule_type, status, hours, duration_min, season } = area;
@@ -153,45 +152,38 @@ export function evaluate(area, now, calendar) {
   const at = (m) => moment(midnight, m);
   const change = nextChange(line, minute);
 
-  // Free parking under a time limit of less than a day needs a parking disc; paid parking is paid
-  // instead. Under the limit, the disc is set to the next half or full hour after arrival, 14:05 to
-  // 14:30 and 14:35 to 15:00, and the limit counts from there; arriving on a mark keeps it, which
-  // errs safe. Parked while the limit is off, the disc is set to when the limit starts. A disc does
-  // not carry over a gap: when the limit comes back, it no longer covers the car.
+  // Free parking under a limit of less than a day needs a parking disc: docs/rule-evaluation.md
   const short = duration_min > 0 && duration_min < DAY;
   const underLimit = kind === "free" && short && LIMITED[rule_type] === state;
-  const beforeLimit = kind === "free" && short && INSIDE[rule_type] === "free" && state === "out" && change?.state === "in";
-  const start = underLimit ? Math.ceil(minute / 30) * 30 : minute;
-  const answer = (result) => (underLimit ? { ...result, disc: at(start) } : result);
+  const start = underLimit ? Math.ceil(minute / HALF_HOUR) * HALF_HOUR : minute;
+  const disc = underLimit ? { disc: at(start) } : {};
 
   // The time limit ends the stay before the rule changes: move by then, nothing follows
   if (duration_min && LIMITED[rule_type] === state && (!change || start + duration_min < change.minute)) {
-    return answer({ kind, stay: duration_min, until: at(start + duration_min), then: null });
+    return { kind, stay: duration_min, until: at(start + duration_min), then: null, ...disc };
   }
-  if (!change) return answer({ kind, until: null, then: null });
-  if (change.state === "unsure") return answer({ kind, until: at(change.minute), then: { kind: "check" } });
+  if (!change) return { kind, until: null, then: null };
+  if (change.state === "unsure") return { kind, until: at(change.minute), then: { kind: "check" }, ...disc };
 
   // What starts when the rule next comes into force
-  const comesBack = () =>
+  const comesBack =
     rule_type === "free_limited" ? { kind: "limited", ...(duration_min && { duration: duration_min }) }
     : rule_type === "paid" && duration_min ? { kind: "paid", duration: duration_min }
     : { kind: INSIDE[rule_type] };
-  const move = () => ({ kind: "move" });
-  // From the end of a window to the next start, or to where the calendar stops being sure, and
-  // what starts there
+  // From the end of a window to the next start, or to where the calendar stops being sure
   const freeUntilNext = (from, then = comesBack) => {
     const after = nextChange(line, from);
     if (!after) return { until: null, then: null };
-    return { until: at(after.minute), then: after.state === "unsure" ? { kind: "check" } : then() };
+    return { until: at(after.minute), then: after.state === "unsure" ? { kind: "check" } : then };
   };
 
-  // Parked while the limit is off: the disc goes to when it starts, and the limit runs from there.
-  // Were the hours to end before the limit, moving at it would still be safe, only early.
-  if (beforeLimit) return { kind, until: at(change.minute + duration_min), then: move(), disc: at(change.minute) };
-  if (state === "out") return answer({ kind, until: at(change.minute), then: comesBack() });
-  // A stay under a limit that outlasts the window runs on until the limit next starts, when the
-  // disc no longer covers the car
-  if (kind === "free") return answer({ kind, ...freeUntilNext(change.minute, underLimit ? move : comesBack) });
+  // Parked before a free limit starts: the disc goes to its start, and the limit runs from there
+  if (rule_type === "free_limited" && state === "out" && short) {
+    return { kind, until: at(change.minute + duration_min), then: { kind: "move" }, disc: at(change.minute) };
+  }
+  if (state === "out") return { kind, until: at(change.minute), then: comesBack, ...disc };
+  // A free stay that outlasts the window: when the limit next starts, the disc no longer covers it
+  if (kind === "free") return { kind, ...freeUntilNext(change.minute, underLimit ? { kind: "move" } : comesBack), ...disc };
   const next = freeUntilNext(change.minute);
   return {
     kind,

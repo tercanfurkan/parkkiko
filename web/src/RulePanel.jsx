@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RULE_TYPES } from "./style.js";
 import { evaluate } from "./evaluate.js";
-import { answer, clock, clockTime, when } from "./answer.js";
+import { answer, clock, clockTime, discSet, when } from "./answer.js";
 import { actionFor } from "./reminder.js";
 import ActionButton from "./ActionButton.jsx";
 
@@ -56,7 +56,7 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, stay
             <div className="headline">{stay.deadline > now ? `Parked. Move by ${clockTime(stay.deadline)}` : "Time is up. Move your car"}</div>
             <Countdown to={stay.deadline} label="left" />
             <div>{headline}</div>
-            {stay.disc && <div>Parking disc set to {clockTime(stay.disc)}</div>}
+            {stay.disc && <div>{discSet(stay.disc)}</div>}
           </>
         ) : (
           <>

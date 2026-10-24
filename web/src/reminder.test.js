@@ -66,8 +66,7 @@ describe("the action beside the answer", () => {
 
 describe("a started stay", () => {
   test("runs the time limit from the parking disc, with the reminder ten minutes before the end", () => {
-    // Parked at 14:40, so the disc is set to 15:00 and the 4 hours run from there
-    const start = new Date("2026-10-13T14:40+03:00");
+    const start = new Date(instant("2026-10-13T14:40"));
     expect(stayFor(area(8006), evaluate(area(8006), start, calendar))).toEqual({
       areaId: 8006, title: "Move your car", deadline: instant("2026-10-13T19:00"), at: instant("2026-10-13T18:50"),
       disc: instant("2026-10-13T15:00"),
@@ -75,7 +74,7 @@ describe("a started stay", () => {
   });
 
   test("keeps no disc for paid parking, which is paid instead", () => {
-    const start = new Date("2026-10-13T14:40+03:00");
+    const start = new Date(instant("2026-10-13T14:40"));
     expect(stayFor(area(8269), evaluate(area(8269), start, calendar))).not.toHaveProperty("disc");
   });
 

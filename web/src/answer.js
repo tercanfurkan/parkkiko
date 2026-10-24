@@ -67,26 +67,23 @@ const LABEL = { paid: "Paid parking", free: "Free parking", no_parking: "No park
  * within a day, since past that "until Monday 09:00" says it better.
  */
 export function answer(area, result, now) {
-  const { kind } = result;
+  const { kind, until, stay } = result;
   if (kind === "check") return { headline: "Check the sign", detail: CHECK[result.why](result) };
   if (kind === "reserved") {
     const who = reservedFor(area);
     return { headline: "Not for you", detail: who ? `Reserved: ${who}` : "Reserved space" };
   }
-  const said = untilWhen(result, now);
-  // The disc is what keeps a free stay from a fine, so it leads the line under the headline
-  if (!result.disc) return said;
-  return { ...said, detail: [`Set your parking disc to ${when(result.disc)}`, said.detail].filter(Boolean).join(". ") };
-}
-
-function untilWhen(result, now) {
-  const { kind, until, stay } = result;
+  // The disc keeps a free stay from a fine, so it leads the line under the headline
+  const lead = (text) => [result.disc && `Set your parking disc to ${when(result.disc)}`, text].filter(Boolean).join(". ") || null;
   // A time limit runs from when the driver leaves the car, so there is nothing to count down yet
-  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Park now and move by ${when(until)}` };
+  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: lead(`Park now and move by ${when(until)}`) };
   const countdown = until && until.at - now < DAY_MS ? { to: until.at, label: kind === "no_parking" ? "Allowed in" : "left" } : undefined;
   if (!until) {
     const always = { no_parking: null, paid: "At all hours", free: "No time limit" };
     return { headline: LABEL[kind], detail: always[kind] };
   }
-  return { headline: `${LABEL[kind]} until ${when(until)}`, detail: after(result.then), countdown };
+  return { headline: `${LABEL[kind]} until ${when(until)}`, detail: lead(after(result.then)), countdown };
 }
+
+/** The parked view's line for the disc a stay started with. */
+export const discSet = (ms) => `Parking disc set to ${clockTime(ms)}`;

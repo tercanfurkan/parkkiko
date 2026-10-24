@@ -48,9 +48,8 @@ changes, looking up to a week ahead through the calendar:
 
 - Back-to-back windows count as one: `0-24` Monday to Friday is paid until Saturday 00:00, not
   until midnight.
-- A free stay that starts inside a free-limited window and outlasts it runs on to the next start,
-  and no further: at 18:30 with a 4-hour limit ending 20:00, move by 08:00 tomorrow, because the
-  disc does not carry over (see the parking disc below).
+- A free stay that outlasts a free-limited window runs on to the next start, and no further; see
+  the parking disc below.
 - The look-ahead stops where the calendar stops being sure, an uncertain day or a date past its
   range: "Park here until midnight. Then check the sign."
 - Only a rule in force at no hour of the coming week gives "no limit". No official area has one,
@@ -61,30 +60,21 @@ changes, looking up to a week ahead through the calendar:
 when they look. `0` means the register explicitly states no limit, and absent means none was
 stated: neither caps.
 
-**A free stay under a time limit needs a parking disc.** In Finland, free parking with a time
-limit on the sign means displaying a parking disc, and parking without one is fined. The disc is
-set to the **next half or full hour after arrival**, and the limit counts from the disc:
+**A free stay under a time limit needs a parking disc.** In Finland, free parking under a limit of
+less than 24 hours means displaying a parking disc, or a fine. The limit counts from the disc, and
+the answer leads with it: "Set your parking disc to 14:30". In an `8-20` area with 4 hours:
 
-- arrive at 14:05, set the disc to 14:30; with a 4-hour limit, move by 18:30;
-- arrive at 14:35, set the disc to 15:00; move by 19:00;
-- arrive exactly on a mark, 14:30, and the disc stays at 14:30. Whether the rule means that mark
-  or the next one, the earlier disc only shortens the stay, so it errs safe.
+- **Under the limit**, the disc goes to the next half or full hour: arrive at 14:05, set 14:30,
+  move by 18:30; arrive at 14:35, set 15:00, move by 19:00. Arriving exactly on a mark keeps it,
+  since an earlier disc errs safe.
+- **Parked while the limit is off**, at 21:00, the disc goes to when it starts, 08:00, and the
+  driver moves by 12:00.
+- **A disc does not carry over a gap.** Parked at 18:30, the disc says 18:30; at 08:00 the limit
+  returns and the disc no longer covers the car, so move by 08:00.
 
-Two more rules decide when the driver must move:
-
-- **Parked while the limit is off**, the disc is set to when the limit starts, and the limit runs
-  from there: at 21:00 in an `8-20` area with 4 hours, set the disc to 08:00 and move by 12:00.
-- **A disc does not carry over a gap.** Parked at 18:30 under that limit, the disc says 18:30;
-  after 20:00 there is no limit, but at 08:00 it returns and the 18:30 disc no longer covers the
-  car, so move by 08:00.
-
-So on free parking under a limit of less than 24 hours, the answer says "Set your parking disc to
-15:00" first, before the time, and the move-by time follows from the disc. No disc is needed on
-paid parking, where the driver pays instead, which "Paid parking" already says, or where the limit
-is 24 hours or more, or none is stated.
-
-The disc belongs to the rule, not to a class. Class 8 names it, but class 1 needs one too, and so
-does a banned-hours area with a limit, outside its ban.
+No disc on paid parking, where the driver pays instead, or with a limit of 24 hours or more, or
+none. Any free stay under a limit needs one, whatever the class: class 1 too, and a banned-hours
+area outside its ban.
 
 The clock time is the commitment, "until 21:00". Beside it a countdown ticks, "11:28:42 left",
 **rounded down to the second, never up**, and left out past a day, where "until Monday 09:00" says
@@ -112,10 +102,10 @@ Real areas from the committed file. Times are Europe/Helsinki.
 | 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free parking until 09:00 tomorrow. No Sunday window means no rule today |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Set your parking disc to 14:00. Park now and move by 18:00 |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:05 | Free parking, 4 hours max. Set your parking disc to 14:30. Park now and move by 18:30 |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 15:40 | Free parking until 08:00 tomorrow. Set your parking disc to 16:00. Move your car then: the 4 hours from the disc reach 20:00, when the limit ends, and the disc does not cover tomorrow |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 15:40 | Free parking until 08:00 tomorrow. Set your parking disc to 16:00. Move your car then |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. Set your parking disc to 18:30. Move your car then |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 21:00 | Free parking until 12:00 tomorrow. Set your parking disc to 08:00 tomorrow. Move your car then |
-| 8539 | free limited, `mon_fri 0-24`, 24 h | Tue 14:00 | Free parking, 24 hours max. Park now and move by 14:00 tomorrow, no disc |
+| 8539 | free limited, `mon_fri 0-24`, 24 h | Tue 14:00 | Free parking, 24 hours max. Park now and move by 14:00 tomorrow |
 | 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Allowed in 6 h. Free after that until 07:00 tomorrow |
 | 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 19:00 | Free parking until 07:00 tomorrow. 12 h left. No parking after that |
 | 8139 | paid, no hours, 60 min | any | The register does not publish hours here. Check the sign. |

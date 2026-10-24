@@ -147,3 +147,55 @@ Copying the nearest same-class area is correct **97.5%** of the time, over 5,834
 | Within 10 m     | 3.8%    |
 | Within 50 m     | 17.7%   |
 | Within 200 m    | 57.4%   |
+
+### Predicting the missing hours, at the distances they really face
+
+| Method                                            |   Accuracy % |   Macro F1 |   Unsafe % |
+|:--------------------------------------------------|-------------:|-----------:|-----------:|
+| most common pattern                               |         28.3 |      0.012 |       43   |
+| most common pattern of the class                  |         48.1 |      0.047 |       26.6 |
+| Nearest neighbours, k=1                           |         60.7 |      0.206 |       22.7 |
+| Nearest neighbours, k=3                           |         61.7 |      0.204 |       23.3 |
+| Nearest neighbours, k=5                           |         61.8 |      0.186 |       24.2 |
+| Nearest neighbours, k=5, whole districts held out |         63.8 |      0.105 |       13.6 |
+
+Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Target, fixed before any result: at least 95% accurate and under 1% unsafe. Of the 978 areas without hours, **373** get an answer.
+
+### The cut-off, on tests it was not chosen on
+
+| Test                                     |   Answered % |   Accuracy % |   Unsafe % |
+|:-----------------------------------------|-------------:|-------------:|-----------:|
+| Simulation, rounds not used to choose it |         35.5 |         99.4 |        0.3 |
+| Whole districts held out                 |          6.9 |         98.5 |        0   |
+
+### The cut-off by parking class
+
+|   Class |   To predict |   Answered |   Simulated accuracy % |   Simulated unsafe % |   Simulated answers |
+|--------:|-------------:|-----------:|-----------------------:|---------------------:|--------------------:|
+|       1 |          353 |          1 |                   81.8 |                 18.2 |                  11 |
+|       2 |           18 |          0 |                        |                      |                   0 |
+|       4 |            3 |          3 |                  100   |                  0   |                  29 |
+|       5 |           56 |         29 |                   98.5 |                  1   |                 201 |
+|       6 |          437 |        314 |                   99.5 |                  0.2 |                2970 |
+|       7 |           29 |         10 |                   98.5 |                  1.5 |                  68 |
+|       8 |           10 |         10 |                  100   |                  0   |                  96 |
+|       9 |           36 |          4 |                  100   |                  0   |                  18 |
+|      10 |           36 |          2 |                  100   |                  0   |                  16 |
+
+### Coverage per district, before and after prediction
+
+| District      |   Areas |   Without hours |   Answered before |   Gained |   Before % |   After % |
+|:--------------|--------:|----------------:|------------------:|---------:|-----------:|----------:|
+| REIJOLA       |     597 |             330 |               258 |       53 |       43.2 |      52.1 |
+| VALLILA       |     569 |             294 |               262 |      230 |       46   |      86.5 |
+| ALPPIHARJU    |     305 |             117 |               180 |       46 |       59   |      74.1 |
+| MUNKKINIEMI   |     592 |              75 |               508 |        6 |       85.8 |      86.8 |
+| PASILA        |     146 |              61 |                74 |        5 |       50.7 |      54.1 |
+| HAAGA         |     504 |              30 |               468 |        0 |       92.9 |      92.9 |
+| TAKA-TÖÖLÖ    |     554 |              25 |               515 |        1 |       93   |      93.1 |
+| ULLANLINNA    |    1330 |              19 |              1281 |       12 |       96.3 |      97.2 |
+| LAUTTASAARI   |     790 |               8 |               778 |        5 |       98.5 |      99.1 |
+| VIRONNIEMI    |     795 |               7 |               752 |        6 |       94.6 |      95.3 |
+| KALLIO        |    1009 |               6 |               941 |        6 |       93.3 |      93.9 |
+| KAMPINMALMI   |    1471 |               5 |              1330 |        3 |       90.4 |      90.6 |
+| VANHAKAUPUNKI |      48 |               1 |                27 |        0 |       56.2 |      56.2 |

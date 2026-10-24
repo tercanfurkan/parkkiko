@@ -393,7 +393,126 @@ def plot_area_sizes(areas):
     return fig
 
 
-def save_figures(areas, by_dist, baseline):
+# ---------------------------------------------------------------- stage 5, learning
+
+def pct(x):
+    return round(100 * x, 1)
+
+
+def learning_results(areas):
+    """Run stage 5 once: the simulation, the cut-off, the district-blocked check, the predictions."""
+    import learning
+    labelled, targets = learning.split(areas)
+    sim = learning.simulate(labelled, targets)
+    cut = learning.cutoff(sim)
+    if cut is None:
+        raise SystemExit("No cut-off meets the stage 5 targets; the learning tables cannot be written.")
+    return {"labelled": labelled, "targets": targets, "sim": sim, "cut": cut,
+            "blocked": learning.district_blocked(labelled, cut["k"]),
+            "predicted": learning.predict(labelled, targets, cut)}
+
+
+def learning_scores(results):
+    """The model against two baselines, at the distances the missing-hours areas really face."""
+    import learning
+    sim = results["sim"]
+    rows = [(name, s) for name, s in learning.baselines(results["labelled"], sim).items()]
+    rows += [(f"Nearest neighbours, k={k}", learning.score(sim.loc[sim["k"] == k, "truth"], sim.loc[sim["k"] == k, "predicted"]))
+             for k in learning.K_CHOICES]
+    blocked = results["blocked"]
+    rows.append((f"Nearest neighbours, k={results['cut']['k']}, whole districts held out",
+                 learning.score(blocked["truth"], blocked["predicted"])))
+    df = pd.DataFrame([{"Method": name, "Accuracy %": pct(s["accuracy"]), "Macro F1": round(s["macro F1"], 3),
+                        "Unsafe %": pct(s["unsafe"])} for name, s in rows])
+    return table(df, "Predicting the missing hours, at the distances they really face")
+
+
+def learning_cutoff(results):
+    """The cut-off, measured on two tests it was not chosen on."""
+    import learning
+    cut, predicted = results["cut"], results["predicted"]
+    tests = {"Simulation, rounds not used to choose it": learning.held_out(results["sim"], cut),
+             "Whole districts held out": results["blocked"]}
+    df = pd.DataFrame([{"Test": name, **{f"{m.capitalize()} %": pct(v) for m, v in learning.at_cutoff(rows, cut).items()}}
+                       for name, rows in tests.items()])
+    agree = "all agreeing" if cut["share"] == 1 else f"at least {cut['share']:.0%} agreeing"
+    head = (f"Cut-off: the {cut['k']} nearest same-class areas, the nearest within {cut['distance']} m, "
+            f"{agree}. Target, fixed before any result: at least {learning.TARGET_ACCURACY:.0%} accurate and "
+            f"under {learning.TARGET_UNSAFE:.0%} unsafe. Of the {len(predicted)} areas without hours, "
+            f"**{predicted['answer'].sum()}** get an answer.\n")
+    return head + "\n" + table(df, "The cut-off, on tests it was not chosen on")
+
+
+def learning_by_class(results):
+    """Who the cut-off answers, by parking class."""
+    import learning
+    targets, predicted = results["targets"], results["predicted"]
+    answered = learning.kept(learning.held_out(results["sim"], results["cut"]), results["cut"])
+    df = pd.DataFrame({
+        "To predict": targets["luokka"].value_counts(),
+        "Answered": targets.loc[predicted["answer"], "luokka"].value_counts(),
+        "Simulated accuracy %": (answered.groupby("luokka")["correct"].mean() * 100).round(1),
+        "Simulated unsafe %": (answered.groupby("luokka")["unsafe"].mean() * 100).round(1),
+        "Simulated answers": answered["luokka"].value_counts(),
+    })
+    df = df[df["To predict"].notna()]
+    df[["To predict", "Answered", "Simulated answers"]] = df[["To predict", "Answered", "Simulated answers"]].fillna(0).astype(int)
+    df.index = df.index.astype(int)
+    return table(df.rename_axis("Class").reset_index().fillna(""), "The cut-off by parking class")
+
+
+def coverage_by_district(areas, results):
+    """Who gains an answer: per district with missing hours, the share the app can answer."""
+    targets, predicted = results["targets"], results["predicted"]
+    places = targets["district"].value_counts().index
+    local = areas[areas["district"].isin(places)]
+    df = pd.DataFrame({
+        "Areas": local["district"].value_counts(),
+        "Without hours": targets["district"].value_counts(),
+        "Answered before": local.loc[local["status"].eq("official"), "district"].value_counts(),
+        "Gained": targets.loc[predicted["answer"], "district"].value_counts(),
+    }).fillna(0).astype(int)
+    df["Before %"] = (100 * df["Answered before"] / df["Areas"]).round(1)
+    df["After %"] = (100 * (df["Answered before"] + df["Gained"]) / df["Areas"]).round(1)
+    df = df.sort_values("Without hours", ascending=False)
+    return table(df.rename_axis("District").reset_index(), "Coverage per district, before and after prediction")
+
+
+def plot_cutoff(results):
+    """Accuracy, unsafe answers and coverage as the distance cut-off moves, the agreement held as chosen."""
+    import learning
+    plt = _pyplot()
+    cut = results["cut"]
+    rows = learning.held_out(results["sim"], cut)
+    xs, accurate, unsafe_, answered = [], [], [], []
+    for distance in learning.DISTANCES:
+        k = learning.kept(rows, {**cut, "distance": distance})
+        if len(k) >= 50:
+            xs.append(distance)
+            accurate.append(100 * k["correct"].mean())
+            unsafe_.append(100 * k["unsafe"].mean())
+            answered.append(100 * len(k) / len(rows))
+    fig, ax = plt.subplots(figsize=(7, 3.5))
+    ax.plot(xs, accurate, marker="o", color=RULE_COLOURS["paid"], label="accurate")
+    ax.plot(xs, answered, marker="o", color=RULE_COLOURS["free_limited"], label="answered")
+    ax.plot(xs, unsafe_, marker="o", color=RULE_COLOURS["always_banned"], label="unsafe")
+    ax.axhline(100 * learning.TARGET_ACCURACY, color="#999999", linestyle="--", linewidth=1,
+               label=f"target, {learning.TARGET_ACCURACY:.0%} accurate")
+    ax.axvline(cut["distance"], color="black", linestyle=":", label=f"chosen, {cut['distance']} m")
+    ax.set_xscale("log")
+    ax.minorticks_off()
+    ax.set_xticks(xs, [str(x) for x in xs])
+    ax.set_xlabel("nearest same-class area within, metres")
+    ax.set_ylabel("% of predictions")
+    ax.set_ylim(0, 105)
+    ax.set_title("Answer less, answer right: where the cut-off sits")
+    ax.legend(frameon=False, fontsize=8, loc="center left")
+    ax.spines[["top", "right"]].set_visible(False)
+    fig.tight_layout()
+    return fig
+
+
+def save_figures(areas, by_dist, baseline, results):
     """Write every chart to docs/figures. Agg draws without a screen."""
     import matplotlib
     matplotlib.use("Agg")
@@ -405,6 +524,7 @@ def save_figures(areas, by_dist, baseline):
         ("accuracy_by_distance.png", plot_accuracy_by_distance(by_dist, baseline), {}),
         ("rule_type_by_district.png", plot_rule_type_by_district(areas), {}),
         ("area_sizes.png", plot_area_sizes(areas), {}),
+        ("learning_cutoff.png", plot_cutoff(results), {}),
     ]
     for name, fig, options in charts:
         fig.savefig(FIGURES / name, dpi=150, **options)
@@ -427,6 +547,7 @@ def main():
     paired = nearest_pairs(known)
     by_dist = accuracy_by_distance(paired)
     baseline = baseline_accuracy(known)
+    results = learning_results(areas)
 
     parts = [
         f"# Report figures\n\nGenerated by `analysis/report_stats.py` from "
@@ -442,11 +563,15 @@ def main():
         quoted_counts(areas),
         neighbour_accuracy(paired, by_dist, baseline),
         prediction_gap(areas, known),
+        learning_scores(results),
+        learning_cutoff(results),
+        learning_by_class(results),
+        coverage_by_district(areas, results),
     ]
     text = "\n".join(parts)
     print(text)
     if args.figures:
-        save_figures(areas, by_dist, baseline)
+        save_figures(areas, by_dist, baseline, results)
     if args.write:
         OUT.write_text(text)
         print(f"written to {OUT}")

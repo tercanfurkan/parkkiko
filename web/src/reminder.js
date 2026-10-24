@@ -29,10 +29,16 @@ export function actionFor(result, now) {
   return reminder && { type: "remind", reminder };
 }
 
-/** A stay started now, from a result evaluated at the moment the driver taps: null if no limit applies. */
+/**
+ * A stay started now, from a result evaluated at the moment the driver taps: null if no limit
+ * applies. `disc` is the instant the parking disc was set to, kept so the parked view can show it.
+ */
 export function stayFor(area, result) {
   if (!result.stay) return null;
-  return { areaId: area.id, title: "Move your car", deadline: result.until.at, at: result.until.at - LEAD_MS };
+  return {
+    areaId: area.id, title: "Move your car", deadline: result.until.at, at: result.until.at - LEAD_MS,
+    ...(result.disc && { disc: result.disc.at }),
+  };
 }
 
 const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");

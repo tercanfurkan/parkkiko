@@ -56,6 +56,7 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, stay
             <div className="headline">{stay.deadline > now ? `Parked. Move by ${clockTime(stay.deadline)}` : "Time is up. Move your car"}</div>
             <Countdown to={stay.deadline} label="left" />
             <div>{headline}</div>
+            {stay.disc && <div>Parking disc set to {clockTime(stay.disc)}</div>}
           </>
         ) : (
           <>

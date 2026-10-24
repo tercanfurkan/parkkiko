@@ -120,16 +120,16 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| 5.1 | Build the feature table | | done | PR #45. Class, district, location, and the nearest same-class areas' patterns and distances, in `analysis/learning.py`. No same-street flag: the register has no street names. |
-| 5.2 | Dummy baseline | | done | PR #45. Two: the most common pattern (28%) and the class's most common (48%), on the same test as the model. |
-| 5.3 | Nearest-neighbour model | | done | PR #45. Same-class, distance-weighted vote, k from 1, 3, 5. 62% at the real distances, macro F1 about 0.2. |
-| 5.4 | Spatially blocked validation | | done | PR #45. Whole districts held out, `GroupKFold`: 64%, and at the cut-off 98.5% on the 7% it answers. |
-| 5.5 | Distance-matched test | | done | PR #45. Class-matched too: for each of the 978, a same-class stand-in with neighbours hidden out to its real gap, 20 rounds. A test checks nothing closer leaks. |
-| 5.6 | Choose the distance cut-off | | done | PR #45. Target fixed before results: 95% accurate, under 1% unsafe. 5 neighbours within 150 m, all agreeing: 99.4% and 0.3% on held-out rounds, 373 of 978 answered. Unsafe answers set the limit. |
-| 5.7 | Error analysis | | done | PR #45. `notebooks/stages/05_learning.ipynb` §6: without the cut-off, class 1 is 11% accurate; the errors it lets through are mostly the Saturday question. |
-| 5.8 | Imputation reflection | | done | PR #45. In the reflection of `notebooks/stages/05_learning.ipynb`. |
-| 5.9 | Coverage per district | | done | PR #45. Vallila 46% to 87% answered; Reijola, the largest gap, 43% to 52%: its gap is class 1. In `docs/report_stats.md`. |
-| 5.10 | Ship predictions to the app | | todo | Next PR. Decided 24 Oct: ship the 373 that pass the cut-off, labelled in plain words, e.g. "ESTIMATE Paid parking until 21:00. The city publishes no hours here. Estimated from the same kind of parking 40 m away: right about 99 times in 100 at this distance. If the sign differs, trust the sign." Changes the data contract above: agree it here first. |
+| 5.1 | Build the feature table | | done | PR #45. Class, location and the nearest same-class areas, in `analysis/learning.py`. No same-street flag: no street names. |
+| 5.2 | Dummy baseline | | done | PR #45. Two: the commonest pattern, and the class's commonest. |
+| 5.3 | Nearest-neighbour model | | done | PR #45. Same-class, distance-weighted vote. |
+| 5.4 | Spatially blocked validation | | done | PR #45. Whole districts held out. |
+| 5.5 | Distance-matched test | | done | PR #45. Class-matched too, 20 rounds; a test checks nothing closer leaks. |
+| 5.6 | Choose the distance cut-off | | done | PR #45. Target fixed first, 95% and under 1% unsafe; frozen as 5 neighbours within 150 m, all agreeing. |
+| 5.7 | Error analysis | | done | PR #45. notebook 05, §5. |
+| 5.8 | Imputation reflection | | done | PR #45. notebook 05, reflection. |
+| 5.9 | Coverage per district | | done | PR #45. In `docs/report_stats.md`. |
+| 5.10 | Ship predictions to the app | | todo | Next PR, decided 24 Oct: the areas that pass the cut-off, as labelled estimates stating the measured reliability (about 99 in 100, not 19 in 20). Also: withhold any class whose own unsafe rate fails the bar or is too small to judge (5, 7, 1), and move the predicting code into `pipeline/` so `process.py` can call it. Changes the data contract above: agree it here first. |
 
 ## 6 The app
 

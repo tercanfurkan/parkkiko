@@ -6,6 +6,7 @@
 // countdown to it is exact even across the nights the clocks change.
 
 const DAY = 1440;
+const HALF_HOUR = 30;        // a parking disc is set to the next half or full hour
 const LOOK_AHEAD_DAYS = 7;   // every area with hours has a mon_fri window, so a week always finds the next start
 const WINDOW_BY_WEEKDAY = ["sun", "mon_fri", "mon_fri", "mon_fri", "mon_fri", "mon_fri", "sat"];
 
@@ -121,9 +122,10 @@ const LIMITED = { paid: "in", free_limited: "in", banned_hours: "out" };
  *                                         calendar or season
  * - { kind: "no_parking" }               never
  * - { kind: "reserved" }                 not for this driver
- * - { kind, until, stay?, then }         kind is paid, free or no_parking until `until`; `stay`
+ * - { kind, until, stay?, then, disc? } kind is paid, free or no_parking until `until`; `stay`
  *                                         is set when the time limit ends the stay first; `then`
- *                                         is what follows, or null when the driver must move
+ *                                         is what follows, { kind: "move" } when the driver must
+ *                                         leave; `disc` is the time to set a parking disc to
  */
 export function evaluate(area, now, calendar) {
   const { rule_type, status, hours, duration_min, season } = area;
@@ -150,28 +152,38 @@ export function evaluate(area, now, calendar) {
   const at = (m) => moment(midnight, m);
   const change = nextChange(line, minute);
 
+  // Free parking under a limit of less than a day needs a parking disc: docs/rule-evaluation.md
+  const short = duration_min > 0 && duration_min < DAY;
+  const underLimit = kind === "free" && short && LIMITED[rule_type] === state;
+  const start = underLimit ? Math.ceil(minute / HALF_HOUR) * HALF_HOUR : minute;
+  const disc = underLimit ? { disc: at(start) } : {};
+
   // The time limit ends the stay before the rule changes: move by then, nothing follows
-  if (duration_min && LIMITED[rule_type] === state && (!change || minute + duration_min < change.minute)) {
-    return { kind, stay: duration_min, until: at(minute + duration_min), then: null };
+  if (duration_min && LIMITED[rule_type] === state && (!change || start + duration_min < change.minute)) {
+    return { kind, stay: duration_min, until: at(start + duration_min), then: null, ...disc };
   }
   if (!change) return { kind, until: null, then: null };
-  if (change.state === "unsure") return { kind, until: at(change.minute), then: { kind: "check" } };
+  if (change.state === "unsure") return { kind, until: at(change.minute), then: { kind: "check" }, ...disc };
 
   // What starts when the rule next comes into force
-  const comesBack = () =>
+  const comesBack =
     rule_type === "free_limited" ? { kind: "limited", ...(duration_min && { duration: duration_min }) }
     : rule_type === "paid" && duration_min ? { kind: "paid", duration: duration_min }
     : { kind: INSIDE[rule_type] };
   // From the end of a window to the next start, or to where the calendar stops being sure
-  const freeUntilNext = (from) => {
+  const freeUntilNext = (from, then = comesBack) => {
     const after = nextChange(line, from);
     if (!after) return { until: null, then: null };
-    return { until: at(after.minute), then: after.state === "unsure" ? { kind: "check" } : comesBack() };
+    return { until: at(after.minute), then: after.state === "unsure" ? { kind: "check" } : then };
   };
 
-  if (state === "out") return { kind, until: at(change.minute), then: comesBack() };
-  // A free-limited stay whose limit outlasts the window runs on until the rule next starts
-  if (kind === "free") return { kind, ...freeUntilNext(change.minute) };
+  // Parked before a free limit starts: the disc goes to its start, and the limit runs from there
+  if (rule_type === "free_limited" && state === "out" && short) {
+    return { kind, until: at(change.minute + duration_min), then: { kind: "move" }, disc: at(change.minute) };
+  }
+  if (state === "out") return { kind, until: at(change.minute), then: comesBack, ...disc };
+  // A free stay that outlasts the window: when the limit next starts, the disc no longer covers it
+  if (kind === "free") return { kind, ...freeUntilNext(change.minute, underLimit ? { kind: "move" } : comesBack), ...disc };
   const next = freeUntilNext(change.minute);
   return {
     kind,

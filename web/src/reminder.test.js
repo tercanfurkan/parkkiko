@@ -17,7 +17,8 @@ describe("a reminder is offered when something gets worse at the deadline", () =
   test.each([
     ["free turns paid", 8001, "2026-10-13T21:30", "Paid parking starts", "2026-10-14T09:00"],
     ["free turns no parking", 8011, "2026-10-13T19:00", "No parking starts", "2026-10-14T07:00"],
-    ["a time limit starts", 8006, "2026-10-13T18:30", "The time limit starts", "2026-10-14T08:00"],
+    ["the disc goes stale when the limit returns", 8006, "2026-10-13T18:30", "Move your car", "2026-10-14T08:00"],
+    ["the limit from tomorrow's disc runs out", 8006, "2026-10-13T21:30", "Move your car", "2026-10-14T12:00"],
   ])("%s", (_, id, local, title, deadline) => {
     const reminder = remind(id, local);
     expect(reminder).toEqual({ title, deadline: instant(deadline), at: instant(deadline) - 10 * 60000 });
@@ -64,11 +65,17 @@ describe("the action beside the answer", () => {
 });
 
 describe("a started stay", () => {
-  test("runs the time limit from the moment it starts, with the reminder ten minutes before the end", () => {
-    const start = new Date("2026-10-13T14:40+03:00");
+  test("runs the time limit from the parking disc, with the reminder ten minutes before the end", () => {
+    const start = new Date(instant("2026-10-13T14:40"));
     expect(stayFor(area(8006), evaluate(area(8006), start, calendar))).toEqual({
-      areaId: 8006, title: "Move your car", deadline: instant("2026-10-13T18:40"), at: instant("2026-10-13T18:30"),
+      areaId: 8006, title: "Move your car", deadline: instant("2026-10-13T19:00"), at: instant("2026-10-13T18:50"),
+      disc: instant("2026-10-13T15:00"),
     });
+  });
+
+  test("keeps no disc for paid parking, which is paid instead", () => {
+    const start = new Date(instant("2026-10-13T14:40"));
+    expect(stayFor(area(8269), evaluate(area(8269), start, calendar))).not.toHaveProperty("disc");
   });
 
   test("is not offered when the window ends before the limit would", () => {

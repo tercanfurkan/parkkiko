@@ -50,6 +50,7 @@ const CHECK = {
 function after(next) {
   if (!next) return null;
   if (next.kind === "check") return "Check the sign after that";
+  if (next.kind === "move") return "Move your car then";
   if (next.kind === "no_parking") return "No parking after that";
   if (next.kind === "paid") return `Paid after that${next.duration ? `, ${duration(next.duration)} max` : ""}`;
   if (next.kind === "limited") return next.duration ? `${duration(next.duration)} max after that` : "A time limit applies after that";
@@ -72,12 +73,17 @@ export function answer(area, result, now) {
     const who = reservedFor(area);
     return { headline: "Not for you", detail: who ? `Reserved: ${who}` : "Reserved space" };
   }
+  // The disc keeps a free stay from a fine, so it leads the line under the headline
+  const lead = (text) => [result.disc && `Set your parking disc to ${when(result.disc)}`, text].filter(Boolean).join(". ") || null;
   // A time limit runs from when the driver leaves the car, so there is nothing to count down yet
-  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Park now and move by ${when(until)}` };
+  if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: lead(`Park now and move by ${when(until)}`) };
   const countdown = until && until.at - now < DAY_MS ? { to: until.at, label: kind === "no_parking" ? "Allowed in" : "left" } : undefined;
   if (!until) {
     const always = { no_parking: null, paid: "At all hours", free: "No time limit" };
     return { headline: LABEL[kind], detail: always[kind] };
   }
-  return { headline: `${LABEL[kind]} until ${when(until)}`, detail: after(result.then), countdown };
+  return { headline: `${LABEL[kind]} until ${when(until)}`, detail: lead(after(result.then)), countdown };
 }
+
+/** The parked view's line for the disc a stay started with. */
+export const discSet = (ms) => `Parking disc set to ${clockTime(ms)}`;

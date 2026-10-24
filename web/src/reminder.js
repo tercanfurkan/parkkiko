@@ -4,7 +4,10 @@
 export const LEAD_MS = 10 * 60000;
 
 // What starts at the deadline that the driver needs warning of
-const WORSE = { paid: "Paid parking starts", no_parking: "No parking starts", limited: "The time limit starts", check: "Check the sign" };
+const WORSE = {
+  paid: "Paid parking starts", no_parking: "No parking starts", limited: "The time limit starts",
+  check: "Check the sign", move: "Move your car",
+};
 
 /**
  * { title, deadline, at } for an evaluate() result at `now`, or null when nothing gets worse at the
@@ -32,7 +35,10 @@ export function actionFor(result, now) {
 /** A stay started now, from a result evaluated at the moment the driver taps: null if no limit applies. */
 export function stayFor(area, result) {
   if (!result.stay) return null;
-  return { areaId: area.id, title: "Move your car", deadline: result.until.at, at: result.until.at - LEAD_MS };
+  return {
+    areaId: area.id, title: WORSE.move, deadline: result.until.at, at: result.until.at - LEAD_MS,
+    ...(result.disc && { disc: result.disc.at }),
+  };
 }
 
 const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");

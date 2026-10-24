@@ -17,6 +17,8 @@ from export_holidays import write as write_holidays
 from export_web import SOURCE as PARQUET, write_web
 
 NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
+# The register's fields that carry the rule, kept in the parquet beside the parsed ones
+RAW_FIELDS = ["luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi", "lisatieto"]
 
 
 def latest_snapshot():
@@ -78,6 +80,19 @@ def classify(row):
     }
 
 
+def differs(a, b):
+    """Where two columns really differ. Missing on both sides is the same, however it is written."""
+    same = (a.isna() & b.isna()) | (a.astype(object) == b.astype(object)).fillna(False).astype(bool)
+    return ~same
+
+
+def reparse(areas):
+    """Per parsed column, how many areas differ from what classify() makes of their raw fields now.
+    All zero means the snapshot is exactly what today's parsers produce."""
+    fresh = pd.DataFrame([classify(r) for r in areas[RAW_FIELDS].to_dict("records")], index=areas.index)
+    return pd.Series({column: int(differs(fresh[column], areas[column]).sum()) for column in fresh})
+
+
 def read_metric(path):
     """Read a snapshot file, insisting on the metric coordinate system it actually holds.
 
@@ -126,8 +141,7 @@ def main():
     check(areas)
 
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
-    areas = areas[["id", "luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi",
-                   "lisatieto", "geometry"]].join(parsed)
+    areas = areas[["id", *RAW_FIELDS, "geometry"]].join(parsed)
     areas = add_district(areas, snapshot)
 
     PARQUET.parent.mkdir(parents=True, exist_ok=True)

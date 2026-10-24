@@ -176,11 +176,16 @@ def area_outliers(areas):
             + "\n" + note)
 
 
+def stated(col):
+    """Where a raw field says anything at all: present and not blank."""
+    return col.notna() & col.astype(str).str.strip().ne("")
+
+
 def raw_spellings(areas):
     """How many ways the register writes each field: the work the parsers do."""
     rows = []
     for field, name in RAW_FIELDS.items():
-        col = areas[field].where(areas[field].str.strip() != "")
+        col = areas[field].where(stated(areas[field]))
         rows.append({"Field": f"{name} (`{field}`)", "Distinct spellings": col.nunique(),
                      "Missing or blank": col.isna().sum()})
     return table(pd.DataFrame(rows), "Distinct raw spellings per field")
@@ -193,6 +198,34 @@ def issue_codes(areas):
     note = (f"{areas['issue_codes'].notna().sum()} uncertain areas, "
             f"{(areas['issue_codes'].str.contains(',', na=False)).sum()} with more than one code.\n")
     return table(df, "Issue codes") + "\n" + note
+
+
+def needs_disc(areas):
+    """Free parking under a time limit of less than a day, where a parking disc is needed while the
+    limit applies. The app's evaluate() applies the same rule at a given moment."""
+    return areas["rule_type"].eq("free_limited") & areas["duration_min"].gt(0) & areas["duration_min"].lt(24 * 60)
+
+
+def lettered_sign_codes(areas):
+    """Areas flagged only because their note is sign codes with a letter, such as `C41, E8`.
+    rules.parse_extra takes only digits as a sign reference, so these read as a condition."""
+    code = r"(?:[A-Z]\d{1,3}(?:\.\d)?|\d+)"
+    notes = areas["lisatieto"].fillna("")
+    only_codes = notes.str.fullmatch(rf"\s*{code}(?:\s*[,/]\s*{code})*[\s,/]*") & notes.str.contains("[A-Z]")
+    return only_codes & areas["issue_codes"].eq("note")
+
+
+def quoted_counts(areas):
+    """Counts the docs quote that no other table here carries."""
+    disc = needs_disc(areas)
+    df = pd.DataFrame({
+        "Measure": ["Free parking under a limit of less than 24 h, so a parking disc is needed",
+                    "  of which class 8", "  of which class 1",
+                    "Flagged only because a note is a lettered sign code"],
+        "Areas": [disc.sum(), (disc & areas["luokka"].eq(8)).sum(), (disc & areas["luokka"].eq(1)).sum(),
+                  lettered_sign_codes(areas).sum()],
+    })
+    return table(df, "Parking disc and sign codes")
 
 
 def accuracy_by_distance(paired):
@@ -406,6 +439,7 @@ def main():
         area_outliers(areas),
         raw_spellings(areas),
         issue_codes(areas),
+        quoted_counts(areas),
         neighbour_accuracy(paired, by_dist, baseline),
         prediction_gap(areas, known),
     ]

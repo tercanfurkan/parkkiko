@@ -50,6 +50,7 @@ const CHECK = {
 function after(next) {
   if (!next) return null;
   if (next.kind === "check") return "Check the sign after that";
+  if (next.kind === "move") return "Move your car then";
   if (next.kind === "no_parking") return "No parking after that";
   if (next.kind === "paid") return `Paid after that${next.duration ? `, ${duration(next.duration)} max` : ""}`;
   if (next.kind === "limited") return next.duration ? `${duration(next.duration)} max after that` : "A time limit applies after that";

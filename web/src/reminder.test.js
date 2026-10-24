@@ -17,7 +17,8 @@ describe("a reminder is offered when something gets worse at the deadline", () =
   test.each([
     ["free turns paid", 8001, "2026-10-13T21:30", "Paid parking starts", "2026-10-14T09:00"],
     ["free turns no parking", 8011, "2026-10-13T19:00", "No parking starts", "2026-10-14T07:00"],
-    ["a time limit starts", 8006, "2026-10-13T18:30", "The time limit starts", "2026-10-14T08:00"],
+    ["the disc goes stale when the limit returns", 8006, "2026-10-13T18:30", "Move your car", "2026-10-14T08:00"],
+    ["the limit from tomorrow's disc runs out", 8006, "2026-10-13T21:30", "Move your car", "2026-10-14T12:00"],
   ])("%s", (_, id, local, title, deadline) => {
     const reminder = remind(id, local);
     expect(reminder).toEqual({ title, deadline: instant(deadline), at: instant(deadline) - 10 * 60000 });

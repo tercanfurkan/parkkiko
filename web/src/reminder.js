@@ -4,7 +4,10 @@
 export const LEAD_MS = 10 * 60000;
 
 // What starts at the deadline that the driver needs warning of
-const WORSE = { paid: "Paid parking starts", no_parking: "No parking starts", limited: "The time limit starts", check: "Check the sign" };
+const WORSE = {
+  paid: "Paid parking starts", no_parking: "No parking starts", limited: "The time limit starts",
+  check: "Check the sign", move: "Move your car",
+};
 
 /**
  * { title, deadline, at } for an evaluate() result at `now`, or null when nothing gets worse at the

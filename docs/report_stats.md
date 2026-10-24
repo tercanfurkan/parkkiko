@@ -216,3 +216,27 @@ Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing.
 | KALLIO        |    1009 |               6 |               941 |        6 |       93.3 |      93.9 |
 | KAMPINMALMI   |    1471 |               5 |              1330 |        3 |       90.4 |      90.6 |
 | VANHAKAUPUNKI |      48 |               1 |                27 |        0 |       56.2 |      56.2 |
+
+### Commonest mistakes, if every guess were shown
+
+3,679 of 9,600 guesses wrong, 2,282 of them costing a fine.
+
+| True hours             | Estimate               | Costs a fine   |   Times |
+|:-----------------------|:-----------------------|:---------------|--------:|
+| mon_fri 8-20           | mon_fri 8-17           | yes            |     418 |
+| mon_fri 8-17           | mon_fri 8-20           | no             |     317 |
+| mon_fri 8-17           | mon_fri 8-17, sat 9-15 | no             |     273 |
+| mon_fri 8-17, sat 9-15 | mon_fri 8-17           | yes            |     245 |
+| mon_fri 6-24           | mon_fri 8-17           | yes            |     196 |
+
+### Commonest mistakes, among the estimates the cut-off shows
+
+22 of 3,409 guesses wrong, 11 of them costing a fine.
+
+| True hours                       | Estimate               | Costs a fine   |   Times |
+|:---------------------------------|:-----------------------|:---------------|--------:|
+| mon_fri 9-21, sat 9-18           | mon_fri 9-21           | yes            |       8 |
+| mon_fri 9-21                     | mon_fri 9-21, sat 9-18 | no             |       7 |
+| mon_fri 9-17                     | mon_fri 9-21           | no             |       3 |
+| mon_fri 7-18                     | mon_fri 8-17           | yes            |       2 |
+| mon_fri 9-21, sat 9-21, sun 9-21 | mon_fri 9-21, sat 9-18 | yes            |       1 |

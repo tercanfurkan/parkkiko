@@ -463,6 +463,25 @@ def learning_by_class(results):
     return table(df.rename_axis("Class").reset_index().fillna(""), "The cut-off by parking class")
 
 
+def learning_errors(results, top=5):
+    """The commonest mistakes on the held-back test rounds: if every guess were shown, and among the
+    estimates the cut-off shows. A mistake costs a fine when the true rule applies at an hour the
+    estimate says it does not."""
+    test = results["test"]
+    views = {"if every guess were shown": test,
+             "among the estimates the cut-off shows": test[learning.answered(test, results["cut"])]}
+    parts = []
+    for title, rows in views.items():
+        wrong = rows[~rows["correct"]]
+        mistakes = pd.DataFrame({"True hours": wrong["truth"].map(readable),
+                                 "Estimate": wrong["predicted"].map(readable),
+                                 "Costs a fine": wrong["unsafe"].map({True: "yes", False: "no"})})
+        counts = mistakes.value_counts().head(top).rename("Times").reset_index()
+        parts.append(f"### Commonest mistakes, {title}\n\n{len(wrong):,} of {len(rows):,} guesses wrong, "
+                     f"{wrong['unsafe'].sum():,} of them costing a fine.\n\n{counts.to_markdown(index=False)}\n")
+    return "\n".join(parts)
+
+
 def coverage_by_district(areas, results):
     """Who gains an answer: per district with missing hours, the share the app can answer."""
     targets, predicted = results["targets"], results["predicted"]
@@ -583,6 +602,7 @@ def main():
         learning_cutoff(results),
         learning_by_class(results),
         coverage_by_district(areas, results),
+        learning_errors(results),
     ]
     text = "\n".join(parts)
     print(text)

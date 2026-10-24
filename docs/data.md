@@ -96,7 +96,10 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
 
 - **The register describes the plan, not the street.** A repainted bay or a bagged sign is
   invisible to us, and there is no feedback channel to detect it.
-- **Free text is not parsed.** 301 areas carry conditions in prose, such as a night driving ban.
+- **Free text is not parsed.** 301 areas carry text the parser treats as a condition, such as a
+  night driving ban. 116 of them hold only a traffic sign code with a letter (`C41`), which the
+  parser does not recognise as a reference, so they are flagged more cautiously than they need to
+  be; see [notebook 03](../notebooks/stages/03_preprocessing.ipynb), section 6.
   These are marked uncertain and shown to the driver verbatim to judge.
 - **Side of the street cannot be determined from GPS.** Rules differ per side, and phone accuracy
   in a street canyon is comparable to the street width, so the driver picks the side.
@@ -108,5 +111,7 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
   tell a driver parking is free when it may be paid, so they, and the days that derive from
   them, carry `uncertain`.
 - **Temporary traffic arrangements are not usable**, see [future-work.md](future-work.md).
-- **One area's hours are genuinely ambiguous** (`7-9, 15-17`, two ranges with no brackets) and
-  stay uncertain by design.
+- **A split day cannot be represented yet.** One area's hours, `7-9, 15-17`, are two weekday
+  windows: two ranges without brackets are a split day on a sign. The hours hold one range per
+  day type, so the parser flags it, with a stored reason that wrongly calls it ambiguous. It
+  stays uncertain until the hours can hold several ranges per day (board task 3.6).

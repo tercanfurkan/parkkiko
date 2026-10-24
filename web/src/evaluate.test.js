@@ -181,3 +181,22 @@ describe("the deadline as a real moment, for the countdown", () => {
     expect(answer.until.at - Date.parse("2026-10-24T21:00+03:00")).toBe(13 * 3600000);
   });
 });
+
+// Free parking under a time limit needs a parking disc. Paid parking is paid instead, a limit of
+// a day or more needs none, and outside its hours the limit does not apply at all.
+describe("the parking disc", () => {
+  test.each([
+    ["8006 free, 4 h, inside 8-20", 8006, "2026-10-13T14:00", true],
+    ["8006 at 18:30, the limit still applies until 20:00", 8006, "2026-10-13T18:30", true],
+    ["8025 class 1, 15 min", 8025, "2026-10-13T10:00", true],
+    ["9646 after its no-parking hours, 60 min free", 9646, "2026-10-13T18:00", true],
+    ["8006 after 20:00, no limit applies", 8006, "2026-10-13T21:00", false],
+    ["8006 on Sunday, no window at all", 8006, "2026-10-18T14:00", false],
+    ["9646 during its no-parking hours", 9646, "2026-10-13T12:00", false],
+    ["8269 paid, 1 h: pay, no disc", 8269, "2026-10-13T14:00", false],
+    ["8001 paid", 8001, "2026-10-13T14:00", false],
+    ["8539 free, 24 h: no disc", 8539, "2026-10-13T14:00", false],
+  ])("%s", (_, id, local, needed) => {
+    expect(evaluate(area(id), at(local), calendar).disc ?? false).toBe(needed);
+  });
+});

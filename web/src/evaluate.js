@@ -121,9 +121,10 @@ const LIMITED = { paid: "in", free_limited: "in", banned_hours: "out" };
  *                                         calendar or season
  * - { kind: "no_parking" }               never
  * - { kind: "reserved" }                 not for this driver
- * - { kind, until, stay?, then }         kind is paid, free or no_parking until `until`; `stay`
+ * - { kind, until, stay?, then, disc? } kind is paid, free or no_parking until `until`; `stay`
  *                                         is set when the time limit ends the stay first; `then`
- *                                         is what follows, or null when the driver must move
+ *                                         is what follows, or null when the driver must move;
+ *                                         `disc` is set when the driver must display a parking disc
  */
 export function evaluate(area, now, calendar) {
   const { rule_type, status, hours, duration_min, season } = area;
@@ -150,12 +151,17 @@ export function evaluate(area, now, calendar) {
   const at = (m) => moment(midnight, m);
   const change = nextChange(line, minute);
 
+  // Free parking under a time limit in force needs a parking disc showing the arrival time. Paid
+  // parking is paid instead, and a limit of a day or more needs no disc.
+  const disc = kind === "free" && duration_min > 0 && duration_min < DAY && LIMITED[rule_type] === state;
+  const answer = (result) => (disc ? { ...result, disc: true } : result);
+
   // The time limit ends the stay before the rule changes: move by then, nothing follows
   if (duration_min && LIMITED[rule_type] === state && (!change || minute + duration_min < change.minute)) {
-    return { kind, stay: duration_min, until: at(minute + duration_min), then: null };
+    return answer({ kind, stay: duration_min, until: at(minute + duration_min), then: null });
   }
-  if (!change) return { kind, until: null, then: null };
-  if (change.state === "unsure") return { kind, until: at(change.minute), then: { kind: "check" } };
+  if (!change) return answer({ kind, until: null, then: null });
+  if (change.state === "unsure") return answer({ kind, until: at(change.minute), then: { kind: "check" } });
 
   // What starts when the rule next comes into force
   const comesBack = () =>
@@ -169,9 +175,9 @@ export function evaluate(area, now, calendar) {
     return { until: at(after.minute), then: after.state === "unsure" ? { kind: "check" } : comesBack() };
   };
 
-  if (state === "out") return { kind, until: at(change.minute), then: comesBack() };
+  if (state === "out") return answer({ kind, until: at(change.minute), then: comesBack() });
   // A free-limited stay whose limit outlasts the window runs on until the rule next starts
-  if (kind === "free") return { kind, ...freeUntilNext(change.minute) };
+  if (kind === "free") return answer({ kind, ...freeUntilNext(change.minute) });
   const next = freeUntilNext(change.minute);
   return {
     kind,

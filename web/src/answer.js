@@ -66,12 +66,21 @@ const LABEL = { paid: "Paid parking", free: "Free parking", no_parking: "No park
  * within a day, since past that "until Monday 09:00" says it better.
  */
 export function answer(area, result, now) {
-  const { kind, until, stay } = result;
+  const { kind } = result;
   if (kind === "check") return { headline: "Check the sign", detail: CHECK[result.why](result) };
   if (kind === "reserved") {
     const who = reservedFor(area);
     return { headline: "Not for you", detail: who ? `Reserved: ${who}` : "Reserved space" };
   }
+  const said = untilWhen(result, now);
+  // The disc is what keeps a free stay from a fine, so it leads the line under the headline
+  return result.disc ? { ...said, detail: [DISC, said.detail].filter(Boolean).join(". ") } : said;
+}
+
+export const DISC = "Display a parking disc";
+
+function untilWhen(result, now) {
+  const { kind, until, stay } = result;
   // A time limit runs from when the driver leaves the car, so there is nothing to count down yet
   if (stay) return { headline: `${LABEL[kind]}, ${duration(stay)} max`, detail: `Park now and move by ${when(until)}` };
   const countdown = until && until.at - now < DAY_MS ? { to: until.at, label: kind === "no_parking" ? "Allowed in" : "left" } : undefined;

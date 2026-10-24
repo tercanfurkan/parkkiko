@@ -16,8 +16,9 @@ const say = (id, local, offset = "+03:00") => {
 test.each([
   [8001, "2026-10-13T14:40", "Paid parking until 21:00", "Free after that until 09:00 tomorrow"],
   [8001, "2026-10-13T21:30", "Free parking until 09:00 tomorrow", "Paid after that"],
-  [8006, "2026-10-13T14:40", "Free parking, 4 hours max", "Park now and move by 18:40"],
-  [8006, "2026-10-13T18:30", "Free parking until 08:00 tomorrow", "4 hours max after that"],
+  [8006, "2026-10-13T14:40", "Free parking, 4 hours max", "Display a parking disc. Park now and move by 18:40"],
+  [8006, "2026-10-13T18:30", "Free parking until 08:00 tomorrow", "Display a parking disc. 4 hours max after that"],
+  [8539, "2026-10-13T14:40", "Free parking, 24 hours max", "Park now and move by 14:40 tomorrow"],
   [8011, "2026-10-13T12:00", "No parking until 18:00", "Free after that until 07:00 tomorrow"],
   [8011, "2026-10-16T19:00", "Free parking until 09:00 tomorrow", "No parking after that"],
   [8269, "2026-10-13T14:40", "Paid parking, 1 hour max", "Park now and move by 15:40"],

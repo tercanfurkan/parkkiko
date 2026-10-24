@@ -242,8 +242,9 @@ guessing the most common pattern.
 
 ![Accuracy by distance](figures/accuracy_by_distance.png)
 
-**Figure A6.** Accuracy, coverage and unsafe answers as the distance cut-off moves, on the
-simulation rounds the cut-off was not chosen on.
+**Figure A6.** Choosing the cut-off. As the distance limit loosens, how often a shown estimate is
+wrong or unsafe (top), against the limits fixed beforehand, and how many of the 978 areas get one
+(bottom). On the simulation rounds the cut-off was chosen on.
 
 ![The cut-off](figures/learning_cutoff.png)
 

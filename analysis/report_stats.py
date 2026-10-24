@@ -480,31 +480,49 @@ def coverage_by_district(areas, results):
 
 
 def plot_cutoff(results):
-    """Accuracy, unsafe answers and coverage as the distance cut-off moves, the agreement held as chosen."""
+    """How the cut-off was chosen, on the rounds it was chosen on: how often a shown estimate is
+    wrong or unsafe (top), and how many areas without hours would get one (bottom), as the distance
+    limit loosens. Agreement is held as chosen."""
     plt = _pyplot()
-    cut, test = results["cut"], results["test"]
-    curve = {}
+    cut, sim, predicted = results["cut"], results["sim"], results["predicted"]
+    fit = sim[(sim["round"] < learning.ROUNDS // 2) & (sim["k"] == cut["k"])]
+    rows = []
     for distance in learning.DISTANCES:
-        kept = test[learning.answered(test, {**cut, "distance": distance})]
+        limit = {**cut, "distance": distance}
+        kept = fit[learning.answered(fit, limit)]
         if len(kept) >= learning.MIN_ANSWERS:
-            curve[distance] = {"accurate": pct(kept["correct"].mean()), "answered": pct(len(kept) / len(test)),
-                               "unsafe": pct(kept["unsafe"].mean())}
-    curve = pd.DataFrame(curve).T
-    fig, ax = plt.subplots(figsize=(7, 3.5))
-    for column, colour in [("accurate", "paid"), ("answered", "free_limited"), ("unsafe", "always_banned")]:
-        ax.plot(curve.index, curve[column], marker="o", color=RULE_COLOURS[colour], label=column)
-    ax.axhline(100 * learning.TARGET_ACCURACY, color=RULE_COLOURS["unknown"], linestyle="--", linewidth=1,
-               label=f"target, {learning.TARGET_ACCURACY:.0%} accurate")
-    ax.axvline(cut["distance"], color="black", linestyle=":", label=f"chosen, {cut['distance']} m")
-    ax.set_xscale("log")
-    ax.minorticks_off()
-    ax.set_xticks(curve.index, [str(x) for x in curve.index])
-    ax.set_xlabel("nearest same-class area within, metres")
-    ax.set_ylabel("% of predictions")
-    ax.set_ylim(0, 105)
-    ax.set_title("Answer less, answer right: where the cut-off sits")
-    ax.legend(frameon=False, fontsize=8, loc="center left")
-    ax.spines[["top", "right"]].set_visible(False)
+            rows.append({"distance": distance, "wrong": pct(1 - kept["correct"].mean()),
+                         "unsafe": pct(kept["unsafe"].mean()), "answered": int(learning.answered(predicted, limit).sum())})
+    df = pd.DataFrame(rows)
+    x = list(range(len(df)))
+    chosen = int(df.index[df["distance"] == cut["distance"]][0])
+
+    fig, (top, bottom) = plt.subplots(2, 1, figsize=(7.5, 6), sharex=True, height_ratios=[3, 2])
+    lines = [("wrong", "wrong", "paid", 100 * (1 - learning.TARGET_ACCURACY)),
+             ("unsafe", "unsafe: would cost a fine", "always_banned", 100 * learning.TARGET_UNSAFE)]
+    for column, label, colour, limit in lines:
+        top.plot(x, df[column], marker="o", color=RULE_COLOURS[colour], label=f"{label} (limit {limit:g}%)")
+        top.axhline(limit, color=RULE_COLOURS[colour], linestyle="--", linewidth=1)
+    top.axvspan(chosen - 0.4, chosen + 0.4, color="#e8e8e8", zorder=0)
+    top.set_ylim(0, max(6, df[["wrong", "unsafe"]].max().max() + 1))
+    top.text(chosen, top.get_ylim()[1] * 0.99, "chosen", ha="center", va="top", fontsize=9)
+    top.set_ylabel("% of estimates shown")
+    top.set_title("How often a shown estimate is wrong", fontsize=10, loc="left")
+    top.legend(frameon=False, fontsize=8, loc="upper left")
+
+    bottom.bar(x, df["answered"], color=[RULE_COLOURS["free_limited"] if i == chosen else "#cccccc" for i in x])
+    for i, value in zip(x, df["answered"]):
+        bottom.text(i, value + 8, str(value), ha="center", fontsize=8)
+    bottom.set_ylim(0, df["answered"].max() * 1.2)
+    bottom.set_ylabel("areas")
+    bottom.set_title(f"How many of the {len(predicted)} areas without hours get an estimate", fontsize=10, loc="left")
+    bottom.set_xticks(x, [f"{d} m" for d in df["distance"]])
+    agree = "all" if cut["share"] == 1 else "most"
+    bottom.set_xlabel(f"show an estimate only if the nearest known area of the same class is within this distance\n"
+                      f"(and {agree} of its {cut['k']} nearest agree)")
+    for ax in (top, bottom):
+        ax.spines[["top", "right"]].set_visible(False)
+    fig.suptitle("Choosing the cut-off: loosen the distance until estimates get too risky", fontsize=12)
     fig.tight_layout()
     return fig
 

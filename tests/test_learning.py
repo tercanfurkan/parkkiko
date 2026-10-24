@@ -3,31 +3,35 @@ unsafe answer is the one that costs a driver a fine."""
 import geopandas as gpd
 from shapely.geometry import Point
 
+import learning
+import process
 from learning import Neighbours, in_force, unsafe
 
 DAY = '{"mon_fri": [9, 21]}'
 DAY_AND_SATURDAY = '{"mon_fri": [9, 21], "sat": [9, 18]}'
+ORIGIN = (25_496_000, 6_672_000)
 
 
-def street(distances, klass=6):
-    """Labelled areas along a line, `distances` metres from the origin, all of one class."""
-    return gpd.GeoDataFrame({"luokka": [klass] * len(distances), "hours": [DAY] * len(distances)},
-                            geometry=[Point(25_496_000 + d, 6_672_000).buffer(1) for d in distances],
-                            crs=3879)
+def street(distances):
+    """Labelled areas of one class along a line, `distances` metres from the origin."""
+    return gpd.GeoDataFrame({"luokka": [6] * len(distances), "hours": [DAY] * len(distances)},
+                            geometry=[Point(ORIGIN[0] + d, ORIGIN[1]).buffer(1) for d in distances], crs=3879)
 
 
 def test_hidden_neighbours_are_never_used():
-    """The distance-matched test hides neighbours closer than the real gap; if one leaked, the
-    headline would describe the easy case again."""
-    areas = street([0, 5, 20, 60, 200])
-    found = Neighbours(areas).nearest(6, (25_496_000, 6_672_000), k=3, beyond=50, skip=areas.index[0])
+    """The distance-matched test hides neighbours out to the real gap; if one leaked, the headline
+    would describe the easy case again. The stand-in itself, at distance 0, is hidden with them."""
+    found = Neighbours(street([0, 5, 20, 60, 200])).nearest(6, ORIGIN, k=3, beyond=50)
     assert [round(d) for d, _ in found] == [60, 200]
 
 
-def test_the_stand_in_is_never_its_own_neighbour():
-    areas = street([0, 30])
-    found = Neighbours(areas).nearest(6, (25_496_000, 6_672_000), k=1, skip=areas.index[0])
-    assert round(found[0][0]) == 30
+def test_without_hiding_the_nearest_come_first():
+    found = Neighbours(street([30, 0, 10])).nearest(6, ORIGIN, k=2)
+    assert [round(d) for d, _ in found] == [0, 10]
+
+
+def test_learning_trains_on_the_rule_types_the_pipeline_marks_missing():
+    assert set(learning.NEEDS_HOURS) == set(process.NEEDS_HOURS)
 
 
 def test_a_range_past_midnight_runs_into_the_next_day():

@@ -148,18 +148,35 @@ Copying the nearest same-class area is correct **97.5%** of the time, over 5,834
 | Within 50 m     | 17.7%   |
 | Within 200 m    | 57.4%   |
 
+### Areas to learn from and to predict, by class
+
+|   Class |   Labelled |   To predict |   Patterns |   Most common % |
+|--------:|-----------:|-------------:|-----------:|----------------:|
+|       1 |         52 |          353 |          9 |            36.5 |
+|       2 |         12 |           18 |          1 |           100   |
+|       3 |         25 |            0 |          4 |            64   |
+|       4 |         78 |            3 |          2 |            98.7 |
+|       5 |        458 |           56 |          6 |            51.1 |
+|       6 |       2585 |          437 |          5 |            50.3 |
+|       7 |        400 |           29 |          5 |            70.5 |
+|       8 |       1587 |           10 |          7 |            92.9 |
+|       9 |        234 |           36 |         21 |            53.8 |
+|      10 |        230 |           36 |          4 |            90.4 |
+
+The 978 areas without hours sit a median of 174 m, centre to centre, from a labelled area of their class; each test hides neighbours out to those distances.
+
 ### Predicting the missing hours, at the distances they really face
 
 | Method                                            |   Accuracy % |   Macro F1 |   Unsafe % |
 |:--------------------------------------------------|-------------:|-----------:|-----------:|
-| most common pattern                               |         28.3 |      0.012 |       43   |
-| most common pattern of the class                  |         48.1 |      0.047 |       26.6 |
+| Always the most common pattern                    |         28.3 |      0.012 |       43   |
+| Always the most common pattern of the class       |         48.1 |      0.047 |       26.6 |
 | Nearest neighbours, k=1                           |         60.7 |      0.206 |       22.7 |
 | Nearest neighbours, k=3                           |         61.7 |      0.204 |       23.3 |
 | Nearest neighbours, k=5                           |         61.8 |      0.186 |       24.2 |
 | Nearest neighbours, k=5, whole districts held out |         63.8 |      0.105 |       13.6 |
 
-Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Target, fixed before any result: at least 95% accurate and under 1% unsafe. Of the 978 areas without hours, **373** get an answer.
+Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Of the 978 areas without hours, **373** get an answer.
 
 ### The cut-off, on tests it was not chosen on
 
@@ -170,17 +187,17 @@ Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing.
 
 ### The cut-off by parking class
 
-|   Class |   To predict |   Answered |   Simulated accuracy % |   Simulated unsafe % |   Simulated answers |
-|--------:|-------------:|-----------:|-----------------------:|---------------------:|--------------------:|
-|       1 |          353 |          1 |                   81.8 |                 18.2 |                  11 |
-|       2 |           18 |          0 |                        |                      |                   0 |
-|       4 |            3 |          3 |                  100   |                  0   |                  29 |
-|       5 |           56 |         29 |                   98.5 |                  1   |                 201 |
-|       6 |          437 |        314 |                   99.5 |                  0.2 |                2970 |
-|       7 |           29 |         10 |                   98.5 |                  1.5 |                  68 |
-|       8 |           10 |         10 |                  100   |                  0   |                  96 |
-|       9 |           36 |          4 |                  100   |                  0   |                  18 |
-|      10 |           36 |          2 |                  100   |                  0   |                  16 |
+|   Class |   To predict |   Answered |   Accuracy % without cut-off |   Accuracy % with |   Unsafe % with |   Simulated answers |
+|--------:|-------------:|-----------:|-----------------------------:|------------------:|----------------:|--------------------:|
+|       1 |          353 |          1 |                         11.4 |              81.8 |            18.2 |                  11 |
+|       2 |           18 |          0 |                              |                   |                 |                   0 |
+|       4 |            3 |          3 |                         96.7 |             100   |             0   |                  29 |
+|       5 |           56 |         29 |                         85.7 |              98.5 |             1   |                 201 |
+|       6 |          437 |        314 |                         96.2 |              99.5 |             0.2 |                2970 |
+|       7 |           29 |         10 |                         82.8 |              98.5 |             1.5 |                  68 |
+|       8 |           10 |         10 |                        100   |             100   |             0   |                  96 |
+|       9 |           36 |          4 |                         45.6 |             100   |             0   |                  18 |
+|      10 |           36 |          2 |                         83.6 |             100   |             0   |                  16 |
 
 ### Coverage per district, before and after prediction
 

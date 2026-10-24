@@ -197,6 +197,17 @@ describe("the parking disc", () => {
     ["8001 paid", 8001, "2026-10-13T14:00", false],
     ["8539 free, 24 h: no disc", 8539, "2026-10-13T14:00", false],
   ])("%s", (_, id, local, needed) => {
-    expect(evaluate(area(id), at(local), calendar).disc ?? false).toBe(needed);
+    expect(Boolean(evaluate(area(id), at(local), calendar).disc)).toBe(needed);
+  });
+
+  // The disc goes to the next half or full hour after arrival, and the limit counts from the disc
+  test.each([
+    ["14:05 sets 14:30, so 4 h runs to 18:30", "2026-10-13T14:05", { disc: t(0, "14:30"), stay: 240, until: t(0, "18:30") }],
+    ["14:35 sets 15:00, so 4 h runs to 19:00", "2026-10-13T14:35", { disc: t(0, "15:00"), stay: 240, until: t(0, "19:00") }],
+    ["arriving on a mark keeps it", "2026-10-13T14:30", { disc: t(0, "14:30"), stay: 240, until: t(0, "18:30") }],
+    ["15:40 sets 16:00, and 4 h then reaches the end of the rule at 20:00", "2026-10-13T15:40",
+      { disc: t(0, "16:00"), until: t(1, "08:00"), then: { kind: "limited", duration: 240 } }],
+  ])("8006: %s", (_, local, expected) => {
+    expect(evaluate(area(8006), at(local), calendar)).toEqual(expect.objectContaining(expected));
   });
 });

@@ -74,10 +74,9 @@ export function answer(area, result, now) {
   }
   const said = untilWhen(result, now);
   // The disc is what keeps a free stay from a fine, so it leads the line under the headline
-  return result.disc ? { ...said, detail: [DISC, said.detail].filter(Boolean).join(". ") } : said;
+  if (!result.disc) return said;
+  return { ...said, detail: [`Set your parking disc to ${when(result.disc)}`, said.detail].filter(Boolean).join(". ") };
 }
-
-export const DISC = "Display a parking disc";
 
 function untilWhen(result, now) {
   const { kind, until, stay } = result;

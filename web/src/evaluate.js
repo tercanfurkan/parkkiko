@@ -124,7 +124,8 @@ const LIMITED = { paid: "in", free_limited: "in", banned_hours: "out" };
  * - { kind, until, stay?, then, disc? } kind is paid, free or no_parking until `until`; `stay`
  *                                         is set when the time limit ends the stay first; `then`
  *                                         is what follows, or null when the driver must move;
- *                                         `disc` is set when the driver must display a parking disc
+ *                                         `disc` is the time to set a parking disc to, when one is
+ *                                         needed
  */
 export function evaluate(area, now, calendar) {
   const { rule_type, status, hours, duration_min, season } = area;
@@ -151,14 +152,17 @@ export function evaluate(area, now, calendar) {
   const at = (m) => moment(midnight, m);
   const change = nextChange(line, minute);
 
-  // Free parking under a time limit in force needs a parking disc showing the arrival time. Paid
-  // parking is paid instead, and a limit of a day or more needs no disc.
+  // Free parking under a time limit in force needs a parking disc. Paid parking is paid instead,
+  // and a limit of a day or more needs no disc. The disc is set to the next half or full hour
+  // after arrival, 14:05 to 14:30 and 14:35 to 15:00, and the limit counts from there. Arriving on
+  // a mark keeps it: an earlier disc only shortens the stay, which errs safe.
   const disc = kind === "free" && duration_min > 0 && duration_min < DAY && LIMITED[rule_type] === state;
-  const answer = (result) => (disc ? { ...result, disc: true } : result);
+  const start = disc ? Math.ceil(minute / 30) * 30 : minute;
+  const answer = (result) => (disc ? { ...result, disc: at(start) } : result);
 
   // The time limit ends the stay before the rule changes: move by then, nothing follows
-  if (duration_min && LIMITED[rule_type] === state && (!change || minute + duration_min < change.minute)) {
-    return answer({ kind, stay: duration_min, until: at(minute + duration_min), then: null });
+  if (duration_min && LIMITED[rule_type] === state && (!change || start + duration_min < change.minute)) {
+    return answer({ kind, stay: duration_min, until: at(start + duration_min), then: null });
   }
   if (!change) return answer({ kind, until: null, then: null });
   if (change.state === "unsure") return answer({ kind, until: at(change.minute), then: { kind: "check" } });

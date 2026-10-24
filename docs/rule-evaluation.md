@@ -62,9 +62,17 @@ when they look. `0` means the register explicitly states no limit, and absent me
 stated: neither caps.
 
 **A free stay under a time limit needs a parking disc.** In Finland, free parking with a time
-limit on the sign means displaying a parking disc showing the arrival time, and parking without
-one is fined. So while a time limit under 24 hours is in force on free parking, the answer says
-"Display a parking disc" first, before the time. No disc is needed:
+limit on the sign means displaying a parking disc, and parking without one is fined. The disc is
+set to the **next half or full hour after arrival**, and the limit counts from the disc:
+
+- arrive at 14:05, set the disc to 14:30; with a 4-hour limit, move by 18:30;
+- arrive at 14:35, set the disc to 15:00; move by 19:00;
+- arrive exactly on a mark, 14:30, and the disc stays at 14:30. Whether the rule means that mark
+  or the next one, the earlier disc only shortens the stay, so it errs safe.
+
+So while a time limit under 24 hours is in force on free parking, the answer says "Set your
+parking disc to 15:00" first, before the time, and the move-by time counts from the disc. No disc
+is needed:
 
 - on paid parking: the driver pays instead, which "Paid parking" already says;
 - where the limit is 24 hours or more, or none is stated;
@@ -97,8 +105,10 @@ Real areas from the committed file. Times are Europe/Helsinki.
 | 8001 | paid, `mon_fri 9-21` | Tue 14:00 | Paid parking until 21:00. 7 h left. Free after that until 09:00 tomorrow |
 | 8001 | paid, `mon_fri 9-21` | Tue 21:00 | Free parking until 09:00 tomorrow. 12 h left. Paid after that |
 | 8001 | paid, `mon_fri 9-21` | Sun 14:00 | Free parking until 09:00 tomorrow. No Sunday window means no rule today |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Display a parking disc. Park now and move by 18:00 |
-| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. Display a parking disc. 4 hours max after that |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:00 | Free parking, 4 hours max. Set your parking disc to 14:00. Park now and move by 18:00 |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 14:05 | Free parking, 4 hours max. Set your parking disc to 14:30. Park now and move by 18:30 |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 15:40 | Free parking until 08:00 tomorrow. Set your parking disc to 16:00: the 4 hours from it reach 20:00, when the rule ends |
+| 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 18:30 | Free parking until 08:00 tomorrow. 13 h 30 min left. Set your parking disc to 18:30. 4 hours max after that |
 | 8006 | free limited, `mon_fri 8-20`, 240 min | Tue 21:00 | Free parking until 08:00 tomorrow, no disc: no limit applies now |
 | 8539 | free limited, `mon_fri 0-24`, 24 h | Tue 14:00 | Free parking, 24 hours max. Park now and move by 14:00 tomorrow, no disc |
 | 8011 | banned hours, `mon_fri 7-18, sat 9-15` | Tue 12:00 | No parking until 18:00. Allowed in 6 h. Free after that until 07:00 tomorrow |
@@ -113,7 +123,7 @@ Real areas from the committed file. Times are Europe/Helsinki.
 The sentence is the product. The headline answers "can I park, and do I pay"; the line under it
 says until when and what follows.
 
-- **Free parking, 2 hours max.** Display a parking disc. Park now and move by 16:00
+- **Free parking, 2 hours max.** Set your parking disc to 14:00. Park now and move by 16:00
 - **Paid parking until 21:00.** 6 h 20 min left. Free after that until 09:00 tomorrow
 - **No parking until 18:00.** Allowed in 3 h. Free after that until 07:00 tomorrow
 - **Check the sign.** *(the reason)*

@@ -60,13 +60,10 @@ are in [future-work.md](future-work.md).
 | `ei aikarajaa` | no limit |
 | class 0 plus space type `Taxi` | reserved, taxi |
 
-**The parsers fail closed.** Each must account for every character of a field. An earlier version
-answered confidently from the part it recognised: it read `7-15, Maksullinen (9-18)` as plain
-hours and dropped the word *Maksullinen*, "paid". Those 8 areas were still flagged, but only
-because their time-limit field was; they are now flagged on their own evidence. The comparison is
-generated in [03 preprocessing](../notebooks/stages/03_preprocessing.ipynb), section 7, which walks
-through the whole stage. Every area carries a status, a machine-readable issue code, and a reason
-in plain words.
+**The parsers fail closed.** Each must account for every character of a field; what our first
+parser did instead is shown in [03 preprocessing](../notebooks/stages/03_preprocessing.ipynb), §6,
+which walks through the whole stage. Every area carries a status, a machine-readable issue code,
+and a reason in plain words.
 
 The pipeline also refuses to write unless ids are unique and present, every area has a geometry
 it can measure, every shape is a polygon, and the coordinates are metres around Helsinki. That

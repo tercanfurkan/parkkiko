@@ -50,20 +50,17 @@ everything downstream runs on it, so every result is reproducible; the processed
 committed to git, so the team, the report and the app share one copy. The stage is walked
 through in `notebooks/stages/02_data_collection.ipynb`, which fetches the live data.
 
-Reading a snapshot back held the project's most instructive bug. The server declares its metric
-coordinate system, but our saved file kept only the features, and a GeoJSON file without a
-declaration is defined to be WGS84. Read naively, metres were labelled as degrees, and a spatial
-join against correctly labelled districts matched zero of 8,754 areas without raising an error.
-Every read now asserts the real system, and a check refuses coordinates that are not metres
-around Helsinki.
+Reading a snapshot back held the project's most instructive bug. Our saved file kept the
+server's features but not its declaration of a metric coordinate system, and a GeoJSON file
+without one is WGS84 by definition. Metres were read as degrees, and a spatial join matched zero
+of 8,754 areas without an error. Every read now asserts the real system, and a check refuses
+coordinates that are not metres around Helsinki.
 
-The canvas also planned to use live roadworks. The city's temporary traffic arrangements turned
-out to last a median of 711 days, up to 3,204. Measured again on 23 October 2026, 168 parking
-areas overlap one, 147 of them an arrangement still running, and for only 18 does its stated
-purpose mention parking. An overlap told us a permit exists nearby, not that the spaces are gone,
-so we dropped the source rather than include it because it existed. The register also carries
-fields we chose not to use, chiefly the number of spaces in each area (37,544 in all) and the
-resident-permit zone; both would add value later (section 8).
+The canvas also planned live roadworks. The city's temporary traffic arrangements last a median
+of 711 days, and of the 191 parking areas overlapping one on 4 October, only 18 had a stated
+purpose that mentions parking. An overlap shows a permit nearby, not closed spaces, so we dropped
+the source. The register also carries fields we do not use, chiefly the number of spaces in each
+area (37,544 on 23 October) and the resident-permit zone (section 8).
 
 ## 3. Preprocessing
 
@@ -84,20 +81,17 @@ running it from git history over every spelling in the register shows what that 
 | `7-15, Maksullinen (9-18)` (5 areas) | weekdays 7-15, Saturday 9-18 | flagged: *Maksullinen* is unread |
 | `7-18, Maksullinen (9-18)` (3 areas) | weekdays 7-18, Saturday 9-18 | flagged: *Maksullinen* is unread |
 
-*Maksullinen* means "paid". These are no-parking-hours areas whose two fields together describe a
-second rule the register has no column for: on Saturday, 9-18 is paid with a 60-minute limit. The
-first parser would have called it a ban. It never reached a driver, but only because the time
-limit field, `max 60 min lauantai` ("on Saturday"), was flagged: the right outcome by luck, resting
-on a neighbouring field. Per-field failing closed removes the luck.
+*Maksullinen* means "paid": on Saturday these areas are paid, not banned. They were flagged anyway,
+but only because their limit field, `max 60 min lauantai`, was: right by luck. Each field now fails
+closed on its own evidence.
 
 Every area ends with a status, an issue code a program can branch on, and a reason in plain words
 for the driver. Of the 385 areas that end up uncertain, 301 carry free text we do not parse, 86 an
 unreadable field, and one a split weekday window, `7-9, 15-17`, which our one-range-per-day model
-cannot hold yet. Re-running the parsers on the committed raw
-fields reproduces every parsed value exactly. The stage is walked through in
-`notebooks/stages/03_preprocessing.ipynb`, which also found that 116 of the uncertain areas are flagged
-only because a note holds a traffic sign code with a letter, such as `C41`, which the parser does
-not recognise as a reference: safe, but probably too cautious.
+cannot hold yet. A test re-derives every parsed value from the committed raw fields and finds no
+difference. The stage is walked through in `notebooks/stages/03_preprocessing.ipynb`, which also
+found 116 areas flagged only because a note is a sign code with a letter, such as `C41`: safe,
+but probably too cautious.
 
 ## 4. Exploration
 

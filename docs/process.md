@@ -133,15 +133,10 @@ This is the stage deciding the method rather than the method deciding the stage.
 
 ## 5. Learning
 
-*In progress.* Supervised classification: predict the hours pattern of an area from its
-neighbours, the distance to them, the class and the district. Planned and partly measured:
-
-- a dummy baseline to beat, currently 32.9%
-- accuracy and macro-F1, since some hour patterns are rare
-- spatially blocked cross-validation, because neighbouring sections of one street are
-  near-duplicates and a random split would test on copies of the training data
-- a distance cut-off chosen from the accuracy-versus-coverage trade-off, favouring accuracy
-- error analysis on a map, and a reflection on what imputation changes for a driver
+Same-class nearest neighbours predict the hours of the 978 areas without them, tested at the
+distances those areas really face and with a cut-off fixed before any result: 95% accurate, under
+1% unsafe. It answers 373 of them at 99%. Walked through in
+[05 learning](../notebooks/stages/05_learning.ipynb); tables in [report_stats.md](report_stats.md).
 
 ---
 

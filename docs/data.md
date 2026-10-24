@@ -111,5 +111,7 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
   tell a driver parking is free when it may be paid, so they, and the days that derive from
   them, carry `uncertain`.
 - **Temporary traffic arrangements are not usable**, see [future-work.md](future-work.md).
-- **One area's hours are genuinely ambiguous** (`7-9, 15-17`, two ranges with no brackets) and
-  stay uncertain by design.
+- **A split day cannot be represented yet.** One area's hours, `7-9, 15-17`, are two weekday
+  windows: two ranges without brackets are a split day on a sign. The hours hold one range per
+  day type, so the parser flags it, with a stored reason that wrongly calls it ambiguous. It
+  stays uncertain until the hours can hold several ranges per day (board task 3.6).

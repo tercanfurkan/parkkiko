@@ -92,7 +92,8 @@ on a neighbouring field. Per-field failing closed removes the luck.
 
 Every area ends with a status, an issue code a program can branch on, and a reason in plain words
 for the driver. Of the 385 areas that end up uncertain, 301 carry free text we do not parse, 86 an
-unreadable field and one genuinely ambiguous hours. Re-running the parsers on the committed raw
+unreadable field, and one a split weekday window, `7-9, 15-17`, which our one-range-per-day model
+cannot hold yet. Re-running the parsers on the committed raw
 fields reproduces every parsed value exactly. The stage is walked through in
 `notebooks/stages/03_preprocessing.ipynb`, which also found that 116 of the uncertain areas are flagged
 only because a note holds a traffic sign code with a letter, such as `C41`, which the parser does

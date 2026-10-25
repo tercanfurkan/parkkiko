@@ -43,7 +43,7 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, stay
   }
   // Until the holiday calendar is in, a time could be wrong on a holiday, so say nothing yet
   const result = calendar && evaluate(area, now, calendar);
-  const { headline, detail, countdown } = result ? answer(area, result, now.getTime()) : { headline: "Checking…" };
+  const { headline, detail, countdown, estimate } = result ? answer(area, result, now.getTime()) : { headline: "Checking…" };
   const tint = RULE_TYPES[TINT[result?.kind] ?? "unknown"].colour;
   const parked = stay?.areaId === area.id;
   const action = !parked && result && actionFor(result, now.getTime());
@@ -60,11 +60,12 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, stay
           </>
         ) : (
           <>
-            <div className="headline">{headline}</div>
+            <div className="headline">{estimate && <span className="badge">Estimate</span>}{headline}</div>
             {countdown && <Countdown {...countdown} />}
             {detail && <div>{detail}</div>}
           </>
         )}
+        {estimate && <div className="note">{estimate}</div>}
         {area.extra_info && <div className="note">Sign note: {area.extra_info}</div>}
       </div>
       {parked && (

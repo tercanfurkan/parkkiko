@@ -67,6 +67,17 @@ const LABEL = { paid: "Paid parking", free: "Free parking", no_parking: "No park
  * within a day, since past that "until Monday 09:00" says it better.
  */
 export function answer(area, result, now) {
+  const said = phrase(area, result, now);
+  return result.estimate ? { ...said, estimate: estimateNote(result.estimate.from) } : said;
+}
+
+// How often an estimate shown in the app was right in stage 5's test, on the rounds the cut-off was
+// not chosen on: docs/report_stats.md, "The cut-off, on tests it was not chosen on"
+const estimateNote = (from) =>
+  `The city publishes no hours here. Estimated from the same kind of parking ${from} m away; in our ` +
+  "tests, estimates like this were right about 99 times in 100. If the sign differs, trust the sign.";
+
+function phrase(area, result, now) {
   const { kind, until, stay } = result;
   if (kind === "check") return { headline: "Check the sign", detail: CHECK[result.why](result) };
   if (kind === "reserved") {

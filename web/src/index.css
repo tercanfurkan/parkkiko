@@ -26,6 +26,12 @@ html, body, #root { height: 100%; margin: 0; font-family: system-ui, sans-serif;
 .countdown { font-size: 0.95rem; color: #333; }
 .countdown-time { font-size: 1.9rem; font-weight: 700; font-variant-numeric: tabular-nums; color: #111; }
 .note { color: #555; font-size: 0.9rem; }
+/* An estimate is dashed like its strip on the map: our guess, not the city's rule */
+.badge {
+  display: inline-block; margin-right: 0.4rem; padding: 0 0.35rem; vertical-align: 0.15em;
+  border: 1px dashed currentColor; border-radius: 4px;
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+}
 .action { display: grid; gap: 8px; width: 112px; }
 .remind {
   display: grid; gap: 4px; padding: 12px 10px; border: 0; border-radius: 10px; text-align: center;

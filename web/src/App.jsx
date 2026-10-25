@@ -16,6 +16,9 @@ const CALENDAR_URL = `${import.meta.env.BASE_URL}data/holidays.json`;
 
 const CITY_ZOOM = 12;       // the whole register fits on a phone screen
 const STREET_ZOOM = 17;     // individual street sections are tappable
+const LOCATED_ZOOM = 19;    // about 56 m across a phone: the strips around the driver, a few metres wide each
+const MAX_ZOOM = 20;        // past OpenStreetMap's last tile level, to tap between two close strips
+const TILE_ZOOM = 19;       // OpenStreetMap's last tile level; above it the tiles are scaled up
 const MIN_RULES_ZOOM = 15;   // below this the areas are a smear of colour, so they are hidden
 
 // Padded by a tenth of the span (1.4 km N-S, 1.8 km E-W). A position outside it would land on a
@@ -79,7 +82,7 @@ export default function App() {
         }
         setPosition({ latlng, accuracy: coords.accuracy });
         setNotice(null);
-        map.flyTo(latlng, STREET_ZOOM);
+        map.flyTo(latlng, LOCATED_ZOOM);
       },
       // A denied permission is not asked again by the browser, so say where to change it
       (err) => setNotice(err.code === err.PERMISSION_DENIED ? NOTICES.denied : NOTICES.failed),
@@ -156,10 +159,12 @@ export default function App() {
   return (
     <div className="app">
       <div className="map-wrap">
-        <MapContainer center={HELSINKI} zoom={CITY_ZOOM} className="map" renderer={RENDERER} ref={setMap}>
+        <MapContainer center={HELSINKI} zoom={CITY_ZOOM} className="map" renderer={RENDERER} maxZoom={MAX_ZOOM} ref={setMap}>
           <TileLayer
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="© OpenStreetMap contributors"
+            maxZoom={MAX_ZOOM}
+            maxNativeZoom={TILE_ZOOM}
           />
           <MapEvents onZoom={onZoom} onEmptyClick={deselect} />
           {showAreas && <GeoJSON ref={layersRef} data={areas} eventHandlers={{ click: onAreaClick }} style={styleFor} />}

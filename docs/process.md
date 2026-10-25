@@ -135,7 +135,8 @@ This is the stage deciding the method rather than the method deciding the stage.
 
 Same-class nearest neighbours predict the hours of the 978 areas without them, tested at the
 distances those areas really face and with a cut-off fixed before any result: 95% accurate, under
-1% unsafe. It answers 373 of them at 99%. Walked through in
+1% unsafe. 373 of them pass it at 99%; the app shows 333 as labelled estimates, holding back the
+classes whose own unsafe rate fails the bar. Walked through in
 [05 learning](../notebooks/stages/05_learning.ipynb); tables in [report_stats.md](report_stats.md).
 
 ---

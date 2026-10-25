@@ -26,7 +26,8 @@ no driver can read at the kerb. Parkkiko turns that register into one plain answ
 street section at the current moment: may I park here, do I pay, and until when. The register is
 incomplete or self-contradicting for about one section in six, and the project's central rule is
 that the app never answers more confidently than the data supports. Most of the technical work
-went into knowing when not to answer.
+went into knowing when not to answer, and where the city is silent, a model now fills the gap for
+333 areas, labelled as estimates.
 
 ## 1. Problem and target user
 
@@ -138,7 +139,7 @@ The gaps are not spread evenly but sit mostly outside the centre (Figure A4).
 The last finding chose the learning method. Hiding each area's hours and copying them from its
 nearest neighbour of the same class is correct 97.5% of the time, against the 32.9% baseline
 (Figure A5). Accuracy depends almost entirely on distance, from 99.5% within 10 m to 35.4% beyond
-200 m (Table B6), and the 978 areas we actually need to predict sit a median of 153 m from the
+200 m (Table B6), and the 978 areas we actually need to predict sit a median of 153 m, edge to edge, from the
 nearest area we can learn from, only 17.7% of them within 50 m. The headline number therefore
 describes areas we do not need to predict: exploration chose the method and also set an honest
 expectation for it.
@@ -193,8 +194,11 @@ free", but working through real rules showed that a window ending is not the rul
 left after a ban ends at 18:00 is fined at 07:00 the next morning, so the answer now runs to the
 next time the rule changes.
 
-> *To add when stages 5 and 6 close: whether predicted hours reached the app, and the
-> side-of-the-street selection.*
+Predicted hours did reach the app, as the canvas intended: labelled as estimates, with where each
+came from. One change on the way: the bar we set for them held for all estimates together but not
+for every class, so three classes are held back, and 333 of the 373 that pass the cut-off are shown.
+
+> *To add when stage 6 closes: the side-of-the-street selection.*
 
 **What we would do differently.** We caused ourselves a coordinate system bug: a GeoJSON file always
 declares itself WGS84 even when it holds metric coordinates, so our metric file was read as

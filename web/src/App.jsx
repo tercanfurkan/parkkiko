@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, GeoJSON, Circle, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { styleFor, SELECTED_STYLE, ACCURACY_STYLE } from "./style.js";
@@ -11,6 +11,7 @@ import { stayFor } from "./reminder.js";
 import { clockTime } from "./answer.js";
 import { DATA_EXTENT } from "./extent.js";
 import { nextHeading, NO_HEADING } from "./heading.js";
+import { roadBearing } from "./road.js";
 
 const HELSINKI = [60.1699, 24.9384];
 const DATA_URL = `${import.meta.env.BASE_URL}data/parking_areas.geojson`;
@@ -198,6 +199,13 @@ export default function App() {
 
   const showAreas = areas && zoomedIn;
 
+  // The car lies along the road when a strip is near and the fix is good; otherwise it shows the
+  // heading as measured. The map stays north up: only the car turns.
+  const carBearing = useMemo(
+    () => position && (roadBearing(areas?.features, position) ?? position.heading),
+    [areas, position],
+  );
+
   // Highlight the selected area once its layer exists: after opening a stay from the bar the map
   // is still flying there, and the areas mount only when it arrives at street zoom
   useEffect(() => {
@@ -243,7 +251,7 @@ export default function App() {
           {position && (
             <>
               <Circle center={position.latlng} radius={position.accuracy} pathOptions={ACCURACY_STYLE} interactive={false} />
-              <CarMarker latlng={position.latlng} bearing={position.heading} />
+              <CarMarker latlng={position.latlng} bearing={carBearing} />
             </>
           )}
         </MapContainer>

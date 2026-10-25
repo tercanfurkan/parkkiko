@@ -131,7 +131,7 @@ add a row to Open questions below rather than computing it in the browser.
 | 5.7 | Error analysis | | done | PR #45. notebook 05, §5. |
 | 5.8 | Imputation reflection | | done | PR #45. notebook 05, reflection. |
 | 5.9 | Coverage per district | | done | PR #45. In `docs/report_stats.md`. |
-| 5.10 | Ship predictions to the app | | done | PR #PRNUM. 333 areas, the cut-off's 373 less classes 1, 5 and 7, whose own unsafe rate fails the bar. `pipeline/predict.py` applies stage 5; the panel labels them "Estimate" with their source and measured reliability. |
+| 5.10 | Ship predictions to the app | | done | PR #46. 333 areas, the cut-off's 373 less classes 1, 5 and 7, whose own unsafe rate fails the bar. `pipeline/predict.py` applies stage 5; the panel labels them "Estimate" with their source and measured reliability. |
 
 ## 6 The app
 

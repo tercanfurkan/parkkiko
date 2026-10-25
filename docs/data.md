@@ -57,11 +57,11 @@ or reserved; English labels in `class_name_en` and `space_type_en`; parsed `hour
 
 | Status | Areas | Meaning |
 |---|---|---|
-| `official` | 7,391 | the register states a complete rule |
+| `official` | 7,537 | the register states a complete rule |
 | `missing_hours` | 978 | rule type known, no hours published |
-| `uncertain` | 385 | something could not be parsed or contradicts itself |
+| `uncertain` | 239 | something could not be parsed or contradicts itself |
 
-Every uncertain area carries an `issue_codes` value (`unreadable`, `ambiguous`, `note`) for code
+Every uncertain area carries an `issue_codes` value (`unreadable`, `ambiguous`, `note`, `missing`) for code
 to branch on, and a `reason` in plain words for the driver. The parsers fail closed: they must
 account for every character of a field, so `7-18 7-15` is flagged as ambiguous rather than read
 as `7-18`, and an unrecognised space type is flagged rather than falling back to the class.
@@ -78,7 +78,7 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
 | `duration_min` | maximum parking time in minutes; 0 means explicitly no limit |
 | `season` | months and days the rule applies, or empty for all year |
 | `status` | official, missing_hours or uncertain |
-| `issue_codes` | unreadable, ambiguous or note, for code to branch on |
+| `issue_codes` | unreadable, ambiguous, note, or missing (a free limit whose length is stated nowhere), for code to branch on |
 | `district` | one of 34 basic districts, by the area's centre; 30 have parking areas |
 | `reason` | the same thing in plain words, for the driver |
 | `predicted_hours`, `predicted_from_m` | on 333 `missing_hours` areas: the hours stage 5 predicts, and the distance in metres to the known area they came from; computed by `pipeline/predict.py` |
@@ -97,9 +97,9 @@ size mismatch`), which is why `requirements.txt` pins a floor rather than leavin
 
 - **The register describes the plan, not the street.** A repainted bay or a bagged sign is
   invisible to us, and there is no feedback channel to detect it.
-- **Free text is not parsed.** 301 areas carry text the parser treats as a condition, such as a
-  night driving ban, marked uncertain and shown to the driver verbatim. 116 of them are only sign
-  codes with a letter (`C41`), flagged more cautiously than needed; see
+- **Free text is not parsed.** 154 areas carry text the parser treats as a condition, such as a
+  night driving ban, marked uncertain and shown to the driver verbatim. Sign codes, numbers or
+  types like `C41`, are references, not conditions; see
   [notebook 03](../notebooks/stages/03_preprocessing.ipynb), §5.
 - **Side of the street cannot be determined from GPS.** Rules differ per side, and phone accuracy
   in a street canyon is comparable to the street width, so the driver picks the side.

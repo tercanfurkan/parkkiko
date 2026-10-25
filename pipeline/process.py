@@ -57,6 +57,10 @@ def classify(row):
                        f"the class allows {stated_limit} min but the register says {minutes} min"))
     if minutes is None:
         minutes = stated_limit
+    # Free parking limited in time, but by how much is stated nowhere: a driver needs the number
+    # for the disc, and "free" without one could cost a fine
+    if rule == "free_limited" and minutes is None and not no_hours_stated:
+        issues.append((rules.MISSING, "the time limit is not stated; check the sign for how long"))
 
     codes = {code for code, _ in issues}
     if codes:

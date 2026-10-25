@@ -209,12 +209,11 @@ def needs_disc(areas):
 
 
 def lettered_sign_codes(areas):
-    """Areas flagged only because their note is sign codes with a letter, such as `C41, E8`.
-    rules.parse_extra takes only digits as a sign reference, so these read as a condition."""
-    code = r"(?:[A-Z]\d{1,3}(?:\.\d)?|\d+)"
+    """Areas whose note is only sign codes with a letter, such as `C41, E8`: read as sign
+    references since 25 October 2026, where they had been flagged as conditions."""
+    import rules   # pipeline/ is on the path through learning
     notes = areas["lisatieto"].fillna("")
-    only_codes = notes.str.fullmatch(rf"\s*{code}(?:\s*[,/]\s*{code})*[\s,/]*") & notes.str.contains("[A-Z]")
-    return only_codes & areas["issue_codes"].eq("note")
+    return notes.str.contains("[A-Z]") & notes.map(lambda s: bool(s.strip()) and rules.parse_extra(s)[1] is None)
 
 
 def quoted_counts(areas):
@@ -223,7 +222,7 @@ def quoted_counts(areas):
     df = pd.DataFrame({
         "Measure": ["Free parking under a limit of less than 24 h, so a parking disc is needed",
                     "  of which class 8", "  of which class 1",
-                    "Flagged only because a note is a lettered sign code"],
+                    "Notes that are sign codes with a letter, read as references"],
         "Areas": [disc.sum(), (disc & areas["luokka"].eq(8)).sum(), (disc & areas["luokka"].eq(1)).sum(),
                   lettered_sign_codes(areas).sum()],
     })

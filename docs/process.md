@@ -109,9 +109,9 @@ of the 35 large outliers overlap another area, which decides what a tap there se
 
 | Status | Areas |
 |---|---|
-| Complete rule published | 7,391 |
+| Complete rule published | 7,537 |
 | Rule type known, hours missing | 978 |
-| Uncertain, with a stated reason | 385 |
+| Uncertain, with a stated reason | 239 |
 
 The gaps are not spread evenly. They cluster outside the centre, which matters for who the
 prediction below can help.

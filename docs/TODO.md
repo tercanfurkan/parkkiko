@@ -48,7 +48,7 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | `tyyppi` | 1,888 | Finnish space type; `spaceLabel()` in `web/src/style.js` turns it into words |
 | `luokka` | 8,411 | the register's class number. Only needed for class 11, the 60 car-sharing bays that are reserved with no space type |
 | `extra_info` | 1,362 | sign text to show verbatim |
-| `reason` | 385 | why an area is uncertain, already written for a driver to read |
+| `reason` | 239 | why an area is uncertain, already written for a driver to read |
 | `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
 | `predicted_hours` | 333 | stage 5's estimate, in the shape of `hours`, only on `missing_hours` areas, whose status stays. Show it as an estimate, never as the city's rule |
 | `predicted_from_m` | 333 | whole metres to the known area the estimate came from |
@@ -166,7 +166,7 @@ add a row to Open questions below rather than computing it in the browser.
 
 | ID | Task | Owner | Status | Notes |
 |---|---|---|---|---|
-| S1 | Read the unparsed sign conditions with a language model | | stretch | 301 areas hold text the parser treats as a condition, carried as `extra_info`; 116 of those are only lettered sign codes (open question below), leaving about 185 in prose. Week 4 of the course covers transformers. First thing to cut. |
+| S1 | Read the unparsed sign conditions with a language model | | stretch | 154 areas hold conditions in prose, carried as `extra_info`. Week 4 of the course covers transformers. First thing to cut. |
 | S2 | Street-level fine density layer | | stretch | **The stretch goal we intend to attempt.** Fines per street, normalised per parking space, as a layer beside the rules. Street level only, and read [future-work.md](future-work.md) first for why. |
 | S3 | Traffic signs as a second source | | stretch | [future-work.md](future-work.md). No field links a sign to an area, so the match would be inferred with no ground truth. |
 | S4 | Crowdsourced rules | | stretch | [future-work.md](future-work.md). No user base during the course, and a wrong entry costs someone a fine. |
@@ -181,10 +181,6 @@ trusts to be current is worse than no table.
 
 | Question | Raised by | Answer |
 |---|---|---|
-| **Parking disc.** 1,650 areas of free parking under a limit of less than 24 hours answered without saying a disc is needed (`docs/report_stats.md`, notebook 03 §2). | backend | Fixed in PR #44, with the rounding to the next half or full hour. Move this row out once #44 merges. |
-| 116 areas, all reserved or always banned, are uncertain only because `lisatieto` holds a traffic sign code with a letter (`C41, E8`, `7539, C39`). `parse_extra` accepts only digits as a sign reference, so the app says check the sign where the rule does not depend on the note. Errs safe; probably too safe. Accept lettered codes as references? Changes the app's data and the status counts. Counted in `docs/report_stats.md`; notebook 03, §5. | backend | |
-| 13 large no-parking polygons, up to 9,977 m², overlap 31 street sections (4.4). Where they overlap, a tap can select the zone instead of the section the driver meant. Draw large areas underneath, or handle it in 6.4? | backend | |
-| Area 16390 is official, free with a time limit (class 8, parking disc, 8-20), but states no limit. The answer line will say free until 20:00 with no cap, when a disc means one exists. Mark it uncertain in the pipeline? One area, found in 4.3. | backend | |
 | 8 areas are typed "no parking" by the register and also state hours, so the ban probably applies only during them. We show "No parking" at every hour. It errs safe, costing a parking space rather than a fine, but it is wrong. Reclassify as banned-during-hours, or mark uncertain? | backend | |
 | Does the frontend need a field the GeoJSON does not carry? Standing invitation, not a question with an end. | | Cheap to add: anything already in the parquet. `district` and `issue_codes` are a few KB each. Costly and refused once: `class_name_en`, 650 KB and register prose in a driver's panel. Spaces per area exists in the register as `paikat_ala` (37,544 spaces in 6,800 areas) and the pipeline drops it; see notebook 02, §2. |
 

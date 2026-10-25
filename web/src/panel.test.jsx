@@ -37,6 +37,11 @@ describe("what the panel says, area by area", () => {
       ["Free parking until 12:00 tomorrow", "Set your parking disc to 08:00 tomorrow", "Move your car then"], []],
     [9646, "2026-10-13T18:05", "free with 60 min after a no-parking spell",
       ["Free parking, 1 hour max", "Set your parking disc to 18:30"], []],
+    // An incomplete rule is not an answer; sign codes are not conditions
+    [16390, "2026-10-13T14:40", "disc parking whose limit is stated nowhere",
+      ["Check the sign", "time limit is not stated"], ["Free parking"]],
+    [16119, "2026-10-13T14:40", "a taxi bay whose note is sign codes, C41 and E8",
+      ["Not for you", "Reserved: Taxi"], ["Check the sign"]],
     // No disc where none is needed
     [8269, "2026-10-13T14:40", "paid, 1 h", ["Paid parking, 1 hour max"], ["disc"]],
     [8539, "2026-10-13T14:40", "free, 24 h", ["Free parking, 24 hours max"], ["disc"]],
@@ -79,6 +84,14 @@ describe("every area in the data", () => {
     expect(wrong.map((a) => a.id)).toEqual([]);
     const unsourced = areas.filter((a) => a.predicted_hours && !tuesday.get(a.id).includes("trust the sign"));
     expect(unsourced.map((a) => a.id)).toEqual([]);
+  });
+
+  test("a reserved bay says not for you, and a no-parking area no parking, whenever the register is complete", () => {
+    // Outside its season a sign says something we do not know, so a seasonal area is left out
+    const official = areas.filter((a) => a.status === "official" && !a.season);
+    const wrong = official.filter((a) => (a.rule_type === "reserved" && !tuesday.get(a.id).includes("Not for you"))
+      || (a.rule_type === "always_banned" && !tuesday.get(a.id).includes("No parking")));
+    expect(wrong.map((a) => a.id)).toEqual([]);
   });
 
   test("paid parking never asks for a disc", () => {

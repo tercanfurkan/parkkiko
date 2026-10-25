@@ -74,6 +74,23 @@ def test_an_uncertain_area_always_says_why(areas):
             assert feature["properties"].get("reason")
 
 
+def test_estimates_only_where_the_city_publishes_no_hours(areas):
+    """An estimate rides beside a missing_hours status, never replacing it, so anything that ignores
+    the estimate fields still says check the sign."""
+    for feature in areas:
+        props = feature["properties"]
+        if "predicted_hours" in props:
+            assert props["status"] == "missing_hours" and "hours" not in props
+            assert isinstance(props["predicted_hours"], dict) and set(props["predicted_hours"]) <= WINDOWS
+            assert isinstance(props["predicted_from_m"], int) and 0 <= props["predicted_from_m"] <= 150
+
+
+def test_no_estimates_for_the_withheld_classes(areas):
+    """Classes 1, 5 and 7 failed the 1% unsafe bar on their own in stage 5's test."""
+    assert not any("predicted_hours" in f["properties"] and f["properties"].get("luokka") in {1, 5, 7}
+                   for f in areas)
+
+
 def test_geometry_is_what_a_map_can_draw(areas):
     for feature in areas:
         assert feature["geometry"]["type"] == "MultiPolygon"

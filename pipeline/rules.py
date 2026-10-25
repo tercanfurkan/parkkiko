@@ -23,6 +23,9 @@ def _txt(value):
 
 # ---------------------------------------------------------------- rule type
 
+# Rule types whose rule depends on the hours: without them, an area is missing its hours
+NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
+
 # The whole domain of luokka, which is 1:1 with luokka_nimi in the register.
 # The stated limit comes from the class name ("Kertamaksu enintään 2 tuntia") and the English
 # name is the driver-facing label, so both are data here rather than prose parsed at read time.

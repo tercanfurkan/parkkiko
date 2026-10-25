@@ -176,7 +176,7 @@ The 978 areas without hours sit a median of 174 m, centre to centre, from a labe
 | Nearest neighbours, k=5                           |         61.8 |      0.186 |       24.2 |
 | Nearest neighbours, k=5, whole districts held out |         63.8 |      0.105 |       13.6 |
 
-Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Of the 978 areas without hours, **373** get an answer.
+Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Of the 978 areas without hours, 373 pass it, and **333** are shown in the app as estimates, after withholding the classes whose own unsafe rate fails the bar (1, 5, 7).
 
 ### The cut-off, on tests it was not chosen on
 
@@ -187,34 +187,34 @@ Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing.
 
 ### The cut-off by parking class
 
-|   Class |   To predict |   Answered |   Accuracy % without cut-off |   Accuracy % with |   Unsafe % with |   Simulated answers |
-|--------:|-------------:|-----------:|-----------------------------:|------------------:|----------------:|--------------------:|
-|       1 |          353 |          1 |                         11.4 |              81.8 |            18.2 |                  11 |
-|       2 |           18 |          0 |                              |                   |                 |                   0 |
-|       4 |            3 |          3 |                         96.7 |             100   |             0   |                  29 |
-|       5 |           56 |         29 |                         85.7 |              98.5 |             1   |                 201 |
-|       6 |          437 |        314 |                         96.2 |              99.5 |             0.2 |                2970 |
-|       7 |           29 |         10 |                         82.8 |              98.5 |             1.5 |                  68 |
-|       8 |           10 |         10 |                        100   |             100   |             0   |                  96 |
-|       9 |           36 |          4 |                         45.6 |             100   |             0   |                  18 |
-|      10 |           36 |          2 |                         83.6 |             100   |             0   |                  16 |
+|   Class |   To predict |   Answered |   Shown in the app |   Accuracy % without cut-off |   Accuracy % with |   Unsafe % with |   Simulated answers |
+|--------:|-------------:|-----------:|-------------------:|-----------------------------:|------------------:|----------------:|--------------------:|
+|       1 |          353 |          1 |                  0 |                         11.4 |              81.8 |            18.2 |                  11 |
+|       2 |           18 |          0 |                  0 |                              |                   |                 |                   0 |
+|       4 |            3 |          3 |                  3 |                         96.7 |             100   |             0   |                  29 |
+|       5 |           56 |         29 |                  0 |                         85.7 |              98.5 |             1   |                 201 |
+|       6 |          437 |        314 |                314 |                         96.2 |              99.5 |             0.2 |                2970 |
+|       7 |           29 |         10 |                  0 |                         82.8 |              98.5 |             1.5 |                  68 |
+|       8 |           10 |         10 |                 10 |                        100   |             100   |             0   |                  96 |
+|       9 |           36 |          4 |                  4 |                         45.6 |             100   |             0   |                  18 |
+|      10 |           36 |          2 |                  2 |                         83.6 |             100   |             0   |                  16 |
 
 ### Coverage per district, before and after prediction
 
 | District      |   Areas |   Without hours |   Answered before |   Gained |   Before % |   After % |
 |:--------------|--------:|----------------:|------------------:|---------:|-----------:|----------:|
 | REIJOLA       |     597 |             330 |               258 |       53 |       43.2 |      52.1 |
-| VALLILA       |     569 |             294 |               262 |      230 |       46   |      86.5 |
-| ALPPIHARJU    |     305 |             117 |               180 |       46 |       59   |      74.1 |
+| VALLILA       |     569 |             294 |               262 |      211 |       46   |      83.1 |
+| ALPPIHARJU    |     305 |             117 |               180 |       37 |       59   |      71.1 |
 | MUNKKINIEMI   |     592 |              75 |               508 |        6 |       85.8 |      86.8 |
-| PASILA        |     146 |              61 |                74 |        5 |       50.7 |      54.1 |
+| PASILA        |     146 |              61 |                74 |        0 |       50.7 |      50.7 |
 | HAAGA         |     504 |              30 |               468 |        0 |       92.9 |      92.9 |
 | TAKA-TÖÖLÖ    |     554 |              25 |               515 |        1 |       93   |      93.1 |
-| ULLANLINNA    |    1330 |              19 |              1281 |       12 |       96.3 |      97.2 |
-| LAUTTASAARI   |     790 |               8 |               778 |        5 |       98.5 |      99.1 |
-| VIRONNIEMI    |     795 |               7 |               752 |        6 |       94.6 |      95.3 |
+| ULLANLINNA    |    1330 |              19 |              1281 |       11 |       96.3 |      97.1 |
+| LAUTTASAARI   |     790 |               8 |               778 |        4 |       98.5 |      99   |
+| VIRONNIEMI    |     795 |               7 |               752 |        3 |       94.6 |      95   |
 | KALLIO        |    1009 |               6 |               941 |        6 |       93.3 |      93.9 |
-| KAMPINMALMI   |    1471 |               5 |              1330 |        3 |       90.4 |      90.6 |
+| KAMPINMALMI   |    1471 |               5 |              1330 |        1 |       90.4 |      90.5 |
 | VANHAKAUPUNKI |      48 |               1 |                27 |        0 |       56.2 |      56.2 |
 
 ### Commonest mistakes, if every guess were shown

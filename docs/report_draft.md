@@ -12,7 +12,7 @@ Maintained draft of the technical report. Updated as each stage closes; a sectio
   where they appear.
 - Comments like this one do not render in the PDF.
 
-Status: stages 1-6 written; the reflection, future steps and learning outcomes to come; Figure A7 needs screenshots.
+Status: all sections written; each member's learning line, and Figure A7's screenshots, to come.
 -->
 
 # Parkkiko: technical report
@@ -24,7 +24,7 @@ https://github.com/tercanfurkan/parkkiko.
 **Summary.** Helsinki publishes every street parking rule as open data, but as codes and strings
 no driver can read at the kerb. Parkkiko turns that register into one plain answer for a chosen
 street section at the current moment: may I park here, do I pay, and until when. The register is
-incomplete or self-contradicting for about one section in six, and the project's central rule is
+incomplete or self-contradicting for about one section in seven, and the project's central rule is
 that the app never answers more confidently than the data supports. Most of the technical work
 went into knowing when not to answer, and where the city is silent, a model now fills the gap for
 333 areas, labelled as estimates.
@@ -90,8 +90,8 @@ Every area ends with a status, an issue code a program can branch on, and a reas
 for the driver. Of the 239 areas that end up uncertain, 154 carry free text we do not parse, 86 an
 unreadable field, one a split weekday window, `7-9, 15-17`, which our one-range-per-day model cannot
 hold yet, and one a free time limit whose length is stated nowhere. A test re-derives every parsed
-value from the committed raw fields and finds no difference. The stage is walked through in `notebooks/stages/03_preprocessing.ipynb`, which also
-found 147 areas flagged only because a note was a sign code with a letter, such as `C41`; they
+value from the committed raw fields and finds no difference. The stage is walked through in
+`notebooks/stages/03_preprocessing.ipynb`, which also found 147 areas flagged only because a note was a sign code with a letter, such as `C41`; they
 are now read as references.
 
 ## 4. Exploration
@@ -129,8 +129,9 @@ interquartile rule on the logarithm of the area: on the raw scale every large po
 outlier and no small one could be. Two areas fall below 3.9 m² and 35 above 527 m² (Table B5). The
 largest are not street sections but whole no-parking squares, up to 9,977 m², and 13 of the 35
 large polygons overlap other areas, 31 in all. That is a finding for the app rather than the
-analysis: where a no-parking zone lies over a street section, a tap can select the zone instead of
-the section the driver meant.
+analysis: where a no-parking zone lies over a street section, a tap could select the zone instead
+of the section the driver meant, so the app now draws the largest areas first and the smaller one
+on top.
 
 What the app can answer follows from the parsing. The register states a complete rule for 7,537
 areas, a rule type without hours for 978, and something unreadable or self-contradicting for 239.
@@ -216,7 +217,10 @@ Predicted hours did reach the app, as the canvas intended: labelled as estimates
 came from. One change on the way: the bar we set for them held for all estimates together but not
 for every class, so three classes are held back, and 333 of the 373 that pass the cut-off are shown.
 
-> *To add when stage 6 closes: the side-of-the-street selection.*
+**What did not work, and why.** Class 1, free short-term parking, is a third of the gap and gets
+almost no estimates: its few labelled neighbours rarely agree. The side of the street was never
+built: GPS cannot tell the two sides apart, so the driver would have to choose, and the time went
+into making the answer right first. The app therefore answers per tapped section, not per side.
 
 **What we would do differently.** We caused ourselves a coordinate system bug: a GeoJSON file always
 declares itself WGS84 even when it holds metric coordinates, so our metric file was read as
@@ -230,16 +234,44 @@ unreadable for weeks before anyone did.
 
 ## 8. Future steps
 
-> *To be written. Candidates, each measured in `docs/future-work.md`: traffic signs from Digiroad
-> as a second source (14,386 parking signs in Helsinki, as points with a facing direction and
-> typed time panels, measured 14 Oct 2026 from `digiroad:dr_liikennemerkit`), street-level fine
-> density per parking space, the register fields we drop (spaces per area, the resident-permit zone,
-> which would open the app to permit holders), and other
-> cities with open parking registers.*
+The largest gain would be a second source for the rules. Digiroad's national traffic sign data
+holds 14,386 parking signs in Helsinki, as points with a facing direction and typed time panels
+(measured 14 October 2026, `digiroad:dr_liikennemerkit`): matched to the nearest section, they
+could check the register, label class 1 for the model, and tell the two sides of a street apart.
+Next, the fields we drop: spaces per area would measure coverage per parking space rather than per
+polygon, and the resident-permit zone would open the app to permit holders. The 2023 fines,
+counted per parking space, could show where a mistake is most likely to cost a driver. In the
+model, a cut-off per class would replace withholding whole classes. Finally, the pipeline reads a
+standard WFS layer, so any city publishing its register the same way is mostly a configuration
+away. Each candidate is measured in `docs/future-work.md`.
 
 ## 9. Learning outcomes
 
-> *To be written by each of us.*
+Each stage taught one thing we would now do from the start.
+
+- **Collection is provenance.** Source, licence, date and coordinate system matter as much as
+  the features. A file can state something false about itself, so check the numbers, not only
+  the label.
+- **Wrangling is enumeration.** List every spelling of a field before writing its parser. A
+  partial parse is worse than none, and *I cannot read this* is a valid output.
+- **Exploration chooses the method and sets its limits.** Crosstabs found more than plots, a log
+  scale made the interquartile rule usable, and an outlier turned out to be a finding about the
+  app. A figure nobody has looked at is not finished.
+- **In learning, the validation design mattered more than the model.** Defining the costly error
+  first, a wrong *free*, decided more than accuracy did; a simple model with an honest test and
+  the right to abstain beat a better one tested on easy cases.
+- **Communication is testable.** Rendering the answer for every area in the shipped data caught
+  wrong sentences no unit test would.
+
+Technically we learned spatial joins and coordinate systems in GeoPandas, nearest-neighbour search
+with spatial indexes, grouped cross-validation, and keeping notebooks, pipeline and report on one
+generated set of numbers.
+
+> *Jamila Shulekha: one line on what you took from the project.*
+>
+> *Mai Phuong Pham: one line on what you took from the project.*
+>
+> *Ömer Furkan Tercan: one line on what you took from the project.*
 
 ---
 

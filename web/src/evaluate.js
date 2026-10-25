@@ -122,15 +122,24 @@ const LIMITED = { paid: "in", free_limited: "in", banned_hours: "out" };
  *                                         calendar or season
  * - { kind: "no_parking" }               never
  * - { kind: "reserved" }                 not for this driver
- * - { kind, until, stay?, then, disc? } kind is paid, free or no_parking until `until`; `stay`
+ * - { kind, until, stay?, then, disc?, estimate? }
+ *                                         kind is paid, free or no_parking until `until`; `stay`
  *                                         is set when the time limit ends the stay first; `then`
  *                                         is what follows, { kind: "move" } when the driver must
- *                                         leave; `disc` is the time to set a parking disc to
+ *                                         leave; `disc` is the time to set a parking disc to;
+ *                                         `estimate` is set, in metres from its source, when the
+ *                                         hours are stage 5's prediction (pipeline/predict.py)
  */
-function evaluateRule(area, now, calendar) {
-  const { rule_type, status, hours, duration_min, season } = area;
-  if (status === "missing_hours") return { kind: "check", why: "missing_hours" };
-  if (status !== "official") return { kind: "check", why: "uncertain", reason: area.reason };
+export function evaluate(area, now, calendar) {
+  const { status, predicted_hours } = area;
+  if (status === "missing_hours" && !predicted_hours) return { kind: "check", why: "missing_hours" };
+  if (status !== "official" && status !== "missing_hours") return { kind: "check", why: "uncertain", reason: area.reason };
+  const result = evaluateRule(area, predicted_hours ?? area.hours, now, calendar);
+  return predicted_hours && result.kind !== "check" ? { ...result, estimate: area.predicted_from_m } : result;
+}
+
+function evaluateRule(area, hours, now, calendar) {
+  const { rule_type, duration_min, season } = area;
   if (!(rule_type in INSIDE) && rule_type !== "always_banned" && rule_type !== "reserved") {
     return { kind: "check", why: "unknown" };
   }
@@ -190,15 +199,4 @@ function evaluateRule(area, now, calendar) {
     until: at(change.minute),
     then: { kind: "free", until: next.until, ...(next.then?.kind === "check" && { thenCheck: true }) },
   };
-}
-
-/**
- * As above, and an area the city publishes no hours for but stage 5 predicted (predicted_hours,
- * see pipeline/predict.py) is answered from the prediction, marked `estimate: { from }`: the
- * distance in metres to the nearest known area it was predicted from.
- */
-export function evaluate(area, now, calendar) {
-  if (area.status !== "missing_hours" || !area.predicted_hours) return evaluateRule(area, now, calendar);
-  const result = evaluateRule({ ...area, status: "official", hours: area.predicted_hours }, now, calendar);
-  return result.kind === "check" ? result : { ...result, estimate: { from: area.predicted_from_m } };
 }

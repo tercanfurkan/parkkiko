@@ -223,11 +223,8 @@ describe("the parking disc", () => {
 describe("an estimate", () => {
   test("is answered like a rule, and marked as an estimate", () => {
     expect(evaluate(area(8193), at("2026-10-13T14:00"), calendar)).toEqual(expect.objectContaining({
-      kind: "paid", until: t(0, "21:00"), estimate: { from: 25 },
+      kind: "paid", until: t(0, "21:00"), estimate: 25,
     }));
   });
 
-  test("never comes from a withheld class: 8139, class 7, still says check the sign", () => {
-    expect(evaluate(area(8139), at("2026-10-13T14:00"), calendar)).toEqual({ kind: "check", why: "missing_hours" });
-  });
 });

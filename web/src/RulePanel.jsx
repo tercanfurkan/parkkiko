@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { RULE_TYPES } from "./style.js";
 import { evaluate } from "./evaluate.js";
-import { answer, clock, clockTime, discSet, when } from "./answer.js";
+import { answer, clock, clockTime, discSet, estimateNote, when } from "./answer.js";
 import { actionFor } from "./reminder.js";
 import ActionButton from "./ActionButton.jsx";
 
@@ -43,7 +43,8 @@ export default function RulePanel({ area, zoomedIn, calendar, now, onClose, stay
   }
   // Until the holiday calendar is in, a time could be wrong on a holiday, so say nothing yet
   const result = calendar && evaluate(area, now, calendar);
-  const { headline, detail, countdown, estimate } = result ? answer(area, result, now.getTime()) : { headline: "Checking…" };
+  const { headline, detail, countdown } = result ? answer(area, result, now.getTime()) : { headline: "Checking…" };
+  const estimate = result?.estimate != null && estimateNote(result.estimate);
   const tint = RULE_TYPES[TINT[result?.kind] ?? "unknown"].colour;
   const parked = stay?.areaId === area.id;
   const action = !parked && result && actionFor(result, now.getTime());

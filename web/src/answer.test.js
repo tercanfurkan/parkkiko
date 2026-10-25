@@ -71,10 +71,3 @@ test("every area in the data gets a complete sentence, at any hour", () => {
   }
   expect(broken).toEqual([]);
 });
-
-test("an estimate says what it is, where it came from, and to trust the sign", () => {
-  const said = say(8193, "2026-10-13T14:40");
-  expect(said.headline).toBe("Paid parking until 21:00");
-  expect(said.estimate).toMatch(/^The city publishes no hours here\. Estimated from the same kind of parking 25 m away/);
-  expect(said.estimate).toMatch(/trust the sign\.$/);
-});

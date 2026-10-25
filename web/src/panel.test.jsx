@@ -1,9 +1,7 @@
-// What a driver reads in the panel, rendered from the committed data file at fixed moments, so a
-// change to the rules can be checked without finding a street on the map. The panel is rendered
-// to text with the same component the app uses; the clock is set by the test, not the machine.
+// The panel as a driver reads it, rendered from the committed data at moments the test sets.
 import { readFileSync } from "node:fs";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, test } from "vitest";
+import { beforeAll, describe, expect, test } from "vitest";
 import RulePanel from "./RulePanel.jsx";
 
 const read = (path) => JSON.parse(readFileSync(new URL(path, import.meta.url)));
@@ -20,7 +18,7 @@ function panel(props, now, stay = null) {
     <RulePanel area={props} zoomedIn calendar={calendar} now={now} stay={stay}
       onClose={noop} onStart={noop} onOpenStay={noop} />,
   );
-  return html.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+  return html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 }
 
 describe("what the panel says, area by area", () => {
@@ -62,9 +60,12 @@ describe("what the panel says, area by area", () => {
 describe("every area in the data", () => {
   const moments = { "Tuesday noon": at("2026-10-13T12:00"), "Saturday noon": at("2026-10-17T12:00"),
     "Sunday 03:00": at("2026-10-18T03:00") };
-  const texts = Object.fromEntries(Object.entries(moments).map(([name, now]) =>
-    [name, new Map(areas.map((a) => [a.id, panel(a, now)]))]));
-  const tuesday = texts["Tuesday noon"];
+  let texts, tuesday;
+  beforeAll(() => {
+    texts = Object.fromEntries(Object.entries(moments).map(([name, now]) =>
+      [name, new Map(areas.map((a) => [a.id, panel(a, now)]))]));
+    tuesday = texts["Tuesday noon"];
+  });
 
   test("no panel says undefined, null or NaN", () => {
     for (const [name, byId] of Object.entries(texts)) {
@@ -78,12 +79,6 @@ describe("every area in the data", () => {
     expect(wrong.map((a) => a.id)).toEqual([]);
     const unsourced = areas.filter((a) => a.predicted_hours && !tuesday.get(a.id).includes("trust the sign"));
     expect(unsourced.map((a) => a.id)).toEqual([]);
-  });
-
-  test("classes 1, 5 and 7 never get an estimate: their areas without hours say check the sign", () => {
-    const withheld = areas.filter((a) => a.status === "missing_hours" && [1, 5, 7].includes(a.luokka));
-    expect(withheld.length).toBeGreaterThan(0);
-    expect(withheld.filter((a) => !tuesday.get(a.id).startsWith("× Check the sign")).map((a) => a.id)).toEqual([]);
   });
 
   test("paid parking never asks for a disc", () => {

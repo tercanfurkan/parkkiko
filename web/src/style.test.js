@@ -8,9 +8,8 @@ const reserved = features.filter((f) => f.properties.rule_type === "reserved");
 // What the map draws: Leaflet merges the selected style over the area's own.
 const look = (status, selected) => ({ ...styleFor({ properties: { rule_type: "paid", status } }), ...(selected && SELECTED_STYLE) });
 
-// "predicted" is not in the data yet. It stands for the hours the learning task will estimate,
-// which must never look official either.
-const notOfficial = [...new Set(features.map((f) => f.properties.status)), "predicted"].filter((s) => s !== "official");
+// Estimates keep the status missing_hours, so they are dashed with it: never the city's rule
+const notOfficial = [...new Set(features.map((f) => f.properties.status))].filter((s) => s !== "official");
 
 test.each(notOfficial.flatMap((s) => [[s, false], [s, true]]))(
   "a %s area never looks like the city's rule (selected: %s)",

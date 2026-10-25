@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, useMapEvents } from "react-leaflet";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, GeoJSON, Circle, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
+import { styleFor, SELECTED_STYLE, ACCURACY_STYLE } from "./style.js";
+import CarMarker from "./CarMarker.jsx";
 import RulePanel from "./RulePanel.jsx";
 import About from "./About.jsx";
 import { addReminder, loadStay, restoreNotification, saveStay } from "./notify.js";
@@ -9,6 +10,8 @@ import { evaluate } from "./evaluate.js";
 import { stayFor } from "./reminder.js";
 import { clockTime } from "./answer.js";
 import { DATA_EXTENT } from "./extent.js";
+import { nextHeading, NO_HEADING } from "./heading.js";
+import { roadBearing } from "./road.js";
 
 const HELSINKI = [60.1699, 24.9384];
 const DATA_URL = `${import.meta.env.BASE_URL}data/parking_areas.geojson`;
@@ -16,6 +19,9 @@ const CALENDAR_URL = `${import.meta.env.BASE_URL}data/holidays.json`;
 
 const CITY_ZOOM = 12;       // the whole register fits on a phone screen
 const STREET_ZOOM = 17;     // individual street sections are tappable
+const LOCATED_ZOOM = 19;    // about 56 m across a phone: the strips around the driver, a few metres wide each
+const MAX_ZOOM = 20;        // past OpenStreetMap's last tile level, to tap between two close strips
+const TILE_ZOOM = 19;       // OpenStreetMap's last tile level; above it the tiles are scaled up
 const MIN_RULES_ZOOM = 15;   // below this the areas are a smear of colour, so they are hidden
 
 // Padded by a tenth of the span (1.4 km N-S, 1.8 km E-W). A position outside it would land on a
@@ -33,8 +39,8 @@ const NOTICES = {
   failed: "Could not find your location. Zoom in on the map instead.",
 };
 
-function MapEvents({ onZoom, onEmptyClick }) {
-  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()), click: onEmptyClick });
+function MapEvents({ onZoom, onEmptyClick, onDrag }) {
+  const map = useMapEvents({ zoomend: () => onZoom(map.getZoom()), click: onEmptyClick, dragstart: onDrag });
   return null;
 }
 
@@ -52,6 +58,14 @@ export default function App() {
   const layersRef = useRef(null);
   const selectedLayer = useRef(null);
   const sheetRef = useRef(null);
+  const watchId = useRef(null);
+  const wantLocation = useRef(false);   // false after a denial, so showing the tab again does not retry
+  const positionRef = useRef(null);
+  const headingRef = useRef(NO_HEADING);
+  const following = useRef(true);       // the map pans with the car until the driver looks elsewhere
+  const flyOnFix = useRef(true);        // the first fix flies to the driver; later ones only pan
+  const flying = useRef(false);
+  const shownNotice = useRef(null);
 
   useEffect(() => {
     fetch(DATA_URL).then((r) => r.json()).then(setAreas);
@@ -67,29 +81,89 @@ export default function App() {
     return () => clearInterval(timer);
   }, [selected]);
 
-  const locate = useCallback(() => {
-    if (!navigator.geolocation) return setNotice(NOTICES.failed);
-    setNotice(NOTICES.finding);
-    navigator.geolocation.getCurrentPosition(
+  // A fix arrives about once a second, so show a notice only when it changes: one the driver
+  // dismissed must not come back with the next fix
+  const showNotice = useCallback((key) => {
+    if (shownNotice.current === key) return;
+    shownNotice.current = key;
+    setNotice(key ? NOTICES[key] : null);
+  }, []);
+
+  const flyToDriver = useCallback((latlng) => {
+    flying.current = true;   // a pan on the next fix would cut the flight short
+    map.once("moveend", () => { flying.current = false; });
+    map.flyTo(latlng, LOCATED_ZOOM);
+  }, [map]);
+
+  const stopWatch = useCallback(() => {
+    if (watchId.current === null) return;
+    navigator.geolocation.clearWatch(watchId.current);
+    watchId.current = null;
+  }, []);
+
+  // The phone pushes fixes as the driver moves, so there is no timer polling for them
+  const startWatch = useCallback(() => {
+    if (watchId.current !== null || document.hidden) return;
+    headingRef.current = { ...headingRef.current, from: null };   // where the driver was before a pause is not a direction
+    watchId.current = navigator.geolocation.watchPosition(
       ({ coords }) => {
         const latlng = [coords.latitude, coords.longitude];
         if (!DATA_BOUNDS.contains(latlng)) {
-          setPosition(null);
-          return setNotice(NOTICES.outside);
+          setPosition((positionRef.current = null));
+          return showNotice("outside");
         }
-        setPosition({ latlng, accuracy: coords.accuracy });
-        setNotice(null);
-        map.flyTo(latlng, STREET_ZOOM);
+        const { accuracy, heading, speed } = coords;
+        headingRef.current = nextHeading(headingRef.current, { latlng, accuracy, heading, speed });
+        setPosition((positionRef.current = { latlng, accuracy, heading: headingRef.current.heading }));
+        showNotice(null);
+        if (flyOnFix.current) {
+          flyOnFix.current = false;
+          flyToDriver(latlng);
+        } else if (following.current && !flying.current) {
+          map.panTo(latlng);   // pan, not zoom: the driver may have pinched to the zoom they want
+        }
       },
-      // A denied permission is not asked again by the browser, so say where to change it
-      (err) => setNotice(err.code === err.PERMISSION_DENIED ? NOTICES.denied : NOTICES.failed),
+      (err) => {
+        // A phone standing still may send no new fix before the timeout; the last one still holds
+        if (err.code === err.TIMEOUT && positionRef.current) return;
+        // A denied permission is not asked again by the browser, so say where to change it
+        if (err.code !== err.PERMISSION_DENIED) return showNotice("failed");
+        stopWatch();
+        wantLocation.current = false;
+        showNotice("denied");
+      },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
     );
-  }, [map]);
+  }, [map, flyToDriver, stopWatch, showNotice]);
 
+  const locate = useCallback(() => {
+    if (!navigator.geolocation) return setNotice(NOTICES.failed);
+    wantLocation.current = true;
+    following.current = true;
+    shownNotice.current = undefined;   // a notice dismissed earlier may be shown again
+    if (positionRef.current) {
+      flyToDriver(positionRef.current.latlng);
+    } else {
+      flyOnFix.current = true;
+      showNotice("finding");
+    }
+    startWatch();
+  }, [flyToDriver, startWatch, showNotice]);
+
+  // Stop the GPS while the tab is hidden, for the battery, and start it again when it is back
   useEffect(() => {
-    if (map) locate();
-  }, [map, locate]);
+    if (!map) return;
+    locate();
+    const onVisibility = () => (document.hidden ? stopWatch() : wantLocation.current && startWatch());
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibility);
+      stopWatch();
+    };
+  }, [map, locate, startWatch, stopWatch]);
+
+  // Looking at another part of the map: stop pulling it back to the car
+  const stopFollowing = () => { following.current = false; };
 
   const deselect = () => {
     if (selectedLayer.current) layersRef.current?.resetStyle(selectedLayer.current);
@@ -100,6 +174,7 @@ export default function App() {
   // One listener on the layer group rather than one per area, so mounting it binds 1 handler, not 8,754
   const onAreaClick = (e) => {
     L.DomEvent.stopPropagation(e);   // a tap on an area is not a tap on empty map
+    stopFollowing();
     const layer = e.propagatedFrom;
     if (selectedLayer.current) layersRef.current.resetStyle(selectedLayer.current);
     layer.setStyle(SELECTED_STYLE);
@@ -123,6 +198,13 @@ export default function App() {
   };
 
   const showAreas = areas && zoomedIn;
+
+  // The car lies along the road when a strip is near and the fix is good; otherwise it shows the
+  // heading as measured. The map stays north up: only the car turns.
+  const carBearing = useMemo(
+    () => position && (roadBearing(areas?.features, position) ?? position.heading),
+    [areas, position],
+  );
 
   // Highlight the selected area once its layer exists: after opening a stay from the bar the map
   // is still flying there, and the areas mount only when it arrives at street zoom
@@ -149,6 +231,7 @@ export default function App() {
     const feature = areas?.features.find((f) => f.properties.id === stay.areaId);
     if (!feature) return;
     deselect();
+    stopFollowing();   // the parked car may be far from the driver
     map.flyTo(L.geoJSON(feature).getBounds().getCenter(), STREET_ZOOM);
     setSelected(feature.properties);
   };
@@ -156,17 +239,19 @@ export default function App() {
   return (
     <div className="app">
       <div className="map-wrap">
-        <MapContainer center={HELSINKI} zoom={CITY_ZOOM} className="map" renderer={RENDERER} ref={setMap}>
+        <MapContainer center={HELSINKI} zoom={CITY_ZOOM} className="map" renderer={RENDERER} maxZoom={MAX_ZOOM} ref={setMap}>
           <TileLayer
             url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             attribution="© OpenStreetMap contributors"
+            maxZoom={MAX_ZOOM}
+            maxNativeZoom={TILE_ZOOM}
           />
-          <MapEvents onZoom={onZoom} onEmptyClick={deselect} />
+          <MapEvents onZoom={onZoom} onEmptyClick={deselect} onDrag={stopFollowing} />
           {showAreas && <GeoJSON ref={layersRef} data={areas} eventHandlers={{ click: onAreaClick }} style={styleFor} />}
           {position && (
             <>
               <Circle center={position.latlng} radius={position.accuracy} pathOptions={ACCURACY_STYLE} interactive={false} />
-              <CircleMarker center={position.latlng} radius={7} pathOptions={POSITION_STYLE} interactive={false} />
+              <CarMarker latlng={position.latlng} bearing={carBearing} />
             </>
           )}
         </MapContainer>

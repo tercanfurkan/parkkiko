@@ -81,6 +81,7 @@ as `7-18`, and an unrecognised space type is flagged rather than falling back to
 | `issue_codes` | unreadable, ambiguous or note, for code to branch on |
 | `district` | one of 34 basic districts, by the area's centre; 30 have parking areas |
 | `reason` | the same thing in plain words, for the driver |
+| `predicted_hours`, `predicted_from_m` | on 333 `missing_hours` areas: the hours stage 5 predicts, and the distance in metres to the known area they came from; written by `pipeline/predict.py` |
 | `luokka`, `luokka_nimi`, `tyyppi`, `voimassaolo`, `kesto`, `kausi`, `lisatieto` | the register's own fields, kept so any parse can be traced back |
 | `geometry` | MultiPolygon, EPSG:3879 |
 

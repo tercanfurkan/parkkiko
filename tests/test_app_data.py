@@ -87,6 +87,21 @@ def test_estimates_ride_beside_missing_hours_and_never_for_a_withheld_class(area
             assert isinstance(props["predicted_from_m"], int) and 0 <= props["predicted_from_m"] <= CHOSEN["distance"]
 
 
+def test_a_large_area_never_lies_on_top_of_a_smaller_one_it_overlaps(areas):
+    """The map draws areas in file order and a tap selects the one on top, so a no-parking square
+    drawn after the street section inside it would take the tap meant for the section."""
+    import geopandas as gpd
+    # Sizes from the unrounded data: the app's coordinates are rounded to about 1 m, which changes
+    # the area of a polygon a few metres across. The order is the app file's.
+    drawn = gpd.read_parquet(REPO / "data/processed/parking_rules.parquet")[["id", "geometry"]]
+    drawn["order"] = drawn["id"].map({f["properties"]["id"]: i for i, f in enumerate(areas)})
+    drawn["size"] = drawn.area
+    pairs = gpd.sjoin(drawn, drawn, predicate="intersects")
+    pairs = pairs[(pairs["size_left"] > 1.5 * pairs["size_right"])]
+    assert len(pairs) > 0
+    assert (pairs["order_left"] < pairs["order_right"]).all()
+
+
 def test_geometry_is_what_a_map_can_draw(areas):
     for feature in areas:
         assert feature["geometry"]["type"] == "MultiPolygon"

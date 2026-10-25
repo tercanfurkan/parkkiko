@@ -33,7 +33,10 @@ COORD_DECIMALS = 5
 
 def write_web(areas, target=TARGET):
     """Write the areas as GPS-coordinate GeoJSON, carrying only what the app displays."""
-    web = areas[WEB_FIELDS + ["geometry"]].to_crs(4326)
+    # Largest first, so smaller areas draw on top and take the tap: a no-parking square must not
+    # swallow the street section lying inside it
+    order = areas.geometry.area.sort_values(ascending=False, kind="stable").index
+    web = areas.loc[order, WEB_FIELDS + ["geometry"]].to_crs(4326)
     # The register's class is a whole number; pandas reads it as a float, and "11.0" in the
     # app's data invites a string comparison that silently fails.
     web["luokka"] = web["luokka"].astype("Int64")

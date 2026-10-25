@@ -60,9 +60,19 @@ def test_sign_text_we_do_not_parse_is_carried_through_for_the_driver():
     assert classify(area(lisatieto=note))["extra_info"] == note
 
 
-def test_plain_sign_codes_are_not_treated_as_conditions():
-    """lisatieto often holds a reference number, which says nothing about the rule."""
-    assert classify(area(lisatieto="7522"))["status"] == "official"
+@pytest.mark.parametrize("note", ["7522", "4878-1, C41, E8", "C41", "7539, C39", "5806, C42,"])
+def test_plain_sign_codes_are_not_treated_as_conditions(note):
+    """lisatieto often holds sign references, numbers or sign types like C41, which say nothing
+    about the rule. Flagging them once told 147 reserved and no-parking areas to check the sign."""
+    assert classify(area(lisatieto=note))["status"] == "official"
+
+
+def test_a_free_limit_with_no_length_is_uncertain():
+    """Class 8 is disc parking with no limit of its own. With no kesto either, "free" would leave out
+    the limit a driver is fined for overstaying."""
+    result = classify(area(luokka=8, kesto=None))
+    assert result["status"] == "uncertain"
+    assert "time limit" in result["reason"]
 
 
 def test_the_committed_snapshot_is_what_the_parsers_make_of_it():

@@ -79,3 +79,22 @@ html, body, #root { height: 100%; margin: 0; font-family: system-ui, sans-serif;
 }
 .parked-bar strong { font-variant-numeric: tabular-nums; }
 div.remind { cursor: default; }
+
+/* Landscape phones and wide screens: the panel is a column beside the map, always visible, so the
+   map is never covered and a tapped strip needs no panning clear of it. Landscape alone would also
+   catch a short desktop window, which is fine: it is wide too. 900px adds portrait tablets and
+   desktop windows that are tall but wide. Keep in sync with SIDE_LAYOUT in App.jsx. */
+@media (orientation: landscape), (min-width: 900px) {
+  .app { flex-direction: row; }
+  .sheet-slot { height: auto; width: min(380px, 45vw); }
+  /* Static, so the locate button positions against the slot and is not clipped by the scroll */
+  .sheet {
+    position: static; height: 100%; box-sizing: border-box; overflow-y: auto;
+    border-top: 0; border-left: 1px solid #ddd;
+    padding-right: env(safe-area-inset-right); /* the notch, when it is on the right */
+  }
+  /* One column: side by side, the answer gets too narrow on a small landscape phone */
+  .panel.open { max-height: none; overflow-y: visible; grid-template-columns: 1fr; }
+  .action { width: auto; }
+  .locate { right: calc(100% + 12px); bottom: calc(28px + env(safe-area-inset-bottom)); } /* the map's corner, clear of the attribution */
+}

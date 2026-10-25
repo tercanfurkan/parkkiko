@@ -12,11 +12,11 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 
+import predict
 import rules
 from export_holidays import write as write_holidays
 from export_web import SOURCE as PARQUET, write_web
 
-NEEDS_HOURS = {"paid", "free_limited", "banned_hours"}
 # The register's fields that carry the rule, kept in the parquet beside the parsed ones
 RAW_FIELDS = ["luokka", "luokka_nimi", "tyyppi", "voimassaolo", "kesto", "kausi", "lisatieto"]
 
@@ -61,7 +61,7 @@ def classify(row):
     codes = {code for code, _ in issues}
     if codes:
         status = "uncertain"
-    elif no_hours_stated and rule in NEEDS_HOURS:
+    elif no_hours_stated and rule in rules.NEEDS_HOURS:
         status = "missing_hours"
     else:
         status = "official"
@@ -143,6 +143,7 @@ def main():
     parsed = pd.DataFrame([classify(r) for r in areas.to_dict("records")], index=areas.index)
     areas = areas[["id", *RAW_FIELDS, "geometry"]].join(parsed)
     areas = add_district(areas, snapshot)
+    areas = predict.add_predictions(areas)
 
     PARQUET.parent.mkdir(parents=True, exist_ok=True)
     areas.to_parquet(PARQUET, compression="zstd")

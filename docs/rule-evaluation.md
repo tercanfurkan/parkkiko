@@ -85,7 +85,9 @@ shorter than the wall clock suggests, not an hour longer.
 
 Never resolve any of these into "free" or a duration:
 
-- `status` is `missing_hours`: we know the kind of rule, not when it applies
+- `status` is `missing_hours`: we know the kind of rule, not when it applies. The exception is
+  an area with `predicted_hours`: it is answered from them like any rule, and always marked an
+  estimate, with where it came from and that the sign wins
 - `status` is `uncertain`: say what `reason` says
 - the calendar says the day is uncertain, or the date is outside its range
 - `season` is present and today falls outside it: the sign says something else off-season and we

@@ -104,13 +104,16 @@ describe("hours mean opposite things per rule type", () => {
 });
 
 describe("when not to answer", () => {
-  test("no area the register is unsure about ever comes out as a time", () => {
+  test("no area the register is unsure about comes out as a time unless it is marked an estimate", () => {
     const now = at("2026-10-13T14:00");
-    const answered = features
+    const unmarked = features
       .map((f) => f.properties)
       .filter((p) => p.status !== "official" || p.rule_type === "unknown")
-      .filter((p) => evaluate(p, now, calendar).kind !== "check");
-    expect(answered.map((p) => p.id)).toEqual([]);
+      .filter((p) => {
+        const result = evaluate(p, now, calendar);
+        return result.kind !== "check" && !result.estimate;
+      });
+    expect(unmarked.map((p) => p.id)).toEqual([]);
   });
 
   test("an uncertain area passes its reason on", () => {
@@ -214,4 +217,14 @@ describe("the parking disc", () => {
   ])("8006: %s", (_, local, expected) => {
     expect(evaluate(area(8006), at(local), calendar)).toEqual(expect.objectContaining(expected));
   });
+});
+
+// 8193 publishes no hours; stage 5 predicted weekdays 9-21 and Saturday 9-18 from an area 25 m away
+describe("an estimate", () => {
+  test("is answered like a rule, and marked as an estimate", () => {
+    expect(evaluate(area(8193), at("2026-10-13T14:00"), calendar)).toEqual(expect.objectContaining({
+      kind: "paid", until: t(0, "21:00"), estimate: 25,
+    }));
+  });
+
 });

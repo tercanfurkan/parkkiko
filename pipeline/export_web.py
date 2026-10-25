@@ -25,7 +25,7 @@ TARGET = Path("web/public/data/parking_areas.geojson")
 # luokka rides along because 60 car-sharing bays are reserved by their class and state no
 # tyyppi, so without it the app can only say "Reserved space" and not who it is for. 3 KB gzipped.
 WEB_FIELDS = ["id", "rule_type", "luokka", "tyyppi", "hours", "duration_min", "season", "status",
-              "reason", "extra_info"]
+              "reason", "extra_info", "predicted_hours", "predicted_from_m"]
 # ~1 m, which is finer than the register's own accuracy and than any phone's GPS. Six decimals
 # cost 19% more on the wire for precision nothing can use; four collapse small polygons entirely.
 COORD_DECIMALS = 5

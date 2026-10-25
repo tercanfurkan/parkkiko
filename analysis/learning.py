@@ -6,13 +6,18 @@ neighbours hidden out to that area's real distance from known ones. run() does t
 once; notebook 05 and the report's tables read its results.
 """
 import json
+import sys
 from functools import lru_cache
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from scipy.spatial import cKDTree
 
-NEEDS_HOURS = ["paid", "free_limited", "banned_hours"]   # as pipeline/process.py; a test keeps them equal
+# predict.py lives in pipeline/; analysis imports it, never the reverse
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
+from predict import (CHOSEN, RELIABILITY, WITHHELD_CLASSES, Neighbours, answered,  # noqa: E402
+                     predict, shown, split, vote, xy)
+
 K_CHOICES = (1, 3, 5)
 ROUNDS = 20
 # Fixed on 24 October 2026, before any result was seen
@@ -21,47 +26,6 @@ TARGET_UNSAFE = 0.01
 DISTANCES = (10, 25, 50, 75, 100, 150, 200, 300, 500)   # candidate cut-offs, metres
 SHARES = (0.5, 0.67, 0.8, 1.0)                          # candidate vote agreement
 MIN_ANSWERS = 200                                       # a cut-off must rest on at least this many
-# What cutoff() chose on 24 October, on the first half of the rounds. Frozen, so the docs that
-# quote it cannot drift when the data is refreshed; run() checks it still meets the target.
-CHOSEN = {"k": 5, "distance": 150, "share": 1.0}
-
-
-def split(areas):
-    """Labelled areas to learn from, and the areas whose hours we must predict."""
-    labelled = areas[areas["rule_type"].isin(NEEDS_HOURS) & areas["status"].eq("official")]
-    return labelled, areas[areas["status"].eq("missing_hours")]
-
-
-def xy(frame):
-    centres = frame.geometry.centroid
-    return np.column_stack([centres.x, centres.y])
-
-
-class Neighbours:
-    """Labelled areas, one spatial index per class."""
-
-    def __init__(self, labelled):
-        self.classes = {klass: (cKDTree(xy(group)), group["hours"].to_numpy())
-                        for klass, group in labelled.groupby("luokka")}
-
-    def nearest(self, klass, point, k, beyond=None):
-        """The k nearest labelled areas of a class as (distance, hours). With `beyond`, only those
-        further than it: the distance-matched test, which also leaves out the stand-in itself."""
-        tree, labels = self.classes[klass]
-        hidden = tree.query_ball_point(point, beyond, return_length=True) if beyond is not None else 0
-        n = min(len(labels), k + hidden)
-        dist, idx = tree.query(point, k=list(range(1, n + 1)))
-        found = [(d, labels[i]) for d, i in zip(dist, idx) if beyond is None or d > beyond]
-        return found[:k]
-
-
-def vote(found):
-    """Distance-weighted vote: the pattern, the distance to the nearest, and the agreement."""
-    weights = {}
-    for distance, hours in found:
-        weights[hours] = weights.get(hours, 0.0) + 1 / max(distance, 1.0)
-    best = max(weights, key=weights.get)
-    return {"predicted": best, "nearest": found[0][0], "share": weights[best] / sum(weights.values())}
 
 
 @lru_cache(maxsize=None)
@@ -136,13 +100,6 @@ def baselines(labelled, test):
             for name, guess in guesses.items()}
 
 
-def predict(neighbours, frame, k):
-    """The vote for each area of a frame, from its k nearest labelled areas of the same class."""
-    votes = [vote(neighbours.nearest(klass, point, k)) if klass in neighbours.classes else None
-             for klass, point in zip(frame["luokka"], xy(frame))]
-    return pd.DataFrame([v or {} for v in votes], index=frame.index)
-
-
 def district_blocked(labelled, k, folds=5):
     """Hold out whole districts, a test the cut-off is not chosen on. Coarser than the simulation,
     and partly a test of rule regimes, since rule types cluster by district."""
@@ -152,11 +109,6 @@ def district_blocked(labelled, k, folds=5):
         held = labelled.iloc[test]
         parts.append(predict(Neighbours(labelled.iloc[train]), held, k).assign(truth=held["hours"]))
     return judged(pd.concat(parts).dropna(subset=["predicted"]).to_dict("records"))
-
-
-def answered(rows, cut):
-    """Which predictions the cut-off lets the model give."""
-    return (rows["nearest"] <= cut["distance"]) & (rows["share"] >= cut["share"])
 
 
 def cutoff(fit):
@@ -172,6 +124,11 @@ def cutoff(fit):
                         and kept["unsafe"].mean() < TARGET_UNSAFE):
                     candidates.append((len(kept) / len(rows), cut))
     return max(candidates, key=lambda c: c[0], default=(None, None))[1]
+
+
+def class_unsafe(test, cut):
+    """Each class's unsafe rate among the answers the cut-off gives."""
+    return test[answered(test, cut)].groupby("luokka")["unsafe"].mean()
 
 
 def meets_target(rows, cut):
@@ -193,6 +150,15 @@ def run(areas):
         raise SystemExit(f"The frozen cut-off {cut} no longer meets the stage 5 target; rerun cutoff().")
     predicted = predict(neighbours, targets, cut["k"])
     predicted["answer"] = answered(predicted, cut)
+    predicted["shown"] = shown(predicted, targets)
+    test = test[test["k"] == cut["k"]]
+    failing = set(class_unsafe(test, cut).loc[lambda u: u >= TARGET_UNSAFE].index)
+    if failing - WITHHELD_CLASSES:
+        raise SystemExit(f"Classes {failing - WITHHELD_CLASSES} now fail the unsafe bar alone; withhold them in pipeline/predict.py.")
+    kept = test[answered(test, cut) & ~test["luokka"].isin(WITHHELD_CLASSES)]
+    if round(kept["correct"].mean(), 2) < RELIABILITY:
+        raise SystemExit(f"Shown estimates are now {kept['correct'].mean():.1%} right, below the app's "
+                         f"'about {RELIABILITY:.0%}'; update RELIABILITY and the wording in web/src/answer.js.")
     return {"labelled": labelled, "targets": targets, "gap": gap, "sim": sim, "cut": cut,
-            "test": test[test["k"] == cut["k"]], "blocked": district_blocked(labelled, cut["k"]),
+            "test": test, "blocked": district_blocked(labelled, cut["k"]),
             "predicted": predicted}

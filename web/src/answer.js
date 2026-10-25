@@ -85,5 +85,10 @@ export function answer(area, result, now) {
   return { headline: `${LABEL[kind]} until ${when(until)}`, detail: lead(after(result.then)), countdown };
 }
 
+/** The note under an estimate. "99 times in 100" is RELIABILITY in pipeline/predict.py, checked by stage 5. */
+export const estimateNote = (from) =>
+  `The city publishes no hours here. Estimated from the same kind of parking ${from} m away; in our ` +
+  "tests, estimates like this were right about 99 times in 100. If the sign differs, trust the sign.";
+
 /** The parked view's line for the disc a stay started with. */
 export const discSet = (ms) => `Parking disc set to ${clockTime(ms)}`;

@@ -3,8 +3,6 @@ unsafe answer is the one that costs a driver a fine."""
 import geopandas as gpd
 from shapely.geometry import Point
 
-import learning
-import process
 from learning import Neighbours, in_force, unsafe
 
 DAY = '{"mon_fri": [9, 21]}'
@@ -28,10 +26,6 @@ def test_hidden_neighbours_are_never_used():
 def test_without_hiding_the_nearest_come_first():
     found = Neighbours(street([30, 0, 10])).nearest(6, ORIGIN, k=2)
     assert [round(d) for d, _ in found] == [0, 10]
-
-
-def test_learning_trains_on_the_rule_types_the_pipeline_marks_missing():
-    assert set(learning.NEEDS_HOURS) == set(process.NEEDS_HOURS)
 
 
 def test_a_range_past_midnight_runs_into_the_next_day():

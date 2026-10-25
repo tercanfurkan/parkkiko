@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, GeoJSON, Circle, CircleMarker, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, GeoJSON, Circle, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import { styleFor, SELECTED_STYLE, ACCURACY_STYLE, POSITION_STYLE } from "./style.js";
+import { styleFor, SELECTED_STYLE, ACCURACY_STYLE } from "./style.js";
+import CarMarker from "./CarMarker.jsx";
 import RulePanel from "./RulePanel.jsx";
 import About from "./About.jsx";
 import { addReminder, loadStay, restoreNotification, saveStay } from "./notify.js";
@@ -171,7 +172,7 @@ export default function App() {
           {position && (
             <>
               <Circle center={position.latlng} radius={position.accuracy} pathOptions={ACCURACY_STYLE} interactive={false} />
-              <CircleMarker center={position.latlng} radius={7} pathOptions={POSITION_STYLE} interactive={false} />
+              <CarMarker latlng={position.latlng} />
             </>
           )}
         </MapContainer>

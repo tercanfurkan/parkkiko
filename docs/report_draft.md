@@ -18,7 +18,7 @@ Status: stages 1-6 written; the reflection, future steps and learning outcomes t
 # Parkkiko: technical report
 
 Jamila Shulekha, Mai Phuong Pham, Ömer Furkan Tercan. Introduction to Data Science, University of
-Helsinki, autumn 2026. App: https://tercanfurkan.github.io/parkkiko/. Code and data:
+Helsinki, autumn 2026. App: https://parkkiko.app. Code and data:
 https://github.com/tercanfurkan/parkkiko.
 
 **Summary.** Helsinki publishes every street parking rule as open data, but as codes and strings

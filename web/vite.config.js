@@ -12,9 +12,10 @@ function commit() {
   }
 }
 
-// base matches the GitHub Pages path
+// A relative base so one build works at the custom domain's root and at tercanfurkan.github.io/parkkiko/.
+// Safe because the app is one page with no router: every URL resolves against the root page.
 export default defineConfig({
   plugins: [react()],
-  base: "/parkkiko/",
+  base: "./",
   define: { __COMMIT__: JSON.stringify(commit()) },
 });

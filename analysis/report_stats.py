@@ -440,9 +440,8 @@ def learning_cutoff(results):
                      "Accuracy %": pct(kept["correct"].mean()), "Unsafe %": pct(kept["unsafe"].mean())})
     agree = "all agreeing" if cut["share"] == 1 else f"at least {cut['share']:.0%} agreeing"
     head = (f"Cut-off: the {cut['k']} nearest same-class areas, the nearest within {cut['distance']} m, {agree}. "
-            f"Of the {len(predicted)} areas without hours, {predicted['answer'].sum()} pass it, and **{predicted['shown'].sum()}** "
-            f"are shown in the app as estimates, after withholding the classes whose own unsafe rate fails the bar "
-            f"({', '.join(str(int(c)) for c in sorted(learning.WITHHELD_CLASSES))}).\n")
+            f"Of the {len(predicted)} areas without hours, {predicted['answer'].sum()} pass it and **{predicted['shown'].sum()}** "
+            f"are shown, classes {', '.join(str(int(c)) for c in sorted(learning.WITHHELD_CLASSES))} withheld.\n")
     return head + "\n" + table(pd.DataFrame(rows), "The cut-off, on tests it was not chosen on")
 
 
@@ -456,7 +455,7 @@ def learning_by_class(results):
         "Shown in the app": targets.loc[predicted["shown"], "luokka"].value_counts(),
         "Accuracy % without cut-off": pct(test.groupby("luokka")["correct"].mean()),
         "Accuracy % with": pct(kept.groupby("luokka")["correct"].mean()),
-        "Unsafe % with": pct(kept.groupby("luokka")["unsafe"].mean()),
+        "Unsafe % with": pct(learning.class_unsafe(test, results["cut"])),
         "Simulated answers": kept["luokka"].value_counts(),
     })
     df = df[df["To predict"].notna()]

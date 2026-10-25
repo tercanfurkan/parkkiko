@@ -13,10 +13,10 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-# The predicting code lives in the pipeline, which applies what this stage chose; analysis imports
-# it, never the reverse
+# predict.py lives in pipeline/; analysis imports it, never the reverse
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "pipeline"))
-from predict import CHOSEN, WITHHELD_CLASSES, Neighbours, answered, predict, split, vote, xy  # noqa: E402
+from predict import (CHOSEN, RELIABILITY, WITHHELD_CLASSES, Neighbours, answered,  # noqa: E402
+                     predict, shown, split, vote, xy)
 
 K_CHOICES = (1, 3, 5)
 ROUNDS = 20
@@ -126,6 +126,11 @@ def cutoff(fit):
     return max(candidates, key=lambda c: c[0], default=(None, None))[1]
 
 
+def class_unsafe(test, cut):
+    """Each class's unsafe rate among the answers the cut-off gives."""
+    return test[answered(test, cut)].groupby("luokka")["unsafe"].mean()
+
+
 def meets_target(rows, cut):
     kept = rows[(rows["k"] == cut["k"]) & answered(rows, cut)]
     return (len(kept) >= MIN_ANSWERS and kept["correct"].mean() >= TARGET_ACCURACY
@@ -145,11 +150,15 @@ def run(areas):
         raise SystemExit(f"The frozen cut-off {cut} no longer meets the stage 5 target; rerun cutoff().")
     predicted = predict(neighbours, targets, cut["k"])
     predicted["answer"] = answered(predicted, cut)
-    predicted["shown"] = predicted["answer"] & ~targets["luokka"].isin(WITHHELD_CLASSES)
-    held = test[(test["k"] == cut["k"]) & answered(test, cut)]
-    failing = set(held.groupby("luokka")["unsafe"].mean().loc[lambda u: u >= TARGET_UNSAFE].index)
+    predicted["shown"] = shown(predicted, targets)
+    test = test[test["k"] == cut["k"]]
+    failing = set(class_unsafe(test, cut).loc[lambda u: u >= TARGET_UNSAFE].index)
     if failing - WITHHELD_CLASSES:
         raise SystemExit(f"Classes {failing - WITHHELD_CLASSES} now fail the unsafe bar alone; withhold them in pipeline/predict.py.")
+    kept = test[answered(test, cut) & ~test["luokka"].isin(WITHHELD_CLASSES)]
+    if round(kept["correct"].mean(), 2) < RELIABILITY:
+        raise SystemExit(f"Shown estimates are now {kept['correct'].mean():.1%} right, below the app's "
+                         f"'about {RELIABILITY:.0%}'; update RELIABILITY and the wording in web/src/answer.js.")
     return {"labelled": labelled, "targets": targets, "gap": gap, "sim": sim, "cut": cut,
-            "test": test[test["k"] == cut["k"]], "blocked": district_blocked(labelled, cut["k"]),
+            "test": test, "blocked": district_blocked(labelled, cut["k"]),
             "predicted": predicted}

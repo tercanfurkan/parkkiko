@@ -176,7 +176,7 @@ The 978 areas without hours sit a median of 174 m, centre to centre, from a labe
 | Nearest neighbours, k=5                           |         61.8 |      0.186 |       24.2 |
 | Nearest neighbours, k=5, whole districts held out |         63.8 |      0.105 |       13.6 |
 
-Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Of the 978 areas without hours, 373 pass it, and **333** are shown in the app as estimates, after withholding the classes whose own unsafe rate fails the bar (1, 5, 7).
+Cut-off: the 5 nearest same-class areas, the nearest within 150 m, all agreeing. Of the 978 areas without hours, 373 pass it and **333** are shown, classes 1, 5, 7 withheld.
 
 ### The cut-off, on tests it was not chosen on
 

@@ -50,7 +50,7 @@ is in [data.md](data.md); how it is parsed is `pipeline/rules.py`. What matters 
 | `extra_info` | 1,362 | sign text to show verbatim |
 | `reason` | 385 | why an area is uncertain, already written for a driver to read |
 | `season` | 23 | `{"start": [4, 1], "end": [10, 31]}`, also an object |
-| `predicted_hours` | 333 | stage 5's estimate where the register has none, in the shape of `hours`. Only on `missing_hours` areas, which keep that status, so ignoring it still says check the sign. Show it as an estimate, never as the city's rule |
+| `predicted_hours` | 333 | stage 5's estimate, in the shape of `hours`, only on `missing_hours` areas, whose status stays. Show it as an estimate, never as the city's rule |
 | `predicted_from_m` | 333 | whole metres to the known area the estimate came from |
 
 A property is **absent** rather than null or empty when an area does not have it, so test for
@@ -131,7 +131,7 @@ add a row to Open questions below rather than computing it in the browser.
 | 5.7 | Error analysis | | done | PR #45. notebook 05, §5. |
 | 5.8 | Imputation reflection | | done | PR #45. notebook 05, reflection. |
 | 5.9 | Coverage per district | | done | PR #45. In `docs/report_stats.md`. |
-| 5.10 | Ship predictions to the app | | done | PR #46. 333 areas, the cut-off's 373 less classes 1, 5 and 7, whose own unsafe rate fails the bar. `pipeline/predict.py` applies stage 5; the panel labels them "Estimate" with their source and measured reliability. |
+| 5.10 | Ship predictions to the app | | done | PR #46. 333 shown, classes 1, 5 and 7 withheld; `pipeline/predict.py`. |
 
 ## 6 The app
 

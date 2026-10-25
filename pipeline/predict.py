@@ -1,25 +1,24 @@
 """Predict the hours the register does not publish, where stage 5 found it safe to.
 
-    python pipeline/predict.py    add the predictions to the committed data and rebuild the app's file
-
 Stage 5 (analysis/learning.py, notebooks/stages/05_learning.ipynb) measured the method and chose
 when to trust it; this applies that choice. A predicted area keeps its status, missing_hours, and
 gains two fields the app shows as an estimate: predicted_hours, in the shape of hours, and
 predicted_from_m, the distance to the nearest known area it was predicted from.
 """
-import geopandas as gpd
 import numpy as np
 import pandas as pd
 from scipy.spatial import cKDTree
 
 import rules
-from export_web import SOURCE, write_web
 
 # Chosen by stage 5 on 24 October 2026: the 5 nearest same-class areas, the nearest within 150 m,
 # all agreeing. Frozen, so what the docs quote cannot drift; analysis/learning.py checks it holds.
 CHOSEN = {"k": 5, "distance": 150, "share": 1.0}
 # Classes whose own unsafe rate in stage 5's test is at or over 1%, withheld on 25 October 2026
 WITHHELD_CLASSES = {1, 5, 7}
+# How often a shown estimate was right in that test, as the app says it: "about 99 times in 100".
+# analysis/learning.py checks it still holds; web/src/answer.js words it.
+RELIABILITY = 0.99
 
 
 def split(areas):
@@ -72,24 +71,17 @@ def answered(rows, cut):
     return (rows["nearest"] <= cut["distance"]) & (rows["share"] >= cut["share"])
 
 
+def shown(votes, targets):
+    """Which predictions the app shows: the cut-off passes and the class is not withheld."""
+    return answered(votes, CHOSEN) & ~targets["luokka"].isin(WITHHELD_CLASSES)
+
+
 def add_predictions(areas):
-    """The areas, with predicted_hours and predicted_from_m where the cut-off passes and the class
-    is not withheld, and absent everywhere else."""
-    areas = areas.drop(columns=["predicted_hours", "predicted_from_m"], errors="ignore")
+    """The areas, with predicted_hours and predicted_from_m where an estimate is shown, and absent
+    everywhere else."""
     labelled, targets = split(areas)
     votes = predict(Neighbours(labelled), targets, CHOSEN["k"])
-    shown = answered(votes, CHOSEN) & ~targets["luokka"].isin(WITHHELD_CLASSES)
-    areas["predicted_hours"] = votes.loc[shown, "predicted"]
-    areas["predicted_from_m"] = votes.loc[shown, "nearest"].round().astype("Int64")
+    show = shown(votes, targets)
+    areas["predicted_hours"] = votes.loc[show, "predicted"]
+    areas["predicted_from_m"] = votes.loc[show, "nearest"].round().astype("Int64")
     return areas
-
-
-def main():
-    areas = add_predictions(gpd.read_parquet(SOURCE))
-    areas.to_parquet(SOURCE, compression="zstd")
-    target = write_web(areas)
-    print(f"{areas['predicted_hours'].notna().sum()} areas with predicted hours -> {SOURCE}, {target}")
-
-
-if __name__ == "__main__":
-    main()

@@ -221,11 +221,16 @@ def parse_season(raw):
 
 # --------------------------------------------------- extra info (lisatieto)
 
+# A sign reference: a number such as 7539 or 4878-1, or a sign type with a letter such as C41 or E8
+_SIGN_CODE = r"[A-Z]?\d+(?:\.\d+)?"
+_SIGN_CODES = re.compile(rf"{_SIGN_CODE}(?:\s*[-/,]\s*{_SIGN_CODE})*[\s,/]*")
+
+
 def parse_extra(raw):
     """Sign reference codes are metadata; anything wordier is a condition we do not parse."""
     s = _txt(raw).strip()
     if not s or s == "0":
         return None, None
-    if re.fullmatch(r"[\d\-/, ]+", s):
-        return s, None                               # plain sign code(s)
+    if _SIGN_CODES.fullmatch(s):
+        return s, None                               # sign codes only
     return s, (NOTE, "the sign carries a condition we do not read; check it yourself")

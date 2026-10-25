@@ -18,6 +18,9 @@ const CITY_ZOOM = 12;       // the whole register fits on a phone screen
 const STREET_ZOOM = 17;     // individual street sections are tappable
 const MIN_RULES_ZOOM = 15;   // below this the areas are a smear of colour, so they are hidden
 
+// When the panel is a column beside the map instead of a sheet under it. Same query as index.css
+const SIDE_LAYOUT = "(orientation: landscape), (min-width: 900px)";
+
 // Padded by a tenth of the span (1.4 km N-S, 1.8 km E-W). A position outside it would land on a
 // map with no rules, so we stay on the city view and say why instead.
 const DATA_BOUNDS = L.latLngBounds(DATA_EXTENT).pad(0.1);
@@ -107,7 +110,8 @@ export default function App() {
     setSelected(layer.feature.properties);
   };
 
-  // The panel grows over the bottom of the map, so pan the tapped area clear of it
+  // The bottom sheet grows over the map, so pan the tapped area clear of it. Beside the map, the
+  // side panel is as tall as its slot, so nothing is covered and only the 24px margin applies
   useEffect(() => {
     if (!selected || !selectedLayer.current) return;
     const covered = sheetRef.current.offsetHeight - sheetRef.current.parentElement.offsetHeight;
@@ -115,6 +119,16 @@ export default function App() {
     const bounds = selectedLayer.current.getBounds();
     map.panInside([bounds.getSouth(), bounds.getCenter().lng], { paddingTopLeft: [0, 24], paddingBottomRight: [0, covered + 24] });
   }, [selected, map]);
+
+  // The map's box changes size when the panel moves, e.g. on rotating the phone. Leaflet keeps the
+  // old size until told, and taps and panning would land off by the difference
+  useEffect(() => {
+    if (!map) return;
+    const query = window.matchMedia(SIDE_LAYOUT);
+    const resize = () => map.invalidateSize();
+    query.addEventListener("change", resize);
+    return () => query.removeEventListener("change", resize);
+  }, [map]);
 
   const onZoom = (zoom) => {
     const nowZoomedIn = zoom >= MIN_RULES_ZOOM;

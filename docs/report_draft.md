@@ -12,7 +12,7 @@ Maintained draft of the technical report. Updated as each stage closes; a sectio
   where they appear.
 - Comments like this one do not render in the PDF.
 
-Status: stages 1-5 written, each with its notebook (02-05); 6 and the reflection to come.
+Status: stages 1-6 written; the reflection, future steps and learning outcomes to come; Figure A7 needs screenshots.
 -->
 
 # Parkkiko: technical report
@@ -170,14 +170,32 @@ question, `9-21` against `9-21, (9-18)`.
 
 ## 6. The app and communication of results
 
-> *To be written when the stage closes. Shipped so far: a static map site (Vite, React, Leaflet,
-> no backend, about 0.4 MB of data compressed); the answer line, which evaluates a rule at the
-> current moment through the holiday calendar and runs it to the next change rather than to the
-> end of today's window; estimates for 333 areas without published hours, labelled "Estimate" with
-> their source and measured reliability; a live countdown; a reminder ten minutes before the deadline as a
-> calendar alarm plus a notification. Cover: why the answer runs to the next change (a ban that
-> ends at 18:00 starts again at 07:00), colour-blind safe colours, and how "check the sign" is
-> shown.*
+**The deliverable** is a mobile web map: no install, no account, no backend. The whole register
+travels as one 0.3 MB compressed file and every rule is evaluated in the phone's browser, so the
+answer is instant and nothing about the driver leaves the device. It opens at the driver's location.
+
+**The map** colours each street section by what the driver may do there, in colour-blind-safe
+Okabe-Ito colours, each paired with words in the panel. Sections whose rule the city does not fully
+publish are drawn faded and dashed, so the project's principle is visible before anything is tapped.
+
+**The answer.** Tapping a section gives one line in the driver's terms: may I park, do I pay, until
+when, and what follows ("Paid parking until 21:00. Free after that until 09:00 tomorrow"), with a
+countdown (Figure A7). Three decisions shape it. An answer runs to the next change of rule, not the
+end of today's window, because a ban that ends at 18:00 returns at 07:00. Free parking under a limit
+says to set a parking disc, and to what time. Where the data cannot support an answer, the app says
+*check the sign* and why, and reserved bays say *not for you* and for whom. The 333 estimates are
+labelled as such, with their source, their tested reliability, and *if the sign differs, trust the
+sign*.
+
+**Acting on it.** "Start parking" or "Remind me" adds a calendar alarm ten minutes before the
+deadline, which fires even with the browser closed.
+
+**How we know it says what we meant.** Every rule decision is written down with worked examples
+(`docs/rule-evaluation.md`). Tests render the app's panel for every one of the 8,754 areas in the
+shipped data, so a wrong sentence fails before it is deployed.
+
+**Not built:** choosing the side of the street, which GPS cannot tell apart; changing the arrival
+time; a desktop layout.
 
 ## 7. Reflection on the canvas
 
@@ -253,6 +271,8 @@ wrong or unsafe (top), against the limits fixed beforehand, and how many of the 
 (bottom). On the simulation rounds the cut-off was chosen on.
 
 ![The cut-off](figures/learning_cutoff.png)
+
+**Figure A7.** *To add: two screenshots of the panel, an ordinary answer and an estimate.*
 
 ## Appendix B. Tables
 
